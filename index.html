@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
-        .admin-only { display: none; }
+        .admin-only { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -74,7 +74,7 @@
                     <i data-lucide="receipt" class="w-4 h-4"></i>
                     <span>Expenses</span>
                 </button>
-                <!-- Admin Setup Tab (Hidden by default, shown only for Admin) -->
+                <!-- Admin Setup Tab (Strictly for Admin) -->
                 <button onclick="switchTab('settings')" id="tab-settings" class="admin-only py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2">
                     <i data-lucide="settings" class="w-4 h-4"></i>
                     <span>Admin Setup</span>
@@ -139,7 +139,6 @@
     </div>
 
     <script>
-        // SheetDB / Sheet TV Endpoints
         const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5jtno86nn45ml";
         const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/e92x2wxuf37nv";
 
@@ -182,13 +181,13 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
-            // Strict Role-based visibility for Admin-only elements
+            // Strict Role-based visibility check
             const adminElements = document.querySelectorAll('.admin-only');
             adminElements.forEach(el => {
                 if (currentUser === 'Admin') {
                     el.style.display = ''; // அட்மினுக்கு மட்டும் தெரியும்
                 } else {
-                    el.style.display = 'none'; // இன்ஜினியர்களுக்கு மறைக்கப்படும்
+                    el.style.display = 'none'; // மற்றவர்களுக்கு மறைக்கப்படும்
                 }
             });
 
@@ -228,7 +227,6 @@
             alert("Expense saved successfully!");
         }
 
-        // Auto login if already authenticated
         if (currentUser) {
             initApp();
         }
