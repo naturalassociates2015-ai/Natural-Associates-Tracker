@@ -84,7 +84,6 @@
             
             <!-- DASHBOARD TAB -->
             <div id="view-dashboard" class="space-y-6">
-                <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p class="text-sm text-slate-500">Total Funds Allocated</p>
@@ -100,7 +99,6 @@
                     </div>
                 </div>
 
-                <!-- Engineer Balances -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h3 class="text-base font-bold text-slate-900 mb-4">Engineer Balances & Fund Status</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="engineerCardsContainer"></div>
@@ -146,7 +144,6 @@
                     </form>
                 </div>
 
-                <!-- Expense Table -->
                 <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
                     <div class="p-6 border-b flex justify-between items-center">
                         <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
@@ -173,7 +170,7 @@
             </div>
 
             <!-- ADMIN SETUP TAB -->
-            <div id="view-settings" class="hidden space-y-6 admin-only">
+            <div id="view-settings" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900">Manage Engineers & Funds</h3>
@@ -259,6 +256,16 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
+            // Handle Admin-only elements visibility based on login role
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(el => {
+                if (currentUser !== 'Admin') {
+                    el.style.display = 'none';
+                } else {
+                    el.style.display = '';
+                }
+            });
+
             const expEngSelect = document.getElementById('expEngineer');
             expEngSelect.innerHTML = '';
             if (currentUser === 'Admin') {
@@ -285,11 +292,15 @@
 
         function switchTab(tabId) {
             ['dashboard', 'expenses', 'settings'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2";
+                const view = document.getElementById(`view-${t}`);
+                const tab = document.getElementById(`tab-${t}`);
+                if (view) view.classList.add('hidden');
+                if (tab) tab.className = "py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2";
             });
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabId}`).className = "py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2";
+            const activeView = document.getElementById(`view-${tabId}`);
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeTab) activeTab.className = "py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2";
         }
 
         function renderDashboard() {
@@ -396,18 +407,24 @@
         }
 
         function addUnit(e) {
-            nav
+            e.preventDefault();
+            const unit = document.getElementById('setupUnitName').value.trim();
+            if (unit && !units.includes(unit)) {
+                units.push(unit);
+                saveAndRefresh();
+                document.getElementById('setupUnitName').value = '';
+            }
         }
 
         function renderSetupLists() {
             let engList = document.getElementById('setupEngList');
-            engList.innerHTML = engineers.map(en => `<div class="py-2 flex justify-between"><span>${en.name}</span><span class="font-semibold">₹${en.totalGiven.toLocaleString()}</span></div>`).join('');
+            if (engList) engList.innerHTML = engineers.map(en => `<div class="py-2 flex justify-between"><span>${en.name}</span><span class="font-semibold">₹${en.totalGiven.toLocaleString()}</span></div>`).join('');
 
             let siteList = document.getElementById('setupSiteList');
-            siteList.innerHTML = sites.map(s => `<div class="py-2">${s}</div>`).join('');
+            if (siteList) siteList.innerHTML = sites.map(s => `<div class="py-2">${s}</div>`).join('');
 
             let unitList = document.getElementById('setupUnitList');
-            unitList.innerHTML = units.map(u => `<div class="py-2">${u}</div>`).join('');
+            if (unitList) unitList.innerHTML = units.map(u => `<div class="py-2">${u}</div>`).join('');
         }
 
         function saveAndRefresh() {
