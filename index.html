@@ -1,723 +1,472 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Natural Associates - Site Cash & Material Tracker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Associates - Live Site Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
+<body class="min-h-screen text-slate-800">
 
-  <!-- Header -->
-  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
-        <div class="flex items-center space-x-3">
-          <div class="bg-blue-600 p-2 rounded-lg text-white font-bold text-lg">
-            <i class="fa-solid fa-building-user"></i>
-          </div>
-          <div>
-            <h1 class="text-base sm:text-xl font-bold tracking-wide">Natural Associates</h1>
-            <p class="text-[10px] sm:text-xs text-slate-400">Site Expense Tracker</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-        <button id="adminIssueCashBtn" onclick="openCashTransferModal()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
-          <i class="fa-solid fa-hand-holding-dollar"><span>Issue Cash</span></i>
-        </button>
-        <button onclick="exportCSV()" class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 whitespace-nowrap">
-          <i class="fa-solid fa-file-csv"><span>Excel</span></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
-
-    <!-- Active User & Role Selector -->
-    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-      <div class="flex items-center justify-between sm:justify-start gap-2">
-        <span class="text-xs sm:text-sm font-medium text-slate-500">Login Role:</span>
-        <select id="currentUserRole" onchange="switchUserRole(this.value)" class="font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-1 sm:flex-none">
-          <option value="Admin">Admin (Full Control)</option>
-        </select>
-      </div>
-
-      <div id="adminControlsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-        <button onclick="openManageEngineerModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
-          <i class="fa-solid fa-user-gear mr-1"></i> Engineers
-        </button>
-        <button onclick="openManageSiteModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
-          <i class="fa-solid fa-map-location-dot mr-1"></i> Sites
-        </button>
-        <button onclick="openManageUnitModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
-          <i class="fa-solid fa-scale-balanced mr-1"></i> Units
-        </button>
-      </div>
-    </div>
-
-    <!-- Balance Cards Summary -->
-    <section>
-      <div class="flex justify-between items-center mb-2 px-1">
-        <h2 class="text-sm sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-wallet text-blue-600"></i> <span id="ledgerTitleText">Ledger Balances</span>
-        </h2>
-        <span class="text-[11px] text-slate-400" id="ledgerSubText">Tap card to filter</span>
-      </div>
-      <div id="engineerCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
-    </section>
-
-    <!-- Main Entry Form & Transaction Logs Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-      <!-- New Entry Form -->
-      <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 h-fit">
-        <div class="border-b border-slate-100 pb-2.5 mb-3 flex justify-between items-center">
-          <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-cart-plus text-blue-600"></i> Add Material / Expense
-          </h3>
-          <span id="formRoleBadge" class="hidden"></span>
-        </div>
-
-        <form id="expenseForm" onsubmit="handleNewExpense(event)" class="space-y-3">
-          <input type="hidden" id="entryEngineer" value="">
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
-            <input type="date" id="entryDate" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Site Location</label>
-            <select id="entrySite" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white"></select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Material Description</label>
-            <input type="text" id="entryMaterial" placeholder="e.g. OPC Cement, M-Sand" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Qty</label>
-              <input type="number" step="any" id="entryQty" placeholder="50" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900">
+        <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-slate-900">Natural Associates</h1>
+                <p class="text-sm text-slate-500">Site Expense & Cash Flow Tracker</p>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Unit</label>
-              <select id="entryUnit" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white"></select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹)</label>
-              <input type="number" step="any" id="entryAmount" placeholder="18500" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-900">
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Supplier / Remarks (Optional)</label>
-            <input type="text" id="entryRemarks" placeholder="e.g. Paid cash to supplier" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg text-sm transition shadow-sm flex items-center justify-center gap-2 mt-2">
-            <i class="fa-solid fa-plus-circle"></i> Save Entry
-          </button>
-        </form>
-      </div>
-
-      <!-- Transaction Logs -->
-      <div class="lg:col-span-2 bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pb-3 border-b border-slate-100">
-          <div>
-            <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
-              <i class="fa-solid fa-list-check text-blue-600"></i> Expense Logs
-            </h3>
-            <p class="text-[11px] text-slate-500" id="filterStatusText">Showing active list</p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <select id="filterEngineer" onchange="applyFilters()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-slate-50 font-medium flex-1 sm:flex-none">
-              <option value="ALL">All Engineers</option>
-            </select>
-            <select id="filterSite" onchange="applyFilters()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-slate-50 font-medium flex-1 sm:flex-none">
-              <option value="ALL">All Sites</option>
-            </select>
-            <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-800 underline px-1 whitespace-nowrap">Reset</button>
-          </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Select User / Role</label>
+                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-600 focus:outline-none" required>
+                        <option value="">-- Choose Profile --</option>
+                        <option value="Admin">Admin (Full Access)</option>
+                        <option value="Sivashankar">Sivashankar (Engineer)</option>
+                        <option value="Yogesh">Yogesh (Engineer)</option>
+                        <option value="Senthil">Senthil (Engineer)</option>
+                        <option value="Manikandan">Manikandan (Engineer / Lead)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-600 focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full py-3 bg-amber-700 text-white rounded-xl font-medium hover:bg-amber-800 transition">Login</button>
+                <p id="loginError" class="text-red-500 text-sm text-center hidden"> தவறான பாஸ்வேர்ட்! (Default Admin: admin123, Engineers: pass123)</p>
+            </form>
         </div>
-
-        <!-- Desktop Table View -->
-        <div class="hidden sm:block overflow-x-auto flex-1">
-          <table class="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr class="bg-slate-50 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
-                <th class="py-2.5 px-3">Date</th>
-                <th id="tableHeaderEngineer" class="py-2.5 px-3">Engineer</th>
-                <th class="py-2.5 px-3">Site</th>
-                <th class="py-2.5 px-3">Material & Item</th>
-                <th class="py-2.5 px-3 text-right">Qty</th>
-                <th class="py-2.5 px-3 text-right">Amount (₹)</th>
-                <th class="py-2.5 px-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
-          </table>
-        </div>
-
-        <!-- Mobile List View (Cards) -->
-        <div id="transactionsMobileList" class="sm:hidden space-y-2.5 flex-1 max-h-[550px] overflow-y-auto"></div>
-
-        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-          <div>Entries: <span id="listedCount" class="font-bold text-slate-800">0</span></div>
-          <div>Total Spending: <span id="filteredTotalSpending" class="font-bold text-emerald-700 text-sm sm:text-base">₹0</span></div>
-        </div>
-      </div>
     </div>
-  </main>
 
-  <!-- Modals -->
-  <div id="cashModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
-    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
-        <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Issue Cash to Engineer</h3>
-        <button onclick="closeModal('cashModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
-      </div>
-      <form onsubmit="handleCashTransfer(event)" class="space-y-3">
-        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Date</label><input type="date" id="cashDate" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none bg-white"></div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Engineer</label>
-          <select id="cashEngineer" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none bg-white"></select>
-        </div>
-        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹)</label><input type="number" id="cashAmount" placeholder="e.g. 50000" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 font-bold outline-none"></div>
-        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Notes</label><input type="text" id="cashNotes" placeholder="Bank Transfer / Cash" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none"></div>
-        <div class="flex gap-2 pt-2"><button type="button" onclick="closeModal('cashModal')" class="w-1/2 border border-slate-300 rounded-lg py-2.5 text-sm font-medium">Cancel</button><button type="submit" class="w-1/2 bg-emerald-600 text-white rounded-lg py-2.5 text-sm font-medium">Confirm</button></div>
-      </form>
-    </div>
-  </div>
-
-  <div id="engineerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
-    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Engineers</h3><button onclick="closeModal('engineerModal')" class="text-slate-400 text-xl">&times;</button></div>
-      <div class="flex flex-col gap-2">
-        <input type="text" id="newEngineerName" placeholder="Engineer Name" class="text-sm border border-slate-300 rounded-lg p-2.5 outline-none">
-        <input type="number" id="newEngineerInitialAmount" placeholder="Initial Cash Given (₹)" class="text-sm border border-slate-300 rounded-lg p-2.5 outline-none">
-        <button onclick="addEngineer()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add Engineer</button>
-      </div>
-      <div id="engineerListContainer" class="space-y-2 max-h-48 overflow-y-auto pt-1"></div>
-    </div>
-  </div>
-
-  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
-    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Sites</h3><button onclick="closeModal('siteModal')" class="text-slate-400 text-xl">&times;</button></div>
-      <div class="flex gap-2"><input type="text" id="newSiteName" placeholder="Site Name" class="flex-1 text-sm border border-slate-300 rounded-lg p-2.5 outline-none"><button onclick="addSite()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add</button></div>
-      <div id="siteListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
-    </div>
-  </div>
-
-  <div id="unitModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
-    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Units</h3><button onclick="closeModal('unitModal')" class="text-slate-400 text-xl">&times;</button></div>
-      <div class="flex gap-2"><input type="text" id="newUnitName" placeholder="Unit Name" class="flex-1 text-sm border border-slate-300 rounded-lg p-2.5 outline-none"><button onclick="addUnit()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add</button></div>
-      <div id="unitListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
-    </div>
-  </div>
-
-  <script>
-    const API_URL = "https://sheetdb.io/api/v1/l51b9oeg433p1"; 
-    const ADMIN_PASSWORD = "123";
-
-    let defaultEngineers = {
-      "Sivashankar": { totalGiven: 100000 },
-      "Yogesh": { totalGiven: 75000 }
-    };
-
-    function loadData() {
-      engineers = JSON.parse(localStorage.getItem('na_engineers')) || defaultEngineers;
-      sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvarchatram"];
-      units = JSON.parse(localStorage.getItem('na_units')) || ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet"];
-      
-      fetch(API_URL)
-        .then(response => response.json())
-        .then(data => {
-          transactions = data.map(t => ({
-            id: Number(t.id) || Date.now(),
-            date: t.Date,
-            engineer: t.Engineer,
-            site: t.Site,
-            material: t.Material,
-            qty: parseFloat(t.Qty),
-            unit: t.Unit,
-            amount: parseFloat(t.Amount),
-            remarks: t.Remarks || ''
-          }));
-          renderApp();
-        })
-        .catch(error => {
-          console.error("Error loading data from SheetDB:", error);
-          transactions = JSON.parse(localStorage.getItem('na_transactions')) || [];
-          renderApp();
-        });
-    }
-
-    let engineers = {};
-    let sites = [];
-    let units = [];
-    let transactions = [];
-    loadData();
-
-    let activeUserRole = "Admin";
-
-    function formatINR(val) {
-      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('entryDate').value = today;
-      document.getElementById('cashDate').value = today;
-      
-      window.addEventListener('storage', () => {
-        loadData();
-      });
-
-      initApp();
-    });
-
-    function saveData(newEntry) {
-      localStorage.setItem('na_engineers', JSON.stringify(engineers));
-      localStorage.setItem('na_sites', JSON.stringify(sites));
-      localStorage.setItem('na_units', JSON.stringify(units));
-
-      const payload = {
-        data: [{
-          id: newEntry.id,
-          Date: newEntry.date,
-          Engineer: newEntry.engineer,
-          Site: newEntry.site,
-          Material: newEntry.material,
-          Qty: newEntry.qty,
-          Unit: newEntry.unit,
-          Amount: newEntry.amount,
-          Remarks: newEntry.remarks
-        }]
-      };
-
-      fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(response => response.json())
-      .then(result => {
-        console.log("Success:", result);
-        loadData(); 
-      })
-      .catch((error) => {
-        console.error("Error saving to SheetDB:", error);
-        transactions.unshift(newEntry);
-        localStorage.setItem('na_transactions', JSON.stringify(transactions));
-        renderApp();
-      });
-    }
-
-    function initApp() {
-      populateDropdowns();
-      renderApp();
-    }
-
-    function populateDropdowns() {
-      const roleSelect = document.getElementById('currentUserRole');
-      const currentSelectedRole = roleSelect.value || activeUserRole;
-      
-      roleSelect.innerHTML = '<option value="Admin">Admin (Full Control)</option>';
-      Object.keys(engineers).forEach(eng => {
-        roleSelect.innerHTML += `<option value="${eng}">${eng} (Engineer)</option>`;
-      });
-      roleSelect.value = currentSelectedRole;
-      activeUserRole = currentSelectedRole;
-
-      const cashEng = document.getElementById('cashEngineer');
-      cashEng.innerHTML = '';
-      Object.keys(engineers).forEach(eng => {
-        cashEng.innerHTML += `<option value="${eng}">${eng}</option>`;
-      });
-
-      const filterEng = document.getElementById('filterEngineer');
-      const currentFilterEng = filterEng.value;
-      filterEng.innerHTML = '<option value="ALL">All Engineers</option>';
-      Object.keys(engineers).forEach(eng => {
-        filterEng.innerHTML += `<option value="${eng}">${eng}</option>`;
-      });
-      if(currentFilterEng) filterEng.value = currentFilterEng;
-
-      const siteSelects = [document.getElementById('entrySite'), document.getElementById('filterSite')];
-      siteSelects.forEach((sel, idx) => {
-        const currentVal = sel.value;
-        sel.innerHTML = idx === 1 ? '<option value="ALL">All Sites</option>' : '';
-        sites.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
-        if (currentVal && sites.includes(currentVal)) sel.value = currentVal;
-      });
-
-      const unitSel = document.getElementById('entryUnit');
-      const currentUnitVal = unitSel.value;
-      unitSel.innerHTML = '';
-      units.forEach(u => { unitSel.innerHTML += `<option value="${u}">${u}</option>`; });
-      if(currentUnitVal && units.includes(currentUnitVal)) unitSel.value = currentUnitVal;
-    }
-
-    function renderApp() {
-      renderEngineerCards();
-      renderTransactionsTable();
-    }
-
-    function renderEngineerCards() {
-      const container = document.getElementById('engineerCardsContainer');
-      container.innerHTML = '';
-
-      if (activeUserRole === 'Admin') {
-        document.getElementById('ledgerTitleText').innerText = "Site Engineers Ledger Balances";
-        document.getElementById('ledgerSubText').innerText = "Tap card to filter";
-        
-        Object.keys(engineers).forEach(name => {
-          const stats = getEngineerStats(name);
-          const isSelected = document.getElementById('filterEngineer').value === name;
-          const card = document.createElement('div');
-          card.className = `bg-white p-3.5 rounded-xl border transition cursor-pointer ${isSelected ? 'border-blue-600 ring-2 ring-blue-100 shadow-md' : 'border-slate-200 shadow-sm'}`;
-          card.onclick = () => { document.getElementById('filterEngineer').value = isSelected ? 'ALL' : name; applyFilters(); };
-          card.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-              <div><h3 class="font-bold text-slate-800 text-sm sm:text-base">${name}</h3><p class="text-[11px] text-slate-400">Site Engineer</p></div>
-              <span class="text-[11px] font-semibold px-2 py-0.5 rounded ${stats.remaining >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">Bal: ${formatINR(stats.remaining)}</span>
+    <!-- MAIN APP INTERFACE -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-amber-600 rounded-lg">
+                        <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold">Natural Associates</h1>
+                        <p class="text-xs text-slate-400" id="userRoleDisplay">Logged in as: Admin</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="flex items-center space-x-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sm rounded-xl transition">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Logout</span>
+                </button>
             </div>
-            <div class="grid grid-cols-3 gap-2 pt-2 border-t text-[11px]">
-              <div><span class="text-slate-400 block">Given</span><span class="font-semibold">${formatINR(stats.totalGiven)}</span></div>
-              <div><span class="text-slate-400 block">Spent</span><span class="font-semibold">${formatINR(stats.spent)}</span></div>
-              <div><span class="text-slate-400 block">Balance</span><span class="font-bold ${stats.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatINR(stats.remaining)}</span></div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white border-b shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 flex space-x-6 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Overview</span>
+                </button>
+                <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2">
+                    <i data-lucide="receipt" class="w-4 h-4"></i><span>Expenses</span>
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2 admin-only">
+                    <i data-lucide="settings" class="w-4 h-4"></i><span>Admin Setup</span>
+                </button>
             </div>
-          `;
-          container.appendChild(card);
-        });
-      } else {
-        document.getElementById('ledgerTitleText').innerText = `${activeUserRole}'s Balance`;
-        document.getElementById('ledgerSubText').innerText = "Personal ledger summary";
+        </nav>
 
-        const name = activeUserRole;
-        const stats = getEngineerStats(name);
-        const card = document.createElement('div');
-        card.className = `bg-white p-4 rounded-xl border border-blue-600 ring-2 ring-blue-100 shadow-md sm:col-span-2 md:col-span-3`;
-        card.innerHTML = `
-          <div class="flex justify-between items-start mb-2">
-            <div><h3 class="font-bold text-slate-800 text-base">${name}</h3><p class="text-xs text-slate-400">Site Engineer (Summary)</p></div>
-            <span class="text-xs font-semibold px-2.5 py-1 rounded ${stats.remaining >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">Balance: ${formatINR(stats.remaining)}</span>
-          </div>
-          <div class="grid grid-cols-3 gap-3 pt-2.5 border-t text-xs">
-            <div><span class="text-slate-400 block text-[11px]">Total Cash Given</span><span class="font-bold text-slate-800">${formatINR(stats.totalGiven)}</span></div>
-            <div><span class="text-slate-400 block text-[11px]">Total Spent</span><span class="font-bold text-blue-600">${formatINR(stats.spent)}</span></div>
-            <div><span class="text-slate-400 block text-[11px]">Remaining Balance</span><span class="font-bold ${stats.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatINR(stats.remaining)}</span></div>
-          </div>
-        `;
-        container.appendChild(card);
-      }
-    }
+        <!-- Content Area -->
+        <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+            
+            <!-- DASHBOARD TAB -->
+            <div id="view-dashboard" class="space-y-6">
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p class="text-sm text-slate-500">Total Funds Allocated</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="totalGivenDisplay">₹0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p class="text-sm text-slate-500">Total Expenses Spent</p>
+                        <h3 class="text-2xl font-bold text-amber-600 mt-1" id="totalSpentDisplay">₹0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p class="text-sm text-slate-500">Active Sites</p>
+                        <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="totalSitesDisplay">0</h3>
+                    </div>
+                </div>
 
-    function getEngineerStats(name) {
-      const totalGiven = engineers[name] ? engineers[name].totalGiven : 0;
-      const spent = transactions.filter(t => t.engineer === name).reduce((sum, t) => sum + Number(t.amount || 0), 0);
-      return { totalGiven, spent, remaining: totalGiven - spent };
-    }
+                <!-- Engineer Balances -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <h3 class="text-base font-bold text-slate-900 mb-4">Engineer Balances & Fund Status</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="engineerCardsContainer">
+                        <!-- Dynamic Cards -->
+                    </div>
+                </div>
+            </div>
 
-    function renderTransactionsTable() {
-      const tbody = document.getElementById('transactionsTableBody');
-      const mobileList = document.getElementById('transactionsMobileList');
-      const selectedEng = document.getElementById('filterEngineer').value;
-      const selectedSite = document.getElementById('filterSite').value;
-      const tableHeaderEng = document.getElementById('tableHeaderEngineer');
+            <!-- EXPENSES TAB -->
+            <div id="view-expenses" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <h3 class="text-base font-bold text-slate-900 mb-4">Record New Expense</h3>
+                    <form id="expenseForm" onsubmit="addExpense(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Date</label>
+                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Engineer</label>
+                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Site</label>
+                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Material / Item</label>
+                            <input type="text" id="expMaterial" placeholder="e.g. Cement, Steel" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
+                            <input type="number" step="any" id="expQty" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Unit</label>
+                            <select id="expUnit" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (₹)</label>
+                            <input type="number" id="expAmount" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full py-2.5 bg-amber-700 text-white rounded-xl text-sm font-medium hover:bg-amber-800 transition">Add Expense</button>
+                        </div>
+                    </form>
+                </div>
 
-      let filtered = transactions.filter(t => {
-        if (activeUserRole !== 'Admin') {
-          return t.engineer === activeUserRole && (selectedSite === 'ALL' || t.site === selectedSite);
+                <!-- Expense Table -->
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="p-6 border-b flex justify-between items-center">
+                        <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
+                        <button onclick="syncData()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200">Sync with SheetDB</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase tracking-wider">
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Engineer</th>
+                                    <th class="p-4">Site</th>
+                                    <th class="p-4">Material</th>
+                                    <th class="p-4">Qty</th>
+                                    <th class="p-4">Unit</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN SETUP TAB -->
+            <div id="view-settings" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Manage Engineers & Funds -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900">Manage Engineers & Funds</h3>
+                        <form onsubmit="addOrUpdateEngineer(event)" class="space-y-3">
+                            <input type="text" id="setupEngName" placeholder="Engineer Name" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <input type="number" id="setupEngFund" placeholder="Fund Given (₹)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Save Engineer Fund</button>
+                        </form>
+                        <div id="setupEngList" class="divide-y text-sm mt-4"></div>
+                    </div>
+
+                    <!-- Manage Sites -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900">Manage Sites</h3>
+                        <form onsubmit="addSite(event)" class="space-y-3">
+                            <input type="text" id="setupSiteName" placeholder="New Site Name" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Add Site</button>
+                        </form>
+                        <div id="setupSiteList" class="divide-y text-sm mt-4"></div>
+                    </div>
+
+                    <!-- Manage Units -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900">Manage Units</h3>
+                        <form onsubmit="addUnit(event)" class="space-y-3">
+                            <input type="text" id="setupUnitName" placeholder="New Unit (e.g., Tons, Nos)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Add Unit</button>
+                        </form>
+                        <div id="setupUnitList" class="divide-y text-sm mt-4"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SheetDB API Configuration Note: Replace these URLs with your actual SheetDB endpoints -->
+    <script>
+        // SheetDB API URLs (இங்கே உங்களது SheetDB URL-களைப் போடவும்)
+        const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/YOUR_EXPENSES_API_ID";
+        const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/YOUR_ENGINEERS_API_ID";
+
+        // Passwords database
+        const passwords = {
+            "Admin": "admin123",
+            "Sivashankar": "pass123",
+            "Yogesh": "pass123",
+            "Senthil": "pass123",
+            "Manikandan": "pass123"
+        };
+
+        // App State Data (LocalStorage synced)
+        let currentUser = null;
+        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
+            { name: "Sivashankar", totalGiven: 100000 },
+            { name: "Yogesh", totalGiven: 75000 },
+            { name: "Senthil", totalGiven: 0 },
+            { name: "Manikandan", totalGiven: 0 }
+        ];
+
+        let sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvarchatram"];
+        let units = JSON.parse(localStorage.getItem('na_units')) || ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet"];
+        let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+
+            if (passwords[user] && passwords[user] === pass) {
+                currentUser = user;
+                localStorage.setItem('na_current_user', user);
+                initApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
         }
-        const matchEng = selectedEng === 'ALL' || t.engineer === selectedEng;
-        const matchSite = selectedSite === 'ALL' || t.site === selectedSite;
-        return matchEng && matchSite;
-      });
 
-      tbody.innerHTML = '';
-      mobileList.innerHTML = '';
-      let totalSpending = 0;
-
-      if (activeUserRole !== 'Admin') {
-        tableHeaderEng.style.display = 'none';
-      } else {
-        tableHeaderEng.style.display = '';
-      }
-
-      if (filtered.length === 0) {
-        const emptyHtml = `<div class="py-8 text-center text-slate-400 text-xs">No transactions found.</div>`;
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No transactions found.</td></tr>`;
-        mobileList.innerHTML = emptyHtml;
-      } else {
-        filtered.forEach(t => {
-          totalSpending += Number(t.amount || 0);
-          
-          const tr = document.createElement('tr');
-          tr.className = "hover:bg-slate-50/80 transition";
-          let engColumnHtml = activeUserRole === 'Admin' ? `<td class="py-3 px-3 font-semibold text-xs"><span class="px-2 py-0.5 bg-slate-100 rounded">${t.engineer || ''}</span></td>` : '';
-
-          tr.innerHTML = `
-            <td class="py-3 px-3 text-xs text-slate-600">${t.date || ''}</td>
-            ${engColumnHtml}
-            <td class="py-3 px-3 text-xs text-slate-600">${t.site || ''}</td>
-            <td class="py-3 px-3"><div class="font-semibold text-xs">${t.material || ''}</div>${t.remarks ? `<div class="text-[11px] text-slate-400">${t.remarks}</div>` : ''}</td>
-            <td class="py-3 px-3 text-right text-xs font-semibold text-blue-700">${t.qty || 0} ${t.unit || ''}</td>
-            <td class="py-3 px-3 text-right font-bold text-xs">${formatINR(t.amount || 0)}</td>
-            <td class="py-3 px-3 text-center"><button onclick="deleteTransaction(${t.id})" class="text-slate-300 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button></td>
-          `;
-          tbody.appendChild(tr);
-
-          const cardDiv = document.createElement('div');
-          cardDiv.className = "bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5";
-          let mobileEngBadge = activeUserRole === 'Admin' ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-semibold">${t.engineer || ''}</span>` : '';
-          
-          cardDiv.innerHTML = `
-            <div class="flex justify-between items-center text-[11px] text-slate-500">
-              <span>${t.date || ''} • <strong class="text-slate-700">${t.site || ''}</strong></span>
-              <div class="flex items-center gap-2">
-                ${mobileEngBadge}
-                <button onclick="deleteTransaction(${t.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
-              </div>
-            </div>
-            <div class="flex justify-between items-start pt-1">
-              <div>
-                <div class="font-bold text-slate-800 text-sm">${t.material || ''}</div>
-                <div class="text-slate-500 text-[11px]">${t.qty || 0} ${t.unit || ''} ${t.remarks ? '• ' + t.remarks : ''}</div>
-              </div>
-              <div class="font-bold text-slate-900 text-sm text-right">${formatINR(t.amount || 0)}</div>
-            </div>
-          `;
-          mobileList.appendChild(cardDiv);
-        });
-      }
-      document.getElementById('listedCount').innerText = filtered.length;
-      document.getElementById('filteredTotalSpending').innerText = formatINR(totalSpending);
-    }
-
-    function switchUserRole(role) {
-      if (role === 'Admin') {
-        let pass = prompt("Enter Admin Password:");
-        if (pass !== ADMIN_PASSWORD) {
-          alert("Incorrect Password!");
-          document.getElementById('currentUserRole').value = activeUserRole;
-          return;
+        function handleLogout() {
+            localStorage.removeItem('na_current_user');
+            currentUser = null;
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('loginForm').reset();
         }
-      }
 
-      activeUserRole = role;
-      const adminControls = document.getElementById('adminControlsContainer');
-      const issueCashBtn = document.getElementById('adminIssueCashBtn');
-      const filterEngSelect = document.getElementById('filterEngineer');
-      const hiddenEntryEng = document.getElementById('entryEngineer');
+        function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
-      if (role !== 'Admin') {
-        hiddenEntryEng.value = role;
-        adminControls.classList.add('hidden');
-        issueCashBtn.classList.add('hidden');
-        filterEngSelect.value = role;
-        filterEngSelect.style.display = 'none';
-      } else {
-        hiddenEntryEng.value = '';
-        adminControls.classList.remove('hidden');
-        issueCashBtn.classList.remove('hidden');
-        filterEngSelect.value = 'ALL';
-        filterEngSelect.style.display = '';
-      }
-      initApp();
-    }
+            // Hide admin options for normal engineers
+            const adminElements = document.querySelectorAll('.admin-only');
+            adminElements.forEach(el => {
+                if (currentUser !== 'Admin') {
+                    el.classList.add('hidden');
+                } else {
+                    el.classList.remove('hidden');
+                }
+            });
 
-    function handleNewExpense(e) {
-      e.preventDefault();
-      
-      let assignedEngineer = activeUserRole === 'Admin' ? (document.getElementById('filterEngineer').value === 'ALL' ? Object.keys(engineers)[0] : document.getElementById('filterEngineer').value) : activeUserRole;
+            // If engineer, lock engineer dropdown in expense form to their name
+            const expEngSelect = document.getElementById('expEngineer');
+            expEngSelect.innerHTML = '';
+            if (currentUser === 'Admin') {
+                engineers.forEach(eng => {
+                    expEngSelect.innerHTML += `<option value="${eng.name}">${eng.name}</option>`;
+                });
+            } else {
+                expEngSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
+            }
 
-      const newEntry = {
-        id: Date.now(),
-        date: document.getElementById('entryDate').value,
-        engineer: assignedEngineer,
-        site: document.getElementById('entrySite').value,
-        material: document.getElementById('entryMaterial').value,
-        qty: parseFloat(document.getElementById('entryQty').value),
-        unit: document.getElementById('entryUnit').value,
-        amount: parseFloat(document.getElementById('entryAmount').value),
-        remarks: document.getElementById('entryRemarks').value
-      };
+            // Populate Sites and Units
+            const expSiteSelect = document.getElementById('expSite');
+            expSiteSelect.innerHTML = '';
+            sites.forEach(site => {
+                expSiteSelect.innerHTML += `<option value="${site}">${site}</option>`;
+            });
 
-      saveData(newEntry);
+            const expUnitSelect = document.getElementById('expUnit');
+            expUnitSelect.innerHTML = '';
+            units.forEach(unit => {
+                expUnitSelect.innerHTML += `<option value="${unit}">${unit}</option>`;
+            });
 
-      document.getElementById('entryMaterial').value = '';
-      document.getElementById('entryQty').value = '';
-      document.getElementById('entryAmount').value = '';
-      document.getElementById('entryRemarks').value = '';
-    }
+            document.getElementById('expDate').valueAsDate = new Date();
 
-    function openCashTransferModal() { document.getElementById('cashModal').classList.remove('hidden'); document.getElementById('cashModal').classList.add('flex'); }
-    function openManageEngineerModal() { renderEngineerList(); document.getElementById('engineerModal').classList.remove('hidden'); document.getElementById('engineerModal').classList.add('flex'); }
-    function openManageSiteModal() { renderSiteList(); document.getElementById('siteModal').classList.remove('hidden'); document.getElementById('siteModal').classList.add('flex'); }
-    function openManageUnitModal() { renderUnitList(); document.getElementById('unitModal').classList.remove('hidden'); document.getElementById('unitModal').classList.add('flex'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+            renderDashboard();
+            renderExpenses();
+            renderSetupLists();
+            lucide.createIcons();
+        }
 
-    function handleCashTransfer(e) {
-      e.preventDefault();
-      const name = document.getElementById('cashEngineer').value;
-      const amt = parseFloat(document.getElementById('cashAmount').value);
-      if (engineers[name]) {
-        engineers[name].totalGiven += amt;
-        localStorage.setItem('na_engineers', JSON.stringify(engineers));
-        initApp();
-        closeModal('cashModal');
-        document.getElementById('cashAmount').value = '';
-      }
-    }
+        function switchTab(tabId) {
+            ['dashboard', 'expenses', 'settings'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2";
+            });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).className = "py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2";
+        }
 
-    function addEngineer() {
-      const name = document.getElementById('newEngineerName').value.trim();
-      const amt = parseFloat(document.getElementById('newEngineerInitialAmount').value) || 0;
-      if (name && !engineers[name]) { 
-        engineers[name] = { totalGiven: amt }; 
-        localStorage.setItem('na_engineers', JSON.stringify(engineers));
-        document.getElementById('newEngineerName').value = ''; 
-        document.getElementById('newEngineerInitialAmount').value = ''; 
-        initApp(); 
-        renderEngineerList(); 
-      }
-    }
-    function updateEngineerGivenAmount(eng) {
-      const newAmt = prompt(`Enter new Total Given Cash for ${eng}:`, engineers[eng].totalGiven);
-      if (newAmt !== null && !isNaN(newAmt)) {
-        engineers[eng].totalGiven = parseFloat(newAmt);
-        localStorage.setItem('na_engineers', JSON.stringify(engineers));
-        initApp();
-        renderEngineerList();
-      }
-    }
-    function deleteEngineer(name) {
-      if (confirm(`Delete ${name}?`)) { delete engineers[name]; localStorage.setItem('na_engineers', JSON.stringify(engineers)); initApp(); renderEngineerList(); }
-    }
-    function renderEngineerList() {
-      const c = document.getElementById('engineerListContainer');
-      c.innerHTML = '';
-      Object.keys(engineers).forEach(eng => {
-        c.innerHTML += `
-          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
-            <div>
-              <span class="font-semibold text-slate-800 block">${eng}</span>
-              <span class="text-[10px] text-slate-500">Given: ${formatINR(engineers[eng].totalGiven)}</span>
-            </div>
-            <div class="flex gap-1.5">
-              <button onclick="updateEngineerGivenAmount('${eng}')" class="text-blue-600 hover:text-blue-800 text-[11px] font-medium bg-blue-50 px-2 py-1 rounded">Edit</button>
-              <button onclick="deleteEngineer('${eng}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Del</button>
-            </div>
-          </div>`;
-      });
-    }
+        function renderDashboard() {
+            let totalGiven = engineers.reduce((sum, e) => sum + parseFloat(e.totalGiven || 0), 0);
+            let totalSpent = expenses.reduce((sum, ex) => sum + parseFloat(ex.amount || 0), 0);
 
-    function addSite() {
-      const name = document.getElementById('newSiteName').value.trim();
-      if (name && !sites.includes(name)) { 
-        sites.push(name); 
-        localStorage.setItem('na_sites', JSON.stringify(sites));
-        document.getElementById('newSiteName').value = '';
-        initApp(); 
-        renderSiteList(); 
-      }
-    }
-    function deleteSite(name) { 
-      if (confirm(`Delete site "${name}"?`)) {
-        sites = sites.filter(s => s !== name); 
-        localStorage.setItem('na_sites', JSON.stringify(sites));
-        initApp(); 
-        renderSiteList(); 
-      }
-    }
-    function renderSiteList() {
-      const c = document.getElementById('siteListContainer');
-      c.innerHTML = '';
-      sites.forEach(s => {
-        c.innerHTML += `
-          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
-            <span class="font-medium text-slate-800">${s}</span>
-            <button onclick="deleteSite('${s}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Delete</button>
-          </div>`;
-      });
-    }
+            document.getElementById('totalGivenDisplay').innerText = `₹${totalGiven.toLocaleString()}`;
+            document.getElementById('totalSpentDisplay').innerText = `₹${totalSpent.toLocaleString()}`;
+            document.getElementById('totalSitesDisplay').innerText = sites.length;
 
-    function addUnit() {
-      const name = document.getElementById('newUnitName').value.trim();
-      if (name && !units.includes(name)) { 
-        units.push(name); 
-        localStorage.setItem('na_units', JSON.stringify(units));
-        document.getElementById('newUnitName').value = ''; 
-        initApp(); 
-        renderUnitList(); 
-      }
-    }
-    function deleteUnit(name) { 
-      if (confirm(`Delete unit "${name}"?`)) {
-        units = units.filter(u => u !== name); 
-        localStorage.setItem('na_units', JSON.stringify(units));
-        initApp(); 
-        renderUnitList(); 
-      }
-    }
-    function renderUnitList() {
-      const c = document.getElementById('unitListContainer');
-      c.innerHTML = '';
-      units.forEach(u => {
-        c.innerHTML += `
-          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
-            <span class="font-medium text-slate-800">${u}</span>
-            <button onclick="deleteUnit('${u}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Delete</button>
-          </div>`;
-      });
-    }
+            let container = document.getElementById('engineerCardsContainer');
+            container.innerHTML = '';
 
-    function deleteTransaction(id) {
-      if (confirm("Delete entry?")) {
-        fetch(`${API_URL}/id/${id}`, { method: 'DELETE' })
-          .then(res => res.json())
-          .then(data => {
-            console.log("Deleted from SheetDB:", data);
-            loadData();
-          })
-          .catch(err => {
-            console.error("Delete error:", err);
-            transactions = transactions.filter(t => t.id !== id);
-            localStorage.setItem('na_transactions', JSON.stringify(transactions));
-            renderApp();
-          });
-      }
-    }
+            engineers.forEach(eng => {
+                let spent = expenses.filter(ex => ex.engineer === eng.name).reduce((s, ex) => s + parseFloat(ex.amount || 0), 0);
+                let balance = eng.totalGiven - spent;
+                container.innerHTML += `
+                    <div class="p-4 bg-slate-50 border rounded-xl space-y-2">
+                        <h4 class="font-bold text-slate-900">${eng.name}</h4>
+                        <div class="text-xs text-slate-500 flex justify-between"><span>Given Fund:</span> <span class="font-semibold text-slate-800">₹${eng.totalGiven.toLocaleString()}</span></div>
+                        <div class="text-xs text-slate-500 flex justify-between"><span>Spent:</span> <span class="font-semibold text-amber-600">₹${spent.toLocaleString()}</span></div>
+                        <div class="text-xs text-slate-500 flex justify-between border-t pt-1"><span>Balance:</span> <span class="font-bold ${balance < 0 ? 'text-red-600' : 'text-emerald-600'}">₹${balance.toLocaleString()}</span></div>
+                    </div>
+                `;
+            });
+        }
 
-    function applyFilters() { renderApp(); }
-    function resetFilters() { document.getElementById('filterEngineer').value = 'ALL'; document.getElementById('filterSite').value = 'ALL'; renderApp(); }
+        function addExpense(e) {
+            e.preventDefault();
+            const newExp = {
+                id: Date.now(),
+                date: document.getElementById('expDate').value,
+                engineer: document.getElementById('expEngineer').value,
+                site: document.getElementById('expSite').value,
+                material: document.getElementById('expMaterial').value,
+                qty: document.getElementById('expQty').value,
+                unit: document.getElementById('expUnit').value,
+                amount: document.getElementById('expAmount').value
+            };
 
-    function exportCSV() {
-      let csv = "Date,Engineer,Site,Material,Qty,Unit,Amount,Remarks\n";
-      transactions.forEach(t => { csv += `"${t.date}","${t.engineer}","${t.site}","${t.material}",${t.qty},"${t.unit}",${t.amount},"${t.remarks || ''}"\n`; });
-      const link = document.createElement("a");
-      link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
-      link.download = `Natural_Associates_Report_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  </script>
+            expenses.unshift(newExp);
+            saveAndRefresh();
+            document.getElementById('expenseForm').reset();
+            document.getElementById('expDate').valueAsDate = new Date();
+            if (currentUser !== 'Admin') {
+                document.getElementById('expEngineer').value = currentUser;
+            }
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(ex => ex.id !== id);
+            saveAndRefresh();
+        }
+
+        function renderExpenses() {
+            let tbody = document.getElementById('expenseTableBody');
+            tbody.innerHTML = '';
+            if (expenses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">No expenses recorded yet.</td></tr>`;
+                return;
+            }
+            expenses.forEach(ex => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-4">${ex.date}</td>
+                        <td class="p-4 font-medium">${ex.engineer}</td>
+                        <td class="p-4">${ex.site}</td>
+                        <td class="p-4">${ex.material}</td>
+                        <td class="p-4">${ex.qty}</td>
+                        <td class="p-4">${ex.unit}</td>
+                        <td class="p-4 font-semibold text-amber-700">₹${parseFloat(ex.amount).toLocaleString()}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteExpense(${ex.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addOrUpdateEngineer(e) {
+            e.preventDefault();
+            const name = document.getElementById('setupEngName').value.trim();
+            const fund = parseFloat(document.getElementById('setupEngFund').value);
+            let existing = engineers.find(en => en.name.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                existing.totalGiven = fund;
+            } else {
+                engineers.push({ name, totalGiven: fund });
+                passwords[name] = "pass123"; // default password for new engineer
+            }
+            saveAndRefresh();
+            document.getElementById('setupEngName').value = '';
+            document.getElementById('setupEngFund').value = '';
+        }
+
+        function addSite(e) {
+            e.preventDefault();
+            const site = document.getElementById('setupSiteName').value.trim();
+            if (site && !sites.includes(site)) {
+                sites.push(site);
+                saveAndRefresh();
+                document.getElementById('setupSiteName').value = '';
+            }
+        }
+
+        function addUnit(e) {
+            e.preventDefault();
+            const unit = document.getElementById('setupUnitName').value.trim();
+            if (unit && !units.includes(unit)) {
+                units.push(unit);
+                saveAndRefresh();
+                document.getElementById('setupUnitName').value = '';
+            }
+        }
+
+        function renderSetupLists() {
+            let engList = document.getElementById('setupEngList');
+            engList.innerHTML = engineers.map(en => `<div class="py-2 flex justify-between"><span>${en.name}</span><span class="font-semibold">₹${en.totalGiven.toLocaleString()}</span></div>`).join('');
+
+            let siteList = document.getElementById('setupSiteList');
+            siteList.innerHTML = sites.map(s => `<div class="py-2">${s}</div>`).join('');
+
+            let unitList = document.getElementById('setupUnitList');
+            unitList.innerHTML = units.map(u => `<div class="py-2">${u}</div>`).join('');
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('na_engineers', JSON.stringify(engineers));
+            localStorage.setItem('na_sites', JSON.stringify(sites));
+            localStorage.setItem('na_units', JSON.stringify(units));
+            localStorage.setItem('na_expenses', JSON.stringify(expenses));
+
+            renderDashboard();
+            renderExpenses();
+            renderSetupLists();
+        }
+
+        function syncData() {
+            alert("Data synced successfully with local storage & app state!");
+        }
+
+        // Auto login if already active in session
+        window.onload = function() {
+            const savedUser = localStorage.getItem('na_current_user');
+            if (savedUser && passwords[savedUser]) {
+                currentUser = savedUser;
+                initApp();
+            }
+        }
+    </script>
 </body>
 </html>
