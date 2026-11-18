@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Natural Associates - Site Cash & Material Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-12">
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+        <div class="flex items-center space-x-3">
+          <div class="bg-blue-600 p-2 rounded-lg text-white font-bold text-lg">
+            <i class="fa-solid fa-building-user"></i>
+          </div>
+          <div>
+            <h1 class="text-base sm:text-xl font-bold tracking-wide">Natural Associates</h1>
+            <p class="text-[10px] sm:text-xs text-slate-400">Site Expense Tracker</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+        <button id="adminIssueCashBtn" onclick="openCashTransferModal()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap">
+          <i class="fa-solid fa-hand-holding-dollar"><span>Issue Cash</span></i>
+        </button>
+        <button onclick="exportCSV()" class="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-file-csv"><span>Excel</span></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 space-y-4">
+
+    <!-- Active User & Role Selector -->
+    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div class="flex items-center justify-between sm:justify-start gap-2">
+        <span class="text-xs sm:text-sm font-medium text-slate-500">Login Role:</span>
+        <select id="currentUserRole" onchange="switchUserRole(this.value)" class="font-semibold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-1 sm:flex-none">
+          <option value="Admin">Admin (Full Control)</option>
+        </select>
+      </div>
+
+      <div id="adminControlsContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <button onclick="openManageEngineerModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
+          <i class="fa-solid fa-user-gear mr-1"></i> Engineers
+        </button>
+        <button onclick="openManageSiteModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
+          <i class="fa-solid fa-map-location-dot mr-1"></i> Sites
+        </button>
+        <button onclick="openManageUnitModal()" class="flex-1 sm:flex-none text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-2 rounded-lg border border-slate-300 transition whitespace-nowrap">
+          <i class="fa-solid fa-scale-balanced mr-1"></i> Units
+        </button>
+      </div>
+    </div>
+
+    <!-- Balance Cards Summary -->
+    <section>
+      <div class="flex justify-between items-center mb-2 px-1">
+        <h2 class="text-sm sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-wallet text-blue-600"></i> <span id="ledgerTitleText">Ledger Balances</span>
+        </h2>
+        <span class="text-[11px] text-slate-400" id="ledgerSubText">Tap card to filter</span>
+      </div>
+      <div id="engineerCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+    </section>
+
+    <!-- Main Entry Form & Transaction Logs Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- New Entry Form -->
+      <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 h-fit">
+        <div class="border-b border-slate-100 pb-2.5 mb-3 flex justify-between items-center">
+          <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-cart-plus text-blue-600"></i> Add Material / Expense
+          </h3>
+          <span id="formRoleBadge" class="hidden"></span>
+        </div>
+
+        <form id="expenseForm" onsubmit="handleNewExpense(event)" class="space-y-3">
+          <input type="hidden" id="entryEngineer" value="">
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+            <input type="date" id="entryDate" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Site Location</label>
+            <select id="entrySite" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white"></select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Material Description</label>
+            <input type="text" id="entryMaterial" placeholder="e.g. OPC Cement, M-Sand" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Qty</label>
+              <input type="number" step="any" id="entryQty" placeholder="50" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Unit</label>
+              <select id="entryUnit" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹)</label>
+              <input type="number" step="any" id="entryAmount" placeholder="18500" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none font-bold text-slate-900">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Supplier / Remarks (Optional)</label>
+            <input type="text" id="entryRemarks" placeholder="e.g. Paid cash to supplier" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg text-sm transition shadow-sm flex items-center justify-center gap-2 mt-2">
+            <i class="fa-solid fa-plus-circle"></i> Save Entry
+          </button>
+        </form>
+      </div>
+
+      <!-- Transaction Logs -->
+      <div class="lg:col-span-2 bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pb-3 border-b border-slate-100">
+          <div>
+            <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-blue-600"></i> Expense Logs
+            </h3>
+            <p class="text-[11px] text-slate-500" id="filterStatusText">Showing active list</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <select id="filterEngineer" onchange="applyFilters()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-slate-50 font-medium flex-1 sm:flex-none">
+              <option value="ALL">All Engineers</option>
+            </select>
+            <select id="filterSite" onchange="applyFilters()" class="text-xs border border-slate-300 rounded-lg px-2 py-2 bg-slate-50 font-medium flex-1 sm:flex-none">
+              <option value="ALL">All Sites</option>
+            </select>
+            <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-800 underline px-1 whitespace-nowrap">Reset</button>
+          </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block overflow-x-auto flex-1">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
+                <th class="py-2.5 px-3">Date</th>
+                <th id="tableHeaderEngineer" class="py-2.5 px-3">Engineer</th>
+                <th class="py-2.5 px-3">Site</th>
+                <th class="py-2.5 px-3">Material & Item</th>
+                <th class="py-2.5 px-3 text-right">Qty</th>
+                <th class="py-2.5 px-3 text-right">Amount (₹)</th>
+                <th class="py-2.5 px-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="transactionsTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+
+        <!-- Mobile List View (Cards) -->
+        <div id="transactionsMobileList" class="sm:hidden space-y-2.5 flex-1 max-h-[550px] overflow-y-auto"></div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+          <div>Entries: <span id="listedCount" class="font-bold text-slate-800">0</span></div>
+          <div>Total Spending: <span id="filteredTotalSpending" class="font-bold text-emerald-700 text-sm sm:text-base">₹0</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <div id="cashModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5">
+        <h3 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Issue Cash to Engineer</h3>
+        <button onclick="closeModal('cashModal')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+      <form onsubmit="handleCashTransfer(event)" class="space-y-3">
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Date</label><input type="date" id="cashDate" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none bg-white"></div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Engineer</label>
+          <select id="cashEngineer" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none bg-white"></select>
+        </div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹)</label><input type="number" id="cashAmount" placeholder="e.g. 50000" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 font-bold outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Notes</label><input type="text" id="cashNotes" placeholder="Bank Transfer / Cash" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none"></div>
+        <div class="flex gap-2 pt-2"><button type="button" onclick="closeModal('cashModal')" class="w-1/2 border border-slate-300 rounded-lg py-2.5 text-sm font-medium">Cancel</button><button type="submit" class="w-1/2 bg-emerald-600 text-white rounded-lg py-2.5 text-sm font-medium">Confirm</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="engineerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Engineers</h3><button onclick="closeModal('engineerModal')" class="text-slate-400 text-xl">&times;</button></div>
+      <div class="flex flex-col gap-2">
+        <input type="text" id="newEngineerName" placeholder="Engineer Name" class="text-sm border border-slate-300 rounded-lg p-2.5 outline-none">
+        <input type="number" id="newEngineerInitialAmount" placeholder="Initial Cash Given (₹)" class="text-sm border border-slate-300 rounded-lg p-2.5 outline-none">
+        <button onclick="addEngineer()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add Engineer</button>
+      </div>
+      <div id="engineerListContainer" class="space-y-2 max-h-48 overflow-y-auto pt-1"></div>
+    </div>
+  </div>
+
+  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Sites</h3><button onclick="closeModal('siteModal')" class="text-slate-400 text-xl">&times;</button></div>
+      <div class="flex gap-2"><input type="text" id="newSiteName" placeholder="Site Name" class="flex-1 text-sm border border-slate-300 rounded-lg p-2.5 outline-none"><button onclick="addSite()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add</button></div>
+      <div id="siteListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <div id="unitModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-3">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5"><h3 class="font-bold text-sm sm:text-base text-slate-800">Manage Units</h3><button onclick="closeModal('unitModal')" class="text-slate-400 text-xl">&times;</button></div>
+      <div class="flex gap-2"><input type="text" id="newUnitName" placeholder="Unit Name" class="flex-1 text-sm border border-slate-300 rounded-lg p-2.5 outline-none"><button onclick="addUnit()" class="bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium">Add</button></div>
+      <div id="unitListContainer" class="space-y-2 max-h-48 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = "123";
+
+    let defaultEngineers = {
+      "Sivashankar": { totalGiven: 100000 },
+      "Yogesh": { totalGiven: 75000 }
+    };
+
+    function loadData() {
+      engineers = JSON.parse(localStorage.getItem('na_engineers')) || defaultEngineers;
+      sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvarchatram"];
+      units = JSON.parse(localStorage.getItem('na_units')) || ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet"];
+      transactions = JSON.parse(localStorage.getItem('na_transactions')) || [];
+    }
+
+    let engineers = {};
+    let sites = [];
+    let units = [];
+    let transactions = [];
+    loadData();
+
+    let activeUserRole = "Admin";
+
+    function formatINR(val) {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('entryDate').value = today;
+      document.getElementById('cashDate').value = today;
+      
+      window.addEventListener('storage', () => {
+        loadData();
+        initApp();
+      });
+
+      initApp();
+    });
+
+    function saveData() {
+      localStorage.setItem('na_engineers', JSON.stringify(engineers));
+      localStorage.setItem('na_sites', JSON.stringify(sites));
+      localStorage.setItem('na_units', JSON.stringify(units));
+      localStorage.setItem('na_transactions', JSON.stringify(transactions));
+    }
+
+    function initApp() {
+      loadData();
+      populateDropdowns();
+      renderApp();
+    }
+
+    function populateDropdowns() {
+      const roleSelect = document.getElementById('currentUserRole');
+      const currentSelectedRole = roleSelect.value || activeUserRole;
+      
+      roleSelect.innerHTML = '<option value="Admin">Admin (Full Control)</option>';
+      Object.keys(engineers).forEach(eng => {
+        roleSelect.innerHTML += `<option value="${eng}">${eng} (Engineer)</option>`;
+      });
+      roleSelect.value = currentSelectedRole;
+      activeUserRole = currentSelectedRole;
+
+      const cashEng = document.getElementById('cashEngineer');
+      cashEng.innerHTML = '';
+      Object.keys(engineers).forEach(eng => {
+        cashEng.innerHTML += `<option value="${eng}">${eng}</option>`;
+      });
+
+      const filterEng = document.getElementById('filterEngineer');
+      const currentFilterEng = filterEng.value;
+      filterEng.innerHTML = '<option value="ALL">All Engineers</option>';
+      Object.keys(engineers).forEach(eng => {
+        filterEng.innerHTML += `<option value="${eng}">${eng}</option>`;
+      });
+      if(currentFilterEng) filterEng.value = currentFilterEng;
+
+      const siteSelects = [document.getElementById('entrySite'), document.getElementById('filterSite')];
+      siteSelects.forEach((sel, idx) => {
+        const currentVal = sel.value;
+        sel.innerHTML = idx === 1 ? '<option value="ALL">All Sites</option>' : '';
+        sites.forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+        if (currentVal && sites.includes(currentVal)) sel.value = currentVal;
+      });
+
+      const unitSel = document.getElementById('entryUnit');
+      const currentUnitVal = unitSel.value;
+      unitSel.innerHTML = '';
+      units.forEach(u => { unitSel.innerHTML += `<option value="${u}">${u}</option>`; });
+      if(currentUnitVal && units.includes(currentUnitVal)) unitSel.value = currentUnitVal;
+    }
+
+    function renderApp() {
+      renderEngineerCards();
+      renderTransactionsTable();
+    }
+
+    function renderEngineerCards() {
+      const container = document.getElementById('engineerCardsContainer');
+      container.innerHTML = '';
+
+      if (activeUserRole === 'Admin') {
+        document.getElementById('ledgerTitleText').innerText = "Site Engineers Ledger Balances";
+        document.getElementById('ledgerSubText').innerText = "Tap card to filter";
+        
+        Object.keys(engineers).forEach(name => {
+          const stats = getEngineerStats(name);
+          const isSelected = document.getElementById('filterEngineer').value === name;
+          const card = document.createElement('div');
+          card.className = `bg-white p-3.5 rounded-xl border transition cursor-pointer ${isSelected ? 'border-blue-600 ring-2 ring-blue-100 shadow-md' : 'border-slate-200 shadow-sm'}`;
+          card.onclick = () => { document.getElementById('filterEngineer').value = isSelected ? 'ALL' : name; applyFilters(); };
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div><h3 class="font-bold text-slate-800 text-sm sm:text-base">${name}</h3><p class="text-[11px] text-slate-400">Site Engineer</p></div>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded ${stats.remaining >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">Bal: ${formatINR(stats.remaining)}</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-2 border-t text-[11px]">
+              <div><span class="text-slate-400 block">Given</span><span class="font-semibold">${formatINR(stats.totalGiven)}</span></div>
+              <div><span class="text-slate-400 block">Spent</span><span class="font-semibold">${formatINR(stats.spent)}</span></div>
+              <div><span class="text-slate-400 block">Balance</span><span class="font-bold ${stats.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatINR(stats.remaining)}</span></div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } else {
+        document.getElementById('ledgerTitleText').innerText = `${activeUserRole}'s Balance`;
+        document.getElementById('ledgerSubText').innerText = "Personal ledger summary";
+
+        const name = activeUserRole;
+        const stats = getEngineerStats(name);
+        const card = document.createElement('div');
+        card.className = `bg-white p-4 rounded-xl border border-blue-600 ring-2 ring-blue-100 shadow-md sm:col-span-2 md:col-span-3`;
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-2">
+            <div><h3 class="font-bold text-slate-800 text-base">${name}</h3><p class="text-xs text-slate-400">Site Engineer (Summary)</p></div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded ${stats.remaining >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">Balance: ${formatINR(stats.remaining)}</span>
+          </div>
+          <div class="grid grid-cols-3 gap-3 pt-2.5 border-t text-xs">
+            <div><span class="text-slate-400 block text-[11px]">Total Cash Given</span><span class="font-bold text-slate-800">${formatINR(stats.totalGiven)}</span></div>
+            <div><span class="text-slate-400 block text-[11px]">Total Spent</span><span class="font-bold text-blue-600">${formatINR(stats.spent)}</span></div>
+            <div><span class="text-slate-400 block text-[11px]">Remaining Balance</span><span class="font-bold ${stats.remaining >= 0 ? 'text-emerald-600' : 'text-red-600'}">${formatINR(stats.remaining)}</span></div>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    function getEngineerStats(name) {
+      loadData();
+      const totalGiven = engineers[name] ? engineers[name].totalGiven : 0;
+      const spent = transactions.filter(t => t.engineer === name).reduce((sum, t) => sum + Number(t.amount), 0);
+      return { totalGiven, spent, remaining: totalGiven - spent };
+    }
+
+    function renderTransactionsTable() {
+      loadData();
+      const tbody = document.getElementById('transactionsTableBody');
+      const mobileList = document.getElementById('transactionsMobileList');
+      const selectedEng = document.getElementById('filterEngineer').value;
+      const selectedSite = document.getElementById('filterSite').value;
+      const tableHeaderEng = document.getElementById('tableHeaderEngineer');
+
+      let filtered = transactions.filter(t => {
+        if (activeUserRole !== 'Admin') {
+          return t.engineer === activeUserRole && (selectedSite === 'ALL' || t.site === selectedSite);
+        }
+        const matchEng = selectedEng === 'ALL' || t.engineer === selectedEng;
+        const matchSite = selectedSite === 'ALL' || t.site === selectedSite;
+        return matchEng && matchSite;
+      });
+
+      tbody.innerHTML = '';
+      mobileList.innerHTML = '';
+      let totalSpending = 0;
+
+      if (activeUserRole !== 'Admin') {
+        tableHeaderEng.style.display = 'none';
+      } else {
+        tableHeaderEng.style.display = '';
+      }
+
+      if (filtered.length === 0) {
+        const emptyHtml = `<div class="py-8 text-center text-slate-400 text-xs">No transactions found.</div>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No transactions found.</td></tr>`;
+        mobileList.innerHTML = emptyHtml;
+      } else {
+        filtered.forEach(t => {
+          totalSpending += Number(t.amount);
+          
+          // Desktop row
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50/80 transition";
+          let engColumnHtml = activeUserRole === 'Admin' ? `<td class="py-3 px-3 font-semibold text-xs"><span class="px-2 py-0.5 bg-slate-100 rounded">${t.engineer}</span></td>` : '';
+
+          tr.innerHTML = `
+            <td class="py-3 px-3 text-xs text-slate-600">${t.date}</td>
+            ${engColumnHtml}
+            <td class="py-3 px-3 text-xs text-slate-600">${t.site}</td>
+            <td class="py-3 px-3"><div class="font-semibold text-xs">${t.material}</div>${t.remarks ? `<div class="text-[11px] text-slate-400">${t.remarks}</div>` : ''}</td>
+            <td class="py-3 px-3 text-right text-xs font-semibold text-blue-700">${t.qty} ${t.unit}</td>
+            <td class="py-3 px-3 text-right font-bold text-xs">${formatINR(t.amount)}</td>
+            <td class="py-3 px-3 text-center"><button onclick="deleteTransaction(${t.id})" class="text-slate-300 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button></td>
+          `;
+          tbody.appendChild(tr);
+
+          // Mobile card item
+          const cardDiv = document.createElement('div');
+          cardDiv.className = "bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5";
+          let mobileEngBadge = activeUserRole === 'Admin' ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-semibold">${t.engineer}</span>` : '';
+          
+          cardDiv.innerHTML = `
+            <div class="flex justify-between items-center text-[11px] text-slate-500">
+              <span>${t.date} • <strong class="text-slate-700">${t.site}</strong></span>
+              <div class="flex items-center gap-2">
+                ${mobileEngBadge}
+                <button onclick="deleteTransaction(${t.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
+            </div>
+            <div class="flex justify-between items-start pt-1">
+              <div>
+                <div class="font-bold text-slate-800 text-sm">${t.material}</div>
+                <div class="text-slate-500 text-[11px]">${t.qty} ${t.unit} ${t.remarks ? '• ' + t.remarks : ''}</div>
+              </div>
+              <div class="font-bold text-slate-900 text-sm text-right">${formatINR(t.amount)}</div>
+            </div>
+          `;
+          mobileList.appendChild(cardDiv);
+        });
+      }
+      document.getElementById('listedCount').innerText = filtered.length;
+      document.getElementById('filteredTotalSpending').innerText = formatINR(totalSpending);
+    }
+
+    function switchUserRole(role) {
+      if (role === 'Admin') {
+        let pass = prompt("Enter Admin Password:");
+        if (pass !== ADMIN_PASSWORD) {
+          alert("Incorrect Password!");
+          document.getElementById('currentUserRole').value = activeUserRole;
+          return;
+        }
+      }
+
+      activeUserRole = role;
+      const adminControls = document.getElementById('adminControlsContainer');
+      const issueCashBtn = document.getElementById('adminIssueCashBtn');
+      const filterEngSelect = document.getElementById('filterEngineer');
+      const hiddenEntryEng = document.getElementById('entryEngineer');
+
+      if (role !== 'Admin') {
+        hiddenEntryEng.value = role;
+        adminControls.classList.add('hidden');
+        issueCashBtn.classList.add('hidden');
+        filterEngSelect.value = role;
+        filterEngSelect.style.display = 'none';
+      } else {
+        hiddenEntryEng.value = '';
+        adminControls.classList.remove('hidden');
+        issueCashBtn.classList.remove('hidden');
+        filterEngSelect.value = 'ALL';
+        filterEngSelect.style.display = '';
+      }
+      initApp();
+    }
+
+    function handleNewExpense(e) {
+      e.preventDefault();
+      loadData();
+      
+      let assignedEngineer = activeUserRole === 'Admin' ? (document.getElementById('filterEngineer').value === 'ALL' ? Object.keys(engineers)[0] : document.getElementById('filterEngineer').value) : activeUserRole;
+
+      const newEntry = {
+        id: Date.now(),
+        date: document.getElementById('entryDate').value,
+        engineer: assignedEngineer,
+        site: document.getElementById('entrySite').value,
+        material: document.getElementById('entryMaterial').value,
+        qty: parseFloat(document.getElementById('entryQty').value),
+        unit: document.getElementById('entryUnit').value,
+        amount: parseFloat(document.getElementById('entryAmount').value),
+        remarks: document.getElementById('entryRemarks').value
+      };
+      transactions.unshift(newEntry);
+      saveData();
+      initApp();
+      document.getElementById('entryMaterial').value = '';
+      document.getElementById('entryQty').value = '';
+      document.getElementById('entryAmount').value = '';
+      document.getElementById('entryRemarks').value = '';
+    }
+
+    function openCashTransferModal() { document.getElementById('cashModal').classList.remove('hidden'); document.getElementById('cashModal').classList.add('flex'); }
+    function openManageEngineerModal() { renderEngineerList(); document.getElementById('engineerModal').classList.remove('hidden'); document.getElementById('engineerModal').classList.add('flex'); }
+    function openManageSiteModal() { renderSiteList(); document.getElementById('siteModal').classList.remove('hidden'); document.getElementById('siteModal').classList.add('flex'); }
+    function openManageUnitModal() { renderUnitList(); document.getElementById('unitModal').classList.remove('hidden'); document.getElementById('unitModal').classList.add('flex'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
+
+    function handleCashTransfer(e) {
+      e.preventDefault();
+      loadData();
+      const name = document.getElementById('cashEngineer').value;
+      const amt = parseFloat(document.getElementById('cashAmount').value);
+      if (engineers[name]) {
+        engineers[name].totalGiven += amt;
+        saveData();
+        initApp();
+        closeModal('cashModal');
+        document.getElementById('cashAmount').value = '';
+      }
+    }
+
+    function addEngineer() {
+      loadData();
+      const name = document.getElementById('newEngineerName').value.trim();
+      const amt = parseFloat(document.getElementById('newEngineerInitialAmount').value) || 0;
+      if (name && !engineers[name]) { 
+        engineers[name] = { totalGiven: amt }; 
+        saveData(); 
+        document.getElementById('newEngineerName').value = ''; 
+        document.getElementById('newEngineerInitialAmount').value = ''; 
+        initApp(); 
+        renderEngineerList(); 
+      }
+    }
+    function updateEngineerGivenAmount(eng) {
+      loadData();
+      const newAmt = prompt(`Enter new Total Given Cash for ${eng}:`, engineers[eng].totalGiven);
+      if (newAmt !== null && !isNaN(newAmt)) {
+        engineers[eng].totalGiven = parseFloat(newAmt);
+        saveData();
+        initApp();
+        renderEngineerList();
+      }
+    }
+    function deleteEngineer(name) {
+      loadData();
+      if (confirm(`Delete ${name}?`)) { delete engineers[name]; saveData(); initApp(); renderEngineerList(); }
+    }
+    function renderEngineerList() {
+      loadData();
+      const c = document.getElementById('engineerListContainer');
+      c.innerHTML = '';
+      Object.keys(engineers).forEach(eng => {
+        c.innerHTML += `
+          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
+            <div>
+              <span class="font-semibold text-slate-800 block">${eng}</span>
+              <span class="text-[10px] text-slate-500">Given: ${formatINR(engineers[eng].totalGiven)}</span>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="updateEngineerGivenAmount('${eng}')" class="text-blue-600 hover:text-blue-800 text-[11px] font-medium bg-blue-50 px-2 py-1 rounded">Edit</button>
+              <button onclick="deleteEngineer('${eng}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Del</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    function addSite() {
+      loadData();
+      const name = document.getElementById('newSiteName').value.trim();
+      if (name && !sites.includes(name)) { 
+        sites.push(name); 
+        saveData(); 
+        document.getElementById('newSiteName').value = '';
+        initApp(); 
+        renderSiteList(); 
+      }
+    }
+    function deleteSite(name) { 
+      loadData();
+      if (confirm(`Delete site "${name}"?`)) {
+        sites = sites.filter(s => s !== name); 
+        saveData(); 
+        initApp(); 
+        renderSiteList(); 
+      }
+    }
+    function renderSiteList() {
+      loadData();
+      const c = document.getElementById('siteListContainer');
+      c.innerHTML = '';
+      sites.forEach(s => {
+        c.innerHTML += `
+          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
+            <span class="font-medium text-slate-800">${s}</span>
+            <button onclick="deleteSite('${s}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Delete</button>
+          </div>`;
+      });
+    }
+
+    function addUnit() {
+      loadData();
+      const name = document.getElementById('newUnitName').value.trim();
+      if (name && !units.includes(name)) { 
+        units.push(name); 
+        saveData(); 
+        document.getElementById('newUnitName').value = ''; 
+        initApp(); 
+        renderUnitList(); 
+      }
+    }
+    function deleteUnit(name) { 
+      loadData();
+      if (confirm(`Delete unit "${name}"?`)) {
+        units = units.filter(u => u !== name); 
+        saveData(); 
+        initApp(); 
+        renderUnitList(); 
+      }
+    }
+    function renderUnitList() {
+      loadData();
+      const c = document.getElementById('unitListContainer');
+      c.innerHTML = '';
+      units.forEach(u => {
+        c.innerHTML += `
+          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-lg text-xs border border-slate-200">
+            <span class="font-medium text-slate-800">${u}</span>
+            <button onclick="deleteUnit('${u}')" class="text-red-500 hover:text-red-700 text-[11px] font-medium bg-red-50 px-2 py-1 rounded">Delete</button>
+          </div>`;
+      });
+    }
+
+    function deleteTransaction(id) {
+      loadData();
+      if (confirm("Delete entry?")) { transactions = transactions.filter(t => t.id !== id); saveData(); initApp(); }
+    }
+
+    function applyFilters() { renderApp(); }
+    function resetFilters() { document.getElementById('filterEngineer').value = 'ALL'; document.getElementById('filterSite').value = 'ALL'; renderApp(); }
+
+    function exportCSV() {
+      loadData();
+      let csv = "Date,Engineer,Site,Material,Qty,Unit,Amount,Remarks\n";
+      transactions.forEach(t => { csv += `"${t.date}","${t.engineer}","${t.site}","${t.material}",${t.qty},"${t.unit}",${t.amount},"${t.remarks || ''}"\n`; });
+      const link = document.createElement("a");
+      link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+      link.download = `Natural_Associates_Report_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
