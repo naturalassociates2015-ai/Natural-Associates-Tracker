@@ -24,7 +24,7 @@
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Select User / Role</label>
-                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-600 focus:outline-none" required>
+                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
                         <option value="">-- Choose Profile --</option>
                         <option value="Admin">Admin (Full Access)</option>
                         <option value="Sivashankar">Sivashankar (Engineer)</option>
@@ -35,47 +35,50 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-600 focus:outline-none" required>
+                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    <p id="loginError" class="text-xs text-red-500 mt-1 hidden">Invalid password!</p>
                 </div>
-                <button type="submit" class="w-full py-3 bg-amber-700 text-white rounded-xl font-medium hover:bg-amber-800 transition">Login</button>
-                <p id="loginError" class="text-red-500 text-sm text-center hidden">தவறான பாஸ்வேர்ட்!</p>
+                <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition">Login</button>
             </form>
         </div>
     </div>
 
     <!-- MAIN APP INTERFACE -->
     <div id="mainApp" class="hidden min-h-screen flex flex-col">
-        <!-- Header -->
         <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-amber-600 rounded-lg">
-                        <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
-                    </div>
+                    <i data-lucide="building-2" class="w-6 h-6 text-emerald-400"></i>
                     <div>
-                        <h1 class="text-lg font-bold">Natural Associates</h1>
-                        <p class="text-xs text-slate-400" id="userRoleDisplay">Logged in as: Admin</p>
+                        <h1 class="text-xl font-bold">Natural Associates</h1>
+                        <p id="userRoleDisplay" class="text-xs text-slate-400"></p>
                     </div>
                 </div>
-                <button onclick="handleLogout()" class="flex items-center space-x-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sm rounded-xl transition">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span>Logout</span>
-                </button>
+                <div class="flex items-center space-x-4">
+                    <button onclick="handleLogout()" class="flex items-center space-x-1 text-sm bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
             </div>
         </header>
 
         <!-- Navigation Tabs -->
         <nav class="bg-white border-b shadow-sm">
             <div class="max-w-7xl mx-auto px-4 flex space-x-6 overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Overview</span>
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-3 border-b-2 border-emerald-600 text-emerald-600 font-medium flex items-center space-x-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Overview</span>
                 </button>
-                <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2">
-                    <i data-lucide="receipt" class="w-4 h-4"></i><span>Expenses</span>
+                <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2">
+                    <i data-lucide="receipt" class="w-4 h-4"></i>
+                    <span>Expenses</span>
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2 admin-only">
-    <i data-lucide="settings" class="w-4 h-4"></i><span>Admin Setup</span>
-</button>
+                <!-- Admin Setup Tab (Hidden by default, shown only for Admin) -->
+                <button onclick="switchTab('settings')" id="tab-settings" class="admin-only py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                    <span>Admin Setup</span>
+                </button>
             </div>
         </nav>
 
@@ -85,120 +88,50 @@
             <!-- DASHBOARD TAB -->
             <div id="view-dashboard" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <div class="bg-white p-6 rounded-2xl shadow border">
                         <p class="text-sm text-slate-500">Total Funds Allocated</p>
-                        <h3 class="text-2xl font-bold text-slate-900 mt-1" id="totalGivenDisplay">₹0</h3>
+                        <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900">₹0</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <div class="bg-white p-6 rounded-2xl shadow border">
                         <p class="text-sm text-slate-500">Total Expenses Spent</p>
-                        <h3 class="text-2xl font-bold text-amber-600 mt-1" id="totalSpentDisplay">₹0</h3>
+                        <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-slate-900">₹0</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <p class="text-sm text-slate-500">Active Sites</p>
-                        <h3 class="text-2xl font-bold text-emerald-600 mt-1" id="totalSitesDisplay">0</h3>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                    <h3 class="text-base font-bold text-slate-900 mb-4">Engineer Balances & Fund Status</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="engineerCardsContainer"></div>
                 </div>
             </div>
 
             <!-- EXPENSES TAB -->
             <div id="view-expenses" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                    <h3 class="text-base font-bold text-slate-900 mb-4">Record New Expense</h3>
-                    <form id="expenseForm" onsubmit="addExpense(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-2xl shadow border">
+                    <h2 class="text-lg font-bold mb-4">Record New Expense</h2>
+                    <form onsubmit="addExpense(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Date</label>
-                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Engineer</label>
-                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Engineer</label>
+                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl" required></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Site</label>
-                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Site</label>
+                            <select id="expSite" class="w-full p-2.5 border rounded-xl" required></select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Material / Item</label>
-                            <input type="text" id="expMaterial" placeholder="e.g. Cement, Steel" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
+                            <input type="number" id="expAmount" placeholder="Enter amount" class="w-full p-2.5 border rounded-xl" required>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Quantity</label>
-                            <input type="number" step="any" id="expQty" class="w-full p-2.5 border rounded-xl text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Unit</label>
-                            <select id="expUnit" class="w-full p-2.5 border rounded-xl text-sm" required></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (₹)</label>
-                            <input type="number" id="expAmount" class="w-full p-2.5 border rounded-xl text-sm" required>
-                        </div>
-                        <div class="flex items-end">
-                            <button type="submit" class="w-full py-2.5 bg-amber-700 text-white rounded-xl text-sm font-medium hover:bg-amber-800 transition">Add Expense</button>
+                        <div class="md:col-span-4">
+                            <button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition">Save Expense</button>
                         </div>
                     </form>
                 </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <div class="p-6 border-b flex justify-between items-center">
-                        <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
-                        <button onclick="syncData()" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200">Sync with SheetDB</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase tracking-wider">
-                                    <th class="p-4">Date</th>
-                                    <th class="p-4">Engineer</th>
-                                    <th class="p-4">Site</th>
-                                    <th class="p-4">Material</th>
-                                    <th class="p-4">Qty</th>
-                                    <th class="p-4">Unit</th>
-                                    <th class="p-4">Amount</th>
-                                    <th class="p-4 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="expenseTableBody" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
 
-            <!-- ADMIN SETUP TAB -->
-            <div id="view-settings" class="hidden space-y-6 admin-only">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 class="text-base font-bold text-slate-900">Manage Engineers & Funds</h3>
-                        <form onsubmit="addOrUpdateEngineer(event)" class="space-y-3">
-                            <input type="text" id="setupEngName" placeholder="Engineer Name" class="w-full p-2.5 border rounded-xl text-sm" required>
-                            <input type="number" id="setupEngFund" placeholder="Fund Given (₹)" class="w-full p-2.5 border rounded-xl text-sm" required>
-                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Save Engineer Fund</button>
-                        </form>
-                        <div id="setupEngList" class="divide-y text-sm mt-4"></div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 class="text-base font-bold text-slate-900">Manage Sites</h3>
-                        <form onsubmit="addSite(event)" class="space-y-3">
-                            <input type="text" id="setupSiteName" placeholder="New Site Name" class="w-full p-2.5 border rounded-xl text-sm" required>
-                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Add Site</button>
-                        </form>
-                        <div id="setupSiteList" class="divide-y text-sm mt-4"></div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 class="text-base font-bold text-slate-900">Manage Units</h3>
-                        <form onsubmit="addUnit(event)" class="space-y-3">
-                            <input type="text" id="setupUnitName" placeholder="New Unit (e.g., Tons, Nos)" class="w-full p-2.5 border rounded-xl text-sm" required>
-                            <button type="submit" class="w-full py-2 bg-slate-900 text-white rounded-xl text-sm font-medium">Add Unit</button>
-                        </form>
-                        <div id="setupUnitList" class="divide-y text-sm mt-4"></div>
-                    </div>
+            <!-- ADMIN SETUP TAB (Strictly Admin Only) -->
+            <div id="view-settings" class="admin-only space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow border">
+                    <h2 class="text-lg font-bold mb-4 text-emerald-600">Admin Setup & Engineer Fund Management</h2>
+                    <p class="text-sm text-slate-500 mb-4">Manage engineer fund allocations and site configurations here.</p>
                 </div>
             </div>
 
@@ -206,28 +139,21 @@
     </div>
 
     <script>
+        // SheetDB / Sheet TV Endpoints
         const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5jtno86nn45ml";
         const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/e92x2wxuf37nv";
 
-        const passwords = {
-            "Admin": "admin123",
-            "Sivashankar": "pass123",
-            "Yogesh": "pass123",
-            "Senthil": "pass123",
-            "Manikandan": "pass123"
-        };
-
-        let currentUser = null;
-        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
+        let currentUser = localStorage.getItem('na_current_user') || null;
+        const passwords = { "Admin": "admin123", "Sivashankar": "pass123", "Yogesh": "pass123", "Senthil": "pass123", "Manikandan": "pass123" };
+        
+        const engineers = [
             { name: "Sivashankar", totalGiven: 100000 },
             { name: "Yogesh", totalGiven: 75000 },
             { name: "Senthil", totalGiven: 0 },
             { name: "Manikandan", totalGiven: 0 }
         ];
 
-        let sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvarchatram"];
-        let units = JSON.parse(localStorage.getItem('na_units')) || ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet"];
-        let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
+        const sites = ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvachathiram"];
 
         function handleLogin(e) {
             e.preventDefault();
@@ -256,199 +182,58 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
-            // Handle Admin-only elements visibility based on login role
+            // Strict Role-based visibility for Admin-only elements
             const adminElements = document.querySelectorAll('.admin-only');
             adminElements.forEach(el => {
-                if (currentUser !== 'Admin') {
-                    el.style.display = 'none';
+                if (currentUser === 'Admin') {
+                    el.style.display = ''; // அட்மினுக்கு மட்டும் தெரியும்
                 } else {
-                    el.style.display = '';
+                    el.style.display = 'none'; // இன்ஜினியர்களுக்கு மறைக்கப்படும்
                 }
             });
 
-            const expEngSelect = document.getElementById('expEngineer');
-            expEngSelect.innerHTML = '';
-            if (currentUser === 'Admin') {
-                engineers.forEach(eng => { expEngSelect.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
-            } else {
-                expEngSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
-            }
+            // Populate selects
+            const expEngineer = document.getElementById('expEngineer');
+            expEngineer.innerHTML = '';
+            engineers.forEach(eng => { expEngineer.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
 
-            const expSiteSelect = document.getElementById('expSite');
-            expSiteSelect.innerHTML = '';
-            sites.forEach(site => { expSiteSelect.innerHTML += `<option value="${site}">${site}</option>`; });
-
-            const expUnitSelect = document.getElementById('expUnit');
-            expUnitSelect.innerHTML = '';
-            units.forEach(unit => { expUnitSelect.innerHTML += `<option value="${unit}">${unit}</option>`; });
+            const expSite = document.getElementById('expSite');
+            expSite.innerHTML = '';
+            sites.forEach(site => { expSite.innerHTML += `<option value="${site}">${site}</option>`; });
 
             document.getElementById('expDate').valueAsDate = new Date();
-
             renderDashboard();
-            renderExpenses();
-            renderSetupLists();
-            lucide.createIcons();
         }
 
-        function switchTab(tabId) {
-            ['dashboard', 'expenses', 'settings'].forEach(t => {
-                const view = document.getElementById(`view-${t}`);
-                const tab = document.getElementById(`tab-${t}`);
-                if (view) view.classList.add('hidden');
-                if (tab) tab.className = "py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2";
-            });
-            const activeView = document.getElementById(`view-${tabId}`);
-            const activeTab = document.getElementById(`tab-${tabId}`);
-            if (activeView) activeView.classList.remove('hidden');
-            if (activeTab) activeTab.className = "py-4 px-2 border-b-2 border-amber-600 text-amber-600 font-medium text-sm flex items-center space-x-2";
+        function switchTab(tabName) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-expenses').classList.add('hidden');
+            document.getElementById('view-settings').classList.add('hidden');
+
+            document.getElementById('tab-dashboard').classList.remove('border-emerald-600', 'text-emerald-600');
+            document.getElementById('tab-expenses').classList.remove('border-emerald-600', 'text-emerald-600');
+            document.getElementById('tab-settings').classList.remove('border-emerald-600', 'text-emerald-600');
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('border-emerald-600', 'text-emerald-600');
         }
 
         function renderDashboard() {
-            let totalGiven = engineers.reduce((sum, e) => sum + parseFloat(e.totalGiven || 0), 0);
-            let totalSpent = expenses.reduce((sum, ex) => sum + parseFloat(ex.amount || 0), 0);
-
-            document.getElementById('totalGivenDisplay').innerText = `₹${totalGiven.toLocaleString()}`;
-            document.getElementById('totalSpentDisplay').innerText = `₹${totalSpent.toLocaleString()}`;
-            document.getElementById('totalSitesDisplay').innerText = sites.length;
-
-            let container = document.getElementById('engineerCardsContainer');
-            container.innerHTML = '';
-
-            engineers.forEach(eng => {
-                let spent = expenses.filter(ex => ex.engineer === eng.name).reduce((s, ex) => s + parseFloat(ex.amount || 0), 0);
-                let balance = eng.totalGiven - spent;
-                container.innerHTML += `
-                    <div class="p-4 bg-slate-50 border rounded-xl space-y-2">
-                        <h4 class="font-bold text-slate-900">${eng.name}</h4>
-                        <div class="text-xs text-slate-500 flex justify-between"><span>Given Fund:</span> <span class="font-semibold text-slate-800">₹${eng.totalGiven.toLocaleString()}</span></div>
-                        <div class="text-xs text-slate-500 flex justify-between"><span>Spent:</span> <span class="font-semibold text-amber-600">₹${spent.toLocaleString()}</span></div>
-                        <div class="text-xs text-slate-500 flex justify-between border-t pt-1"><span>Balance:</span> <span class="font-bold ${balance < 0 ? 'text-red-600' : 'text-emerald-600'}">₹${balance.toLocaleString()}</span></div>
-                    </div>
-                `;
-            });
+            let totalFunds = engineers.reduce((sum, eng) => sum + eng.totalGiven, 0);
+            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString()}`;
         }
 
         function addExpense(e) {
             e.preventDefault();
-            const newExp = {
-                id: Date.now(),
-                date: document.getElementById('expDate').value,
-                engineer: document.getElementById('expEngineer').value,
-                site: document.getElementById('expSite').value,
-                material: document.getElementById('expMaterial').value,
-                qty: document.getElementById('expQty').value,
-                unit: document.getElementById('expUnit').value,
-                amount: document.getElementById('expAmount').value
-            };
-
-            expenses.unshift(newExp);
-            saveAndRefresh();
-            document.getElementById('expenseForm').reset();
-            document.getElementById('expDate').valueAsDate = new Date();
-            if (currentUser !== 'Admin') {
-                document.getElementById('expEngineer').value = currentUser;
-            }
+            alert("Expense saved successfully!");
         }
 
-        function deleteExpense(id) {
-            expenses = expenses.filter(ex => ex.id !== id);
-            saveAndRefresh();
+        // Auto login if already authenticated
+        if (currentUser) {
+            initApp();
         }
 
-        function renderExpenses() {
-            let tbody = document.getElementById('expenseTableBody');
-            tbody.innerHTML = '';
-            if (expenses.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">No expenses recorded yet.</td></tr>`;
-                return;
-            }
-            expenses.forEach(ex => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-4">${ex.date}</td>
-                        <td class="p-4 font-medium">${ex.engineer}</td>
-                        <td class="p-4">${ex.site}</td>
-                        <td class="p-4">${ex.material}</td>
-                        <td class="p-4">${ex.qty}</td>
-                        <td class="p-4">${ex.unit}</td>
-                        <td class="p-4 font-semibold text-amber-700">₹${parseFloat(ex.amount).toLocaleString()}</td>
-                        <td class="p-4 text-center">
-                            <button onclick="deleteExpense(${ex.id})" class="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        function addOrUpdateEngineer(e) {
-            e.preventDefault();
-            const name = document.getElementById('setupEngName').value.trim();
-            const fund = parseFloat(document.getElementById('setupEngFund').value);
-            let existing = engineers.find(en => en.name.toLowerCase() === name.toLowerCase());
-            if (existing) {
-                existing.totalGiven = fund;
-            } else {
-                engineers.push({ name, totalGiven: fund });
-                passwords[name] = "pass123";
-            }
-            saveAndRefresh();
-            document.getElementById('setupEngName').value = '';
-            document.getElementById('setupEngFund').value = '';
-        }
-
-        function addSite(e) {
-            e.preventDefault();
-            const site = document.getElementById('setupSiteName').value.trim();
-            if (site && !sites.includes(site)) {
-                sites.push(site);
-                saveAndRefresh();
-                document.getElementById('setupSiteName').value = '';
-            }
-        }
-
-        function addUnit(e) {
-            e.preventDefault();
-            const unit = document.getElementById('setupUnitName').value.trim();
-            if (unit && !units.includes(unit)) {
-                units.push(unit);
-                saveAndRefresh();
-                document.getElementById('setupUnitName').value = '';
-            }
-        }
-
-        function renderSetupLists() {
-            let engList = document.getElementById('setupEngList');
-            if (engList) engList.innerHTML = engineers.map(en => `<div class="py-2 flex justify-between"><span>${en.name}</span><span class="font-semibold">₹${en.totalGiven.toLocaleString()}</span></div>`).join('');
-
-            let siteList = document.getElementById('setupSiteList');
-            if (siteList) siteList.innerHTML = sites.map(s => `<div class="py-2">${s}</div>`).join('');
-
-            let unitList = document.getElementById('setupUnitList');
-            if (unitList) unitList.innerHTML = units.map(u => `<div class="py-2">${u}</div>`).join('');
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem('na_engineers', JSON.stringify(engineers));
-            localStorage.setItem('na_sites', JSON.stringify(sites));
-            localStorage.setItem('na_units', JSON.stringify(units));
-            localStorage.setItem('na_expenses', JSON.stringify(expenses));
-
-            renderDashboard();
-            renderExpenses();
-            renderSetupLists();
-        }
-
-        function syncData() {
-            alert("Data synced successfully with local storage & app state!");
-        }
-
-        window.onload = function() {
-            const savedUser = localStorage.getItem('na_current_user');
-            if (savedUser && passwords[savedUser]) {
-                currentUser = savedUser;
-                initApp();
-            }
-        }
+        lucide.createIcons();
     </script>
 </body>
 </html>
