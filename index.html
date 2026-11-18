@@ -7,9 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .admin-only { display: none !important; }
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        .admin-only { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -38,7 +38,7 @@
                     <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-amber-600 focus:outline-none" required>
                 </div>
                 <button type="submit" class="w-full py-3 bg-amber-700 text-white rounded-xl font-medium hover:bg-amber-800 transition">Login</button>
-                <p id="loginError" class="text-red-500 text-sm text-center hidden"> தவறான பாஸ்வேர்ட்! (Default Admin: admin123, Engineers: pass123)</p>
+                <p id="loginError" class="text-red-500 text-sm text-center hidden">தவறான பாஸ்வேர்ட்!</p>
             </form>
         </div>
     </div>
@@ -73,7 +73,7 @@
                 <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2">
                     <i data-lucide="receipt" class="w-4 h-4"></i><span>Expenses</span>
                 </button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="py-4 px-2 border-b-2 border-transparent admin-only">
+                <button onclick="switchTab('settings')" id="tab-settings" class="py-4 px-2 border-b-2 border-transparent text-slate-600 hover:text-slate-900 font-medium text-sm flex items-center space-x-2 admin-only">
                     <i data-lucide="settings" class="w-4 h-4"></i><span>Admin Setup</span>
                 </button>
             </div>
@@ -103,9 +103,7 @@
                 <!-- Engineer Balances -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h3 class="text-base font-bold text-slate-900 mb-4">Engineer Balances & Fund Status</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="engineerCardsContainer">
-                        <!-- Dynamic Cards -->
-                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="engineerCardsContainer"></div>
                 </div>
             </div>
 
@@ -168,18 +166,15 @@
                                     <th class="p-4 text-center">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="expenseTableBody" class="divide-y divide-slate-100">
-                                <!-- Dynamic rows -->
-                            </tbody>
+                            <tbody id="expenseTableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <!-- ADMIN SETUP TAB -->
-            <div id="view-settings" class="hidden space-y-6">
+            <div id="view-settings" class="hidden space-y-6 admin-only">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Manage Engineers & Funds -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900">Manage Engineers & Funds</h3>
                         <form onsubmit="addOrUpdateEngineer(event)" class="space-y-3">
@@ -190,7 +185,6 @@
                         <div id="setupEngList" class="divide-y text-sm mt-4"></div>
                     </div>
 
-                    <!-- Manage Sites -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900">Manage Sites</h3>
                         <form onsubmit="addSite(event)" class="space-y-3">
@@ -200,7 +194,6 @@
                         <div id="setupSiteList" class="divide-y text-sm mt-4"></div>
                     </div>
 
-                    <!-- Manage Units -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900">Manage Units</h3>
                         <form onsubmit="addUnit(event)" class="space-y-3">
@@ -215,13 +208,10 @@
         </main>
     </div>
 
-    <!-- SheetDB API Configuration Note: Replace these URLs with your actual SheetDB endpoints -->
     <script>
-        // SheetDB API URLs 
         const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5jtno86nn45ml";
         const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/e92x2wxuf37nv";
 
-        // Passwords database
         const passwords = {
             "Admin": "admin123",
             "Sivashankar": "pass123",
@@ -230,7 +220,6 @@
             "Manikandan": "pass123"
         };
 
-        // App State Data (LocalStorage synced)
         let currentUser = null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
             { name: "Sivashankar", totalGiven: 100000 },
@@ -270,39 +259,21 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
-            // Hide admin options for normal engineers
-            const adminElements = document.querySelectorAll('.admin-only');
-            adminElements.forEach(el => {
-                if (currentUser !== 'Admin') {
-                    el.classList.add('hidden');
-                } else {
-                    el.classList.remove('hidden');
-                }
-            });
-
-            // If engineer, lock engineer dropdown in expense form to their name
             const expEngSelect = document.getElementById('expEngineer');
             expEngSelect.innerHTML = '';
             if (currentUser === 'Admin') {
-                engineers.forEach(eng => {
-                    expEngSelect.innerHTML += `<option value="${eng.name}">${eng.name}</option>`;
-                });
+                engineers.forEach(eng => { expEngSelect.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
             } else {
                 expEngSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
             }
 
-            // Populate Sites and Units
             const expSiteSelect = document.getElementById('expSite');
             expSiteSelect.innerHTML = '';
-            sites.forEach(site => {
-                expSiteSelect.innerHTML += `<option value="${site}">${site}</option>`;
-            });
+            sites.forEach(site => { expSiteSelect.innerHTML += `<option value="${site}">${site}</option>`; });
 
             const expUnitSelect = document.getElementById('expUnit');
             expUnitSelect.innerHTML = '';
-            units.forEach(unit => {
-                expUnitSelect.innerHTML += `<option value="${unit}">${unit}</option>`;
-            });
+            units.forEach(unit => { expUnitSelect.innerHTML += `<option value="${unit}">${unit}</option>`; });
 
             document.getElementById('expDate').valueAsDate = new Date();
 
@@ -407,7 +378,7 @@
                 existing.totalGiven = fund;
             } else {
                 engineers.push({ name, totalGiven: fund });
-                passwords[name] = "pass123"; // default password for new engineer
+                passwords[name] = "pass123";
             }
             saveAndRefresh();
             document.getElementById('setupEngName').value = '';
@@ -425,13 +396,7 @@
         }
 
         function addUnit(e) {
-            e.preventDefault();
-            const unit = document.getElementById('setupUnitName').value.trim();
-            if (unit && !units.includes(unit)) {
-                units.push(unit);
-                saveAndRefresh();
-                document.getElementById('setupUnitName').value = '';
-            }
+            nav
         }
 
         function renderSetupLists() {
@@ -460,7 +425,6 @@
             alert("Data synced successfully with local storage & app state!");
         }
 
-        // Auto login if already active in session
         window.onload = function() {
             const savedUser = localStorage.getItem('na_current_user');
             if (savedUser && passwords[savedUser]) {
