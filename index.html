@@ -229,6 +229,7 @@
   </div>
 
   <script>
+    const API_URL = "https://sheetdb.io/api/v1/l51b9oeg433p1"; 
     const ADMIN_PASSWORD = "123";
 
     let defaultEngineers = {
@@ -240,7 +241,28 @@
       engineers = JSON.parse(localStorage.getItem('na_engineers')) || defaultEngineers;
       sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvarchatram"];
       units = JSON.parse(localStorage.getItem('na_units')) || ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet"];
-      transactions = JSON.parse(localStorage.getItem('na_transactions')) || [];
+      
+      fetch(API_URL)
+        .then(response => response.json())
+        .then(data => {
+          transactions = data.map(t => ({
+            id: Number(t.id) || Date.now(),
+            date: t.Date,
+            engineer: t.Engineer,
+            site: t.Site,
+            material: t.Material,
+            qty: parseFloat(t.Qty),
+            unit: t.Unit,
+            amount: parseFloat(t.Amount),
+            remarks: t.Remarks || ''
+          }));
+          renderApp();
+        })
+        .catch(error => {
+          console.error("Error loading data from SheetDB:", error);
+          transactions = JSON.parse(localStorage.getItem('na_transactions')) || [];
+          renderApp();
+        });
     }
 
     let engineers = {};
@@ -262,21 +284,51 @@
       
       window.addEventListener('storage', () => {
         loadData();
-        initApp();
       });
 
       initApp();
     });
 
-    function saveData() {
+    function saveData(newEntry) {
       localStorage.setItem('na_engineers', JSON.stringify(engineers));
       localStorage.setItem('na_sites', JSON.stringify(sites));
       localStorage.setItem('na_units', JSON.stringify(units));
-      localStorage.setItem('na_transactions', JSON.stringify(transactions));
+
+      const payload = {
+        data: [{
+          id: newEntry.id,
+          Date: newEntry.date,
+          Engineer: newEntry.engineer,
+          Site: newEntry.site,
+          Material: newEntry.material,
+          Qty: newEntry.qty,
+          Unit: newEntry.unit,
+          Amount: newEntry.amount,
+          Remarks: newEntry.remarks
+        }]
+      };
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(result => {
+        console.log("Success:", result);
+        loadData(); 
+      })
+      .catch((error) => {
+        console.error("Error saving to SheetDB:", error);
+        transactions.unshift(newEntry);
+        localStorage.setItem('na_transactions', JSON.stringify(transactions));
+        renderApp();
+      });
     }
 
     function initApp() {
-      loadData();
       populateDropdowns();
       renderApp();
     }
@@ -377,14 +429,12 @@
     }
 
     function getEngineerStats(name) {
-      loadData();
       const totalGiven = engineers[name] ? engineers[name].totalGiven : 0;
-      const spent = transactions.filter(t => t.engineer === name).reduce((sum, t) => sum + Number(t.amount), 0);
+      const spent = transactions.filter(t => t.engineer === name).reduce((sum, t) => sum + Number(t.amount || 0), 0);
       return { totalGiven, spent, remaining: totalGiven - spent };
     }
 
     function renderTransactionsTable() {
-      loadData();
       const tbody = document.getElementById('transactionsTableBody');
       const mobileList = document.getElementById('transactionsMobileList');
       const selectedEng = document.getElementById('filterEngineer').value;
@@ -416,32 +466,30 @@
         mobileList.innerHTML = emptyHtml;
       } else {
         filtered.forEach(t => {
-          totalSpending += Number(t.amount);
+          totalSpending += Number(t.amount || 0);
           
-          // Desktop row
           const tr = document.createElement('tr');
           tr.className = "hover:bg-slate-50/80 transition";
-          let engColumnHtml = activeUserRole === 'Admin' ? `<td class="py-3 px-3 font-semibold text-xs"><span class="px-2 py-0.5 bg-slate-100 rounded">${t.engineer}</span></td>` : '';
+          let engColumnHtml = activeUserRole === 'Admin' ? `<td class="py-3 px-3 font-semibold text-xs"><span class="px-2 py-0.5 bg-slate-100 rounded">${t.engineer || ''}</span></td>` : '';
 
           tr.innerHTML = `
-            <td class="py-3 px-3 text-xs text-slate-600">${t.date}</td>
+            <td class="py-3 px-3 text-xs text-slate-600">${t.date || ''}</td>
             ${engColumnHtml}
-            <td class="py-3 px-3 text-xs text-slate-600">${t.site}</td>
-            <td class="py-3 px-3"><div class="font-semibold text-xs">${t.material}</div>${t.remarks ? `<div class="text-[11px] text-slate-400">${t.remarks}</div>` : ''}</td>
-            <td class="py-3 px-3 text-right text-xs font-semibold text-blue-700">${t.qty} ${t.unit}</td>
-            <td class="py-3 px-3 text-right font-bold text-xs">${formatINR(t.amount)}</td>
+            <td class="py-3 px-3 text-xs text-slate-600">${t.site || ''}</td>
+            <td class="py-3 px-3"><div class="font-semibold text-xs">${t.material || ''}</div>${t.remarks ? `<div class="text-[11px] text-slate-400">${t.remarks}</div>` : ''}</td>
+            <td class="py-3 px-3 text-right text-xs font-semibold text-blue-700">${t.qty || 0} ${t.unit || ''}</td>
+            <td class="py-3 px-3 text-right font-bold text-xs">${formatINR(t.amount || 0)}</td>
             <td class="py-3 px-3 text-center"><button onclick="deleteTransaction(${t.id})" class="text-slate-300 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button></td>
           `;
           tbody.appendChild(tr);
 
-          // Mobile card item
           const cardDiv = document.createElement('div');
           cardDiv.className = "bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1.5";
-          let mobileEngBadge = activeUserRole === 'Admin' ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-semibold">${t.engineer}</span>` : '';
+          let mobileEngBadge = activeUserRole === 'Admin' ? `<span class="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-semibold">${t.engineer || ''}</span>` : '';
           
           cardDiv.innerHTML = `
             <div class="flex justify-between items-center text-[11px] text-slate-500">
-              <span>${t.date} • <strong class="text-slate-700">${t.site}</strong></span>
+              <span>${t.date || ''} • <strong class="text-slate-700">${t.site || ''}</strong></span>
               <div class="flex items-center gap-2">
                 ${mobileEngBadge}
                 <button onclick="deleteTransaction(${t.id})" class="text-slate-400 hover:text-red-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
@@ -449,10 +497,10 @@
             </div>
             <div class="flex justify-between items-start pt-1">
               <div>
-                <div class="font-bold text-slate-800 text-sm">${t.material}</div>
-                <div class="text-slate-500 text-[11px]">${t.qty} ${t.unit} ${t.remarks ? '• ' + t.remarks : ''}</div>
+                <div class="font-bold text-slate-800 text-sm">${t.material || ''}</div>
+                <div class="text-slate-500 text-[11px]">${t.qty || 0} ${t.unit || ''} ${t.remarks ? '• ' + t.remarks : ''}</div>
               </div>
-              <div class="font-bold text-slate-900 text-sm text-right">${formatINR(t.amount)}</div>
+              <div class="font-bold text-slate-900 text-sm text-right">${formatINR(t.amount || 0)}</div>
             </div>
           `;
           mobileList.appendChild(cardDiv);
@@ -496,7 +544,6 @@
 
     function handleNewExpense(e) {
       e.preventDefault();
-      loadData();
       
       let assignedEngineer = activeUserRole === 'Admin' ? (document.getElementById('filterEngineer').value === 'ALL' ? Object.keys(engineers)[0] : document.getElementById('filterEngineer').value) : activeUserRole;
 
@@ -511,9 +558,9 @@
         amount: parseFloat(document.getElementById('entryAmount').value),
         remarks: document.getElementById('entryRemarks').value
       };
-      transactions.unshift(newEntry);
-      saveData();
-      initApp();
+
+      saveData(newEntry);
+
       document.getElementById('entryMaterial').value = '';
       document.getElementById('entryQty').value = '';
       document.getElementById('entryAmount').value = '';
@@ -528,12 +575,11 @@
 
     function handleCashTransfer(e) {
       e.preventDefault();
-      loadData();
       const name = document.getElementById('cashEngineer').value;
       const amt = parseFloat(document.getElementById('cashAmount').value);
       if (engineers[name]) {
         engineers[name].totalGiven += amt;
-        saveData();
+        localStorage.setItem('na_engineers', JSON.stringify(engineers));
         initApp();
         closeModal('cashModal');
         document.getElementById('cashAmount').value = '';
@@ -541,12 +587,11 @@
     }
 
     function addEngineer() {
-      loadData();
       const name = document.getElementById('newEngineerName').value.trim();
       const amt = parseFloat(document.getElementById('newEngineerInitialAmount').value) || 0;
       if (name && !engineers[name]) { 
         engineers[name] = { totalGiven: amt }; 
-        saveData(); 
+        localStorage.setItem('na_engineers', JSON.stringify(engineers));
         document.getElementById('newEngineerName').value = ''; 
         document.getElementById('newEngineerInitialAmount').value = ''; 
         initApp(); 
@@ -554,21 +599,18 @@
       }
     }
     function updateEngineerGivenAmount(eng) {
-      loadData();
       const newAmt = prompt(`Enter new Total Given Cash for ${eng}:`, engineers[eng].totalGiven);
       if (newAmt !== null && !isNaN(newAmt)) {
         engineers[eng].totalGiven = parseFloat(newAmt);
-        saveData();
+        localStorage.setItem('na_engineers', JSON.stringify(engineers));
         initApp();
         renderEngineerList();
       }
     }
     function deleteEngineer(name) {
-      loadData();
-      if (confirm(`Delete ${name}?`)) { delete engineers[name]; saveData(); initApp(); renderEngineerList(); }
+      if (confirm(`Delete ${name}?`)) { delete engineers[name]; localStorage.setItem('na_engineers', JSON.stringify(engineers)); initApp(); renderEngineerList(); }
     }
     function renderEngineerList() {
-      loadData();
       const c = document.getElementById('engineerListContainer');
       c.innerHTML = '';
       Object.keys(engineers).forEach(eng => {
@@ -587,27 +629,24 @@
     }
 
     function addSite() {
-      loadData();
       const name = document.getElementById('newSiteName').value.trim();
       if (name && !sites.includes(name)) { 
         sites.push(name); 
-        saveData(); 
+        localStorage.setItem('na_sites', JSON.stringify(sites));
         document.getElementById('newSiteName').value = '';
         initApp(); 
         renderSiteList(); 
       }
     }
     function deleteSite(name) { 
-      loadData();
       if (confirm(`Delete site "${name}"?`)) {
         sites = sites.filter(s => s !== name); 
-        saveData(); 
+        localStorage.setItem('na_sites', JSON.stringify(sites));
         initApp(); 
         renderSiteList(); 
       }
     }
     function renderSiteList() {
-      loadData();
       const c = document.getElementById('siteListContainer');
       c.innerHTML = '';
       sites.forEach(s => {
@@ -620,27 +659,24 @@
     }
 
     function addUnit() {
-      loadData();
       const name = document.getElementById('newUnitName').value.trim();
       if (name && !units.includes(name)) { 
         units.push(name); 
-        saveData(); 
+        localStorage.setItem('na_units', JSON.stringify(units));
         document.getElementById('newUnitName').value = ''; 
         initApp(); 
         renderUnitList(); 
       }
     }
     function deleteUnit(name) { 
-      loadData();
       if (confirm(`Delete unit "${name}"?`)) {
         units = units.filter(u => u !== name); 
-        saveData(); 
+        localStorage.setItem('na_units', JSON.stringify(units));
         initApp(); 
         renderUnitList(); 
       }
     }
     function renderUnitList() {
-      loadData();
       const c = document.getElementById('unitListContainer');
       c.innerHTML = '';
       units.forEach(u => {
@@ -653,15 +689,26 @@
     }
 
     function deleteTransaction(id) {
-      loadData();
-      if (confirm("Delete entry?")) { transactions = transactions.filter(t => t.id !== id); saveData(); initApp(); }
+      if (confirm("Delete entry?")) {
+        fetch(`${API_URL}/id/${id}`, { method: 'DELETE' })
+          .then(res => res.json())
+          .then(data => {
+            console.log("Deleted from SheetDB:", data);
+            loadData();
+          })
+          .catch(err => {
+            console.error("Delete error:", err);
+            transactions = transactions.filter(t => t.id !== id);
+            localStorage.setItem('na_transactions', JSON.stringify(transactions));
+            renderApp();
+          });
+      }
     }
 
     function applyFilters() { renderApp(); }
     function resetFilters() { document.getElementById('filterEngineer').value = 'ALL'; document.getElementById('filterSite').value = 'ALL'; renderApp(); }
 
     function exportCSV() {
-      loadData();
       let csv = "Date,Engineer,Site,Material,Qty,Unit,Amount,Remarks\n";
       transactions.forEach(t => { csv += `"${t.date}","${t.engineer}","${t.site}","${t.material}",${t.qty},"${t.unit}",${t.amount},"${t.remarks || ''}"\n`; });
       const link = document.createElement("a");
