@@ -105,7 +105,7 @@
                     </div>
                 </div>
 
-                <!-- Cash / Online / GPay Received Log (Visible on First Page for Admin & Engineers) -->
+                <!-- Fund / Cash Received Details on First Page -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-1">Fund / Cash Received Details</h2>
                     <p class="text-xs text-slate-500 mb-4">எந்தத் தேதியில், எவ்வளவு பணம், எந்த முறையில் (Cash / Online / GPay) வந்துள்ளது என்ற விவரம்</p>
@@ -191,7 +191,7 @@
             <!-- 3. ADMIN SETUP TAB (Strictly Admin Only) -->
             <div id="view-settings" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Allocate & Edit Fund to Engineer -->
+                    <!-- Give / Edit Engineer Fund -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
                             <i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>
@@ -220,20 +220,15 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Update Mode</label>
-                                <select id="setupFundAction" class="w-full p-2.5 border rounded-xl text-sm bg-slate-50">
-                                    <option value="add">Add New Amount (+)</option>
-                                    <option value="set">Edit / Set Exact Total (=)</option>
-                                </select>
-                            </div>
-                            <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Amount (₹)</label>
                                 <input type="number" id="setupEngFund" placeholder="Enter amount (e.g., 50000)" class="w-full p-2.5 border rounded-xl text-sm" required>
                             </div>
                             <button type="submit" id="btnSaveFund" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Save Fund</button>
                         </form>
+
+                        <!-- Admin Fund Given History (Date, Engineer, Mode, Amount & Edit) -->
                         <div class="pt-3 border-t">
-                            <p class="text-xs font-semibold text-slate-500 mb-2">Engineer Fund Summary (Click Edit to change amount):</p>
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Funds Given by Admin (Date, Mode & Edit):</p>
                             <div id="setupEngList" class="divide-y text-sm"></div>
                         </div>
                     </div>
@@ -273,6 +268,8 @@
             "Senthil": "pass123",
             "Manikandan": "pass123"
         };
+
+        const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "Manikandan"];
 
         let currentUser = localStorage.getItem('na_current_user') || null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
@@ -316,7 +313,6 @@
 
             const isAdmin = currentUser === 'Admin';
 
-            // Admin Setup tab visible ONLY to Admin
             const adminTab = document.getElementById('tab-settings');
             if (isAdmin) {
                 adminTab.classList.remove('hidden');
@@ -324,7 +320,6 @@
                 adminTab.classList.add('hidden');
             }
 
-            // Admin does NOT get Record New Expense; gets Action column in Expenses Log
             const recordExpCard = document.getElementById('recordExpenseCard');
             const thAction = document.getElementById('thExpenseAction');
             if (isAdmin) {
@@ -340,7 +335,7 @@
             const expEngineer = document.getElementById('expEngineer');
             expEngineer.innerHTML = '';
             if (isAdmin) {
-                engineers.forEach(eng => { expEngineer.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
+                VALID_ENGINEERS.forEach(engName => { expEngineer.innerHTML += `<option value="${engName}">${engName}</option>`; });
             } else {
                 expEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
             }
@@ -383,7 +378,7 @@
                 if (expRes.ok) {
                     const expData = await expRes.json();
                     if (Array.isArray(expData)) {
-                        expenses = expData;
+                        expenses = expData.filter(row => row.Material || row.material || row.Amount || row.amount);
                         localStorage.setItem('na_expenses', JSON.stringify(expenses));
                     }
                 }
@@ -392,12 +387,27 @@
                 if (engRes.ok) {
                     const engData = await engRes.json();
                     if (Array.isArray(engData) && engData.length > 0) {
-                        engineers = engData.map(e => ({
-                            name: e.name || e.Engineer,
-                            totalGiven: Number(e.totalGiven || e.Amount || 0),
-                            lastDate: e.lastDate || "-",
-                            mode: e.mode || "Cash"
-                        }));
+                        const mapByEng = {};
+                        VALID_ENGINEERS.forEach(name => {
+                            mapByEng[name] = { name, totalGiven: 0, lastDate: "-", mode: "Cash" };
+                        });
+
+                        engData.forEach(row => {
+                            const rawName = (row.name || row.Engineer || "").trim();
+                            if (VALID_ENGINEERS.includes(rawName) && !row.Material && !row.material) {
+                                const amt = Number(row.totalGiven ?? row.Amount ?? 0);
+                                if (!Number.isNaN(amt)) {
+                                    mapByEng[rawName] = {
+                                        name: rawName,
+                                        totalGiven: amt,
+                                        lastDate: row.lastDate || row.Date || "-",
+                                        mode: row.mode || row.Mode || "Cash"
+                                    };
+                                }
+                            }
+                        });
+
+                        engineers = VALID_ENGINEERS.map(name => mapByEng[name]);
                         localStorage.setItem('na_engineers', JSON.stringify(engineers));
                     }
                 }
@@ -439,7 +449,7 @@
                 });
             }
 
-            // Expenses Table (With Action Edit & Delete for Admin)
+            // Expenses Table
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
             const visibleExpenses = isAdmin
@@ -467,23 +477,42 @@
                 `;
             });
 
-            // Admin Setup Engineer List with Edit
+            // Admin Setup: Funds Given by Admin (Date, Engineer, Mode, Amount & Edit)
             const setupEngList = document.getElementById('setupEngList');
             setupEngList.innerHTML = '';
-            engineers.forEach(eng => {
-                setupEngList.innerHTML += `
-                    <div class="py-2.5 flex justify-between items-center">
-                        <div>
-                            <span class="font-medium text-slate-800">${eng.name}</span>
-                            <span class="ml-2 font-bold text-emerald-700">₹${Number(eng.totalGiven || 0).toLocaleString('en-IN')}</span>
-                            <span class="ml-2 text-xs text-slate-500">(${eng.lastDate || '-'} | ${eng.mode || '-'})</span>
+            if (fundHistory.length === 0) {
+                engineers.forEach(eng => {
+                    setupEngList.innerHTML += `
+                        <div class="py-2.5 flex justify-between items-center">
+                            <div>
+                                <span class="font-medium text-slate-800">${eng.name}</span>
+                                <span class="ml-2 font-bold text-emerald-700">₹${Number(eng.totalGiven || 0).toLocaleString('en-IN')}</span>
+                                <span class="ml-2 text-xs text-slate-500">(${eng.lastDate || '-'} | ${eng.mode || 'Cash'})</span>
+                            </div>
+                            <button onclick="editFundHistoryByEngineer('${eng.name}')" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                Edit
+                            </button>
                         </div>
-                        <button onclick="quickEditFund('${eng.name}', ${Number(eng.totalGiven || 0)}, '${eng.mode || 'Cash'}')" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
-                            Edit
-                        </button>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } else {
+                fundHistory.slice().reverse().forEach((fh, revIdx) => {
+                    const realIdx = fundHistory.length - 1 - revIdx;
+                    setupEngList.innerHTML += `
+                        <div class="py-2.5 flex justify-between items-center">
+                            <div>
+                                <span class="text-xs text-slate-500">${fh.date}</span>
+                                <span class="ml-2 font-medium text-slate-800">${fh.engineer}</span>
+                                <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span>
+                                <span class="ml-2 font-bold text-emerald-700">₹${Number(fh.amount).toLocaleString('en-IN')}</span>
+                            </div>
+                            <button onclick="editFundEntry(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                Edit
+                            </button>
+                        </div>
+                    `;
+                });
+            }
 
             const setupSiteList = document.getElementById('setupSiteList');
             setupSiteList.innerHTML = '';
@@ -492,12 +521,93 @@
             });
         }
 
-        function quickEditFund(engName, currentAmount, currentMode) {
-            document.getElementById('setupEngSelect').value = engName;
-            document.getElementById('setupFundAction').value = 'set';
-            document.getElementById('setupFundMode').value = ['Cash', 'Online', 'GPay'].includes(currentMode) ? currentMode : 'Cash';
-            document.getElementById('setupEngFund').value = currentAmount;
-            document.getElementById('setupEngFund').focus();
+        function recalculateEngineerTotals() {
+            const totals = {};
+            VALID_ENGINEERS.forEach(name => {
+                totals[name] = { totalGiven: 0, lastDate: "-", mode: "Cash" };
+            });
+
+            fundHistory.forEach(fh => {
+                if (totals[fh.engineer]) {
+                    totals[fh.engineer].totalGiven += Number(fh.amount || 0);
+                    totals[fh.engineer].lastDate = fh.date;
+                    totals[fh.engineer].mode = fh.mode;
+                }
+            });
+
+            engineers = VALID_ENGINEERS.map(name => ({
+                name,
+                totalGiven: totals[name].totalGiven,
+                lastDate: totals[name].lastDate,
+                mode: totals[name].mode
+            }));
+            localStorage.setItem('na_engineers', JSON.stringify(engineers));
+        }
+
+        async function editFundEntry(idx) {
+            if (currentUser !== 'Admin') return;
+            const entry = fundHistory[idx];
+            const newAmt = prompt(`Edit Amount (₹) given to ${entry.engineer} on ${entry.date} (${entry.mode}):`, entry.amount);
+            if (newAmt === null || isNaN(Number(newAmt))) return;
+
+            fundHistory[idx].amount = Number(newAmt);
+            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
+            recalculateEngineerTotals();
+            renderAll();
+
+            const updatedEng = engineers.find(e => e.name === entry.engineer);
+            try {
+                await fetch(`${SHEETDB_ENGINEERS}/name/${encodeURIComponent(entry.engineer)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data: {
+                            totalGiven: updatedEng.totalGiven,
+                            lastDate: updatedEng.lastDate,
+                            mode: updatedEng.mode
+                        }
+                    })
+                });
+            } catch (err) {
+                console.log("Sync error on edit:", err);
+            }
+        }
+
+        async function editFundHistoryByEngineer(engName) {
+            if (currentUser !== 'Admin') return;
+            const engObj = engineers.find(e => e.name === engName);
+            const newAmt = prompt(`Edit Total Amount (₹) for ${engName}:`, engObj ? engObj.totalGiven : 0);
+            if (newAmt === null || isNaN(Number(newAmt))) return;
+
+            const payDate = document.getElementById('setupFundDate').value || new Date().toISOString().split('T')[0];
+            const mode = document.getElementById('setupFundMode').value || 'Cash';
+
+            fundHistory = fundHistory.filter(fh => fh.engineer !== engName);
+            fundHistory.push({
+                date: payDate,
+                engineer: engName,
+                mode: mode,
+                amount: Number(newAmt)
+            });
+            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
+            recalculateEngineerTotals();
+            renderAll();
+
+            try {
+                await fetch(`${SHEETDB_ENGINEERS}/name/${encodeURIComponent(engName)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data: {
+                            totalGiven: Number(newAmt),
+                            lastDate: payDate,
+                            mode: mode
+                        }
+                    })
+                });
+            } catch (err) {
+                console.log("Sync error:", err);
+            }
         }
 
         function openAdminEditExpense(index) {
@@ -570,58 +680,44 @@
 
             const btn = document.getElementById('btnSaveFund');
             btn.disabled = true;
-            btn.innerText = "Updating...";
+            btn.innerText = "Saving...";
 
             const payDate = document.getElementById('setupFundDate').value;
             const name = document.getElementById('setupEngSelect').value;
             const mode = document.getElementById('setupFundMode').value;
-            const actionType = document.getElementById('setupFundAction').value;
             const amt = Number(document.getElementById('setupEngFund').value);
-
-            let eng = engineers.find(item => item.name === name);
-            const oldAmt = eng ? Number(eng.totalGiven || 0) : 0;
-            const diffAmt = actionType === 'set' ? (amt - oldAmt) : amt;
-
-            if (eng) {
-                eng.totalGiven = actionType === 'set' ? amt : (oldAmt + amt);
-                eng.lastDate = payDate;
-                eng.mode = mode;
-            } else {
-                engineers.push({ name: name, totalGiven: amt, lastDate: payDate, mode: mode });
-            }
 
             fundHistory.push({
                 date: payDate,
                 engineer: name,
                 mode: mode,
-                amount: actionType === 'set' ? amt : diffAmt
+                amount: amt
             });
-
-            localStorage.setItem('na_engineers', JSON.stringify(engineers));
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
+
+            recalculateEngineerTotals();
             renderAll();
 
+            const updatedEng = engineers.find(item => item.name === name);
             try {
-                const updatedEng = engineers.find(item => item.name === name);
                 await fetch(`${SHEETDB_ENGINEERS}/name/${encodeURIComponent(name)}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         data: {
                             totalGiven: updatedEng.totalGiven,
-                            lastDate: updatedEng.lastDate,
-                            mode: updatedEng.mode
+                            lastDate: payDate,
+                            mode: mode
                         }
                     })
                 });
-                alert(`${name} fund updated to ₹${updatedEng.totalGiven.toLocaleString('en-IN')} (${mode} on ${payDate})!`);
+                alert(`₹${amt.toLocaleString('en-IN')} (${mode}) saved for ${name} on ${payDate}!`);
             } catch (err) {
-                alert("Fund updated locally!");
+                alert("Fund saved locally!");
             }
 
             e.target.reset();
             document.getElementById('setupFundDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('setupFundAction').value = 'add';
             btn.disabled = false;
             btn.innerText = "Save Fund";
         }
