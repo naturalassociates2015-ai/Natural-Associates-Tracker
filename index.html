@@ -363,6 +363,7 @@
             document.getElementById('expDate').value = todayStr;
             document.getElementById('setupFundDate').value = todayStr;
             
+            recalculateEngineerTotals();
             renderAll();
             syncAllData(false);
         }
@@ -390,58 +391,55 @@
             if (syncText) syncText.innerText = "Syncing...";
 
             try {
-                const expRes = await fetch(`${SHEETDB_EXPENSES}?sheet=EXPENSES&t=${Date.now()}`);
-                let expData = [];
+                // 1. Fetch Expenses
+                const expRes = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`);
                 if (expRes.ok) {
-                    expData = await expRes.json();
-                } else {
-                    const fallbackExp = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`);
-                    if (fallbackExp.ok) expData = await fallbackExp.json();
+                    const expData = await expRes.json();
+                    if (Array.isArray(expData)) {
+                        expenses = expData.filter(row =>
+                            (row.Material || row.material || row.Amount || row.amount) &&
+                            !((row.EntryType || row.entryType || "").toUpperCase() === 'FUND_HISTORY')
+                        );
+                        localStorage.setItem('na_expenses', JSON.stringify(expenses));
+                    }
                 }
 
-                if (Array.isArray(expData)) {
-                    expenses = expData.filter(row =>
-                        (row.Material || row.material || row.Amount || row.amount) &&
-                        !(row.EntryType === 'FUND_HISTORY' || row.entryType === 'FUND_HISTORY')
-                    );
-                    localStorage.setItem('na_expenses', JSON.stringify(expenses));
-                }
-
+                // 2. Fetch Engineers & Fund History
                 const engRes = await fetch(`${SHEETDB_ENGINEERS}?t=${Date.now()}`);
                 if (engRes.ok) {
                     const engData = await engRes.json();
-                    if (Array.isArray(engData) && engData.length > 0) {
-                        const mapByEng = {};
-                        VALID_ENGINEERS.forEach(name => {
-                            mapByEng[name] = { name, totalGiven: 0, lastDate: "-", mode: "Cash" };
-                        });
-
+                    if (Array.isArray(engData)) {
                         const historyRows = [];
+                        const summaryByEng = {};
 
                         engData.forEach(row => {
-                            const entryType = (row.EntryType || row.entryType || "").trim();
+                            const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
                             const rawName = (row.name || row.Engineer || row.engineer || "").trim();
                             const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
 
-                            if (entryType === 'FUND_HISTORY' && matchedName) {
+                            if (!matchedName || row.Material || row.material) return;
+
+                            const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
+                            const rowMode = row.Mode || row.mode || "Cash";
+
+                            if (entryType === 'FUND_HISTORY') {
                                 const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
-                                if (!Number.isNaN(amt)) {
+                                if (!Number.isNaN(amt) && amt !== 0) {
                                     historyRows.push({
-                                        id: row.id || row.ID || null,
-                                        date: row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0],
+                                        date: rowDate,
                                         engineer: matchedName,
-                                        mode: row.Mode || row.mode || "Cash",
+                                        mode: rowMode,
                                         amount: amt
                                     });
                                 }
-                            } else if (matchedName && !row.Material && !row.material) {
-                                const amt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
-                                if (!Number.isNaN(amt)) {
-                                    mapByEng[matchedName] = {
+                            } else {
+                                const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
+                                if (!Number.isNaN(givenAmt)) {
+                                    summaryByEng[matchedName] = {
                                         name: matchedName,
-                                        totalGiven: amt,
-                                        lastDate: row.lastDate || row.Date || "-",
-                                        mode: row.mode || row.Mode || "Cash"
+                                        totalGiven: givenAmt,
+                                        lastDate: rowDate,
+                                        mode: rowMode
                                     };
                                 }
                             }
@@ -451,8 +449,8 @@
                             fundHistory = historyRows;
                             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
                             recalculateEngineerTotals();
-                        } else {
-                            engineers = VALID_ENGINEERS.map(name => mapByEng[name]);
+                        } else if (Object.keys(summaryByEng).length > 0) {
+                            engineers = VALID_ENGINEERS.map(name => summaryByEng[name] || { name, totalGiven: 0, lastDate: "-", mode: "Cash" });
                             localStorage.setItem('na_engineers', JSON.stringify(engineers));
                         }
                     }
@@ -470,13 +468,37 @@
             if (syncText) syncText.innerText = "Sync";
         }
 
+        function recalculateEngineerTotals() {
+            const totals = {};
+            VALID_ENGINEERS.forEach(name => {
+                totals[name] = { totalGiven: 0, lastDate: "-", mode: "Cash" };
+            });
+
+            fundHistory.forEach(fh => {
+                const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === (fh.engineer || "").trim().toLowerCase());
+                if (matchedName) {
+                    totals[matchedName].totalGiven += Number(fh.amount || 0);
+                    totals[matchedName].lastDate = fh.date;
+                    totals[matchedName].mode = fh.mode;
+                }
+            });
+
+            engineers = VALID_ENGINEERS.map(name => ({
+                name,
+                totalGiven: totals[name].totalGiven,
+                lastDate: totals[name].lastDate,
+                mode: totals[name].mode
+            }));
+            localStorage.setItem('na_engineers', JSON.stringify(engineers));
+        }
+
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
 
-            // Each Engineer sees ONLY their own fund & expenses; Admin sees total across all
+            // Engineer sees ONLY their own fund & expenses; Admin sees total across all
             const scopedEngineers = isAdmin
                 ? engineers
-                : engineers.filter(e => e.name === currentUser);
+                : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
 
             const scopedExpenses = isAdmin
                 ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
@@ -541,7 +563,7 @@
                 `;
             });
 
-            // Admin Setup: Funds Given by Admin (Specific Engineer only)
+            // Admin Setup: Funds Given by Admin
             const setupEngList = document.getElementById('setupEngList');
             setupEngList.innerHTML = '';
             if (fundHistory.length === 0) {
@@ -575,29 +597,6 @@
             sites.forEach(s => {
                 setupSiteList.innerHTML += `<div class="py-2">${s}</div>`;
             });
-        }
-
-        function recalculateEngineerTotals() {
-            const totals = {};
-            VALID_ENGINEERS.forEach(name => {
-                totals[name] = { totalGiven: 0, lastDate: "-", mode: "Cash" };
-            });
-
-            fundHistory.forEach(fh => {
-                if (totals[fh.engineer]) {
-                    totals[fh.engineer].totalGiven += Number(fh.amount || 0);
-                    totals[fh.engineer].lastDate = fh.date;
-                    totals[fh.engineer].mode = fh.mode;
-                }
-            });
-
-            engineers = VALID_ENGINEERS.map(name => ({
-                name,
-                totalGiven: totals[name].totalGiven,
-                lastDate: totals[name].lastDate,
-                mode: totals[name].mode
-            }));
-            localStorage.setItem('na_engineers', JSON.stringify(engineers));
         }
 
         async function pushEngineerToSheet(engName) {
@@ -733,7 +732,7 @@
             renderAll();
 
             try {
-                await fetch(`${SHEETDB_EXPENSES}?sheet=EXPENSES`, {
+                await fetch(SHEETDB_EXPENSES, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: [newExp] })
@@ -777,7 +776,7 @@
             await pushEngineerToSheet(name);
             await pushFundHistoryEntryToSheet(historyItem);
 
-            alert(`₹${amt.toLocaleString('en-IN')} (${mode}) saved only for ${name} on ${formatDateVal(payDate)}!`);
+            alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} on ${formatDateVal(payDate)}!`);
 
             e.target.reset();
             document.getElementById('setupFundDate').value = new Date().toISOString().split('T')[0];
