@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
-        .admin-only { display: none !important; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -24,7 +23,7 @@
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Select User / Role</label>
-                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" required>
                         <option value="">-- Choose Profile --</option>
                         <option value="Admin">Admin (Full Access)</option>
                         <option value="Sivashankar">Sivashankar (Engineer)</option>
@@ -35,8 +34,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" required>
-                    <p id="loginError" class="text-xs text-red-500 mt-1 hidden">Invalid password!</p>
+                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <p id="loginError" class="text-xs text-red-500 mt-1 hidden">Invalid password! Please try again.</p>
                 </div>
                 <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition">Login</button>
             </form>
@@ -51,12 +50,16 @@
                     <i data-lucide="building-2" class="w-6 h-6 text-emerald-400"></i>
                     <div>
                         <h1 class="text-xl font-bold">Natural Associates</h1>
-                        <p id="userRoleDisplay" class="text-xs text-slate-400"></p>
+                        <p id="userRoleDisplay" class="text-xs text-emerald-400 font-medium"></p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <button onclick="handleLogout()" class="flex items-center space-x-1 text-sm bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                <div class="flex items-center space-x-3">
+                    <button onclick="syncAllData()" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>Sync</span>
+                    </button>
+                    <button onclick="handleLogout()" class="flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
                         <span>Logout</span>
                     </button>
                 </div>
@@ -66,16 +69,16 @@
         <!-- Navigation Tabs -->
         <nav class="bg-white border-b shadow-sm">
             <div class="max-w-7xl mx-auto px-4 flex space-x-6 overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-3 border-b-2 border-emerald-600 text-emerald-600 font-medium flex items-center space-x-2">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 px-3 border-b-2 border-emerald-600 text-emerald-600 font-medium flex items-center space-x-2 whitespace-nowrap">
                     <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
                     <span>Overview</span>
                 </button>
-                <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2">
+                <button onclick="switchTab('expenses')" id="tab-expenses" class="py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2 whitespace-nowrap">
                     <i data-lucide="receipt" class="w-4 h-4"></i>
                     <span>Expenses</span>
                 </button>
-                <!-- Admin Setup Tab (Strictly for Admin) -->
-                <button onclick="switchTab('settings')" id="tab-settings" class="admin-only py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2">
+                <!-- Admin Setup Tab (Hidden by default with Tailwind 'hidden' class) -->
+                <button onclick="switchTab('settings')" id="tab-settings" class="hidden py-4 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex items-center space-x-2 whitespace-nowrap">
                     <i data-lucide="settings" class="w-4 h-4"></i>
                     <span>Admin Setup</span>
                 </button>
@@ -85,53 +88,152 @@
         <!-- Content Area -->
         <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
             
-            <!-- DASHBOARD TAB -->
+            <!-- 1. DASHBOARD TAB -->
             <div id="view-dashboard" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-6 rounded-2xl shadow border">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p class="text-sm text-slate-500">Total Funds Allocated</p>
-                        <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900">₹0</h3>
+                        <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl shadow border">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p class="text-sm text-slate-500">Total Expenses Spent</p>
-                        <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-slate-900">₹0</h3>
+                        <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-rose-600 mt-1">₹0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p class="text-sm text-slate-500">Balance Available</p>
+                        <h3 id="balanceDisplay" class="text-2xl font-bold text-emerald-600 mt-1">₹0</h3>
+                    </div>
+                </div>
+
+                <!-- Engineer Summary Table -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <h2 class="text-lg font-bold mb-4">Engineer Balances & Fund Status</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b">
+                                    <th class="p-3">Engineer Name</th>
+                                    <th class="p-3">Funds Given</th>
+                                    <th class="p-3">Spent</th>
+                                    <th class="p-3">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="engineerSummaryBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- EXPENSES TAB -->
+            <!-- 2. EXPENSES TAB -->
             <div id="view-expenses" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow border">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-4">Record New Expense</h2>
-                    <form onsubmit="addExpense(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <form onsubmit="addExpense(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl" required>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date</label>
+                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl text-sm" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Engineer</label>
-                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl" required></select>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Engineer</label>
+                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl text-sm" required></select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Site</label>
-                            <select id="expSite" class="w-full p-2.5 border rounded-xl" required></select>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
+                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm" required></select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Amount (₹)</label>
-                            <input type="number" id="expAmount" placeholder="Enter amount" class="w-full p-2.5 border rounded-xl" required>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Material / Description</label>
+                            <input type="text" id="expMaterial" placeholder="e.g., Cement, M-Sand, Labor" class="w-full p-2.5 border rounded-xl text-sm" required>
                         </div>
-                        <div class="md:col-span-4">
-                            <button type="submit" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition">Save Expense</button>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Qty & Unit</label>
+                            <div class="flex space-x-2">
+                                <input type="number" step="any" id="expQty" placeholder="Qty" class="w-1/2 p-2.5 border rounded-xl text-sm" required>
+                                <select id="expUnit" class="w-1/2 p-2.5 border rounded-xl text-sm"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Amount (₹)</label>
+                            <input type="number" id="expAmount" placeholder="Amount in ₹" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div class="md:col-span-3">
+                            <button type="submit" id="btnSaveExp" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition text-sm">Save Expense</button>
                         </div>
                     </form>
                 </div>
+
+                <!-- Expense Logs Table -->
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="p-6 border-b">
+                        <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Engineer</th>
+                                    <th class="p-3">Site</th>
+                                    <th class="p-3">Material</th>
+                                    <th class="p-3">Qty</th>
+                                    <th class="p-3">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- ADMIN SETUP TAB (Strictly Admin Only) -->
-            <div id="view-settings" class="admin-only space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow border">
-                    <h2 class="text-lg font-bold mb-4 text-emerald-600">Admin Setup & Engineer Fund Management</h2>
-                    <p class="text-sm text-slate-500 mb-4">Manage engineer fund allocations and site configurations here.</p>
+            <!-- 3. ADMIN SETUP TAB (Strictly Visible & Accessible ONLY to Admin) -->
+            <div id="view-settings" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Allocate Fund to Engineer -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Allocate / Update Engineer Fund</span>
+                        </h3>
+                        <form onsubmit="addOrUpdateEngineer(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Engineer Name</label>
+                                <select id="setupEngSelect" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                    <option value="Sivashankar">Sivashankar</option>
+                                    <option value="Yogesh">Yogesh</option>
+                                    <option value="Senthil">Senthil</option>
+                                    <option value="Manikandan">Manikandan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Add Fund Amount (₹)</label>
+                                <input type="number" id="setupEngFund" placeholder="Enter amount to add (e.g., 50000)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <button type="submit" id="btnSaveFund" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Fund to Engineer</button>
+                        </form>
+                        <div class="pt-2 border-t">
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Current Engineer Allocations:</p>
+                            <div id="setupEngList" class="divide-y text-sm"></div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Sites -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Manage Construction Sites</span>
+                        </h3>
+                        <form onsubmit="addSite(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
+                                <input type="text" id="setupSiteName" placeholder="e.g., Tambaram, Porur" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
+                        </form>
+                        <div class="pt-2 border-t">
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites:</p>
+                            <div id="setupSiteList" class="divide-y text-sm"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -139,20 +241,29 @@
     </div>
 
     <script>
+        // SheetDB API Endpoints
         const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5jtno86nn45ml";
         const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/e92x2wxuf37nv";
 
+        // Passwords
+        const passwords = {
+            "Admin": "admin123",
+            "Sivashankar": "pass123",
+            "Yogesh": "pass123",
+            "Senthil": "pass123",
+            "Manikandan": "pass123"
+        };
+
         let currentUser = localStorage.getItem('na_current_user') || null;
-        const passwords = { "Admin": "admin123", "Sivashankar": "pass123", "Yogesh": "pass123", "Senthil": "pass123", "Manikandan": "pass123" };
-        
-        const engineers = [
+        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
             { name: "Sivashankar", totalGiven: 100000 },
             { name: "Yogesh", totalGiven: 75000 },
             { name: "Senthil", totalGiven: 0 },
             { name: "Manikandan", totalGiven: 0 }
         ];
-
-        const sites = ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvachathiram"];
+        let sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvachathiram"];
+        let units = ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet", "Lumpsum"];
+        let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
 
         function handleLogin(e) {
             e.preventDefault();
@@ -162,6 +273,7 @@
             if (passwords[user] && passwords[user] === pass) {
                 currentUser = user;
                 localStorage.setItem('na_current_user', user);
+                document.getElementById('loginError').classList.add('hidden');
                 initApp();
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
@@ -181,56 +293,245 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
-            // Strict Role-based visibility check
-            const adminElements = document.querySelectorAll('.admin-only');
-            adminElements.forEach(el => {
-                if (currentUser === 'Admin') {
-                    el.style.display = ''; // அட்மினுக்கு மட்டும் தெரியும்
-                } else {
-                    el.style.display = 'none'; // மற்றவர்களுக்கு மறைக்கப்படும்
-                }
-            });
+            // STRICT ROLE CHECK: Only 'Admin' sees the Admin Setup tab
+            const adminTab = document.getElementById('tab-settings');
+            if (currentUser === 'Admin') {
+                adminTab.classList.remove('hidden');
+            } else {
+                adminTab.classList.add('hidden');
+            }
 
-            // Populate selects
+            // Always default to Dashboard tab on login
+            switchTab('dashboard');
+
+            // Populate dropdowns
             const expEngineer = document.getElementById('expEngineer');
             expEngineer.innerHTML = '';
-            engineers.forEach(eng => { expEngineer.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
+            if (currentUser === 'Admin') {
+                engineers.forEach(eng => { expEngineer.innerHTML += `<option value="${eng.name}">${eng.name}</option>`; });
+            } else {
+                expEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
+            }
 
             const expSite = document.getElementById('expSite');
             expSite.innerHTML = '';
             sites.forEach(site => { expSite.innerHTML += `<option value="${site}">${site}</option>`; });
 
+            const expUnit = document.getElementById('expUnit');
+            expUnit.innerHTML = '';
+            units.forEach(u => { expUnit.innerHTML += `<option value="${u}">${u}</option>`; });
+
             document.getElementById('expDate').valueAsDate = new Date();
-            renderDashboard();
+            
+            renderAll();
+            syncAllData();
         }
 
         function switchTab(tabName) {
-            document.getElementById('view-dashboard').classList.add('hidden');
-            document.getElementById('view-expenses').classList.add('hidden');
-            document.getElementById('view-settings').classList.add('hidden');
+            // Security block: Prevent non-admin from opening settings tab
+            if (tabName === 'settings' && currentUser !== 'Admin') {
+                return;
+            }
 
-            document.getElementById('tab-dashboard').classList.remove('border-emerald-600', 'text-emerald-600');
-            document.getElementById('tab-expenses').classList.remove('border-emerald-600', 'text-emerald-600');
-            document.getElementById('tab-settings').classList.remove('border-emerald-600', 'text-emerald-600');
+            ['dashboard', 'expenses', 'settings'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('border-emerald-600', 'text-emerald-600');
+                document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-slate-500');
+            });
 
             document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-slate-500');
             document.getElementById(`tab-${tabName}`).classList.add('border-emerald-600', 'text-emerald-600');
         }
 
-        function renderDashboard() {
-            let totalFunds = engineers.reduce((sum, eng) => sum + eng.totalGiven, 0);
-            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString()}`;
+        async function syncAllData() {
+            try {
+                // Fetch Expenses from SheetDB
+                const expRes = await fetch(SHEETDB_EXPENSES);
+                if (expRes.ok) {
+                    const expData = await expRes.json();
+                    if (Array.isArray(expData)) {
+                        expenses = expData;
+                        localStorage.setItem('na_expenses', JSON.stringify(expenses));
+                    }
+                }
+
+                // Fetch Engineers Fund from SheetDB
+                const engRes = await fetch(SHEETDB_ENGINEERS);
+                if (engRes.ok) {
+                    const engData = await engRes.json();
+                    if (Array.isArray(engData) && engData.length > 0) {
+                        engineers = engData.map(e => ({
+                            name: e.name || e.Engineer,
+                            totalGiven: Number(e.totalGiven || e.Amount || 0)
+                        }));
+                        localStorage.setItem('na_engineers', JSON.stringify(engineers));
+                    }
+                }
+                renderAll();
+            } catch (err) {
+                console.log("Offline or sync error:", err);
+                renderAll();
+            }
         }
 
-        function addExpense(e) {
+        function renderAll() {
+            // 1. Dashboard Summary
+            let totalFunds = engineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0);
+            let totalSpent = expenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
+            
+            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
+            document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+            document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
+
+            // Engineer Summary Table
+            const engBody = document.getElementById('engineerSummaryBody');
+            engBody.innerHTML = '';
+            engineers.forEach(eng => {
+                const spent = expenses
+                    .filter(ex => (ex.Engineer || ex.engineer) === eng.name)
+                    .reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
+                const bal = Number(eng.totalGiven || 0) - spent;
+                engBody.innerHTML += `
+                    <tr>
+                        <td class="p-3 font-medium">${eng.name}</td>
+                        <td class="p-3">₹${Number(eng.totalGiven || 0).toLocaleString('en-IN')}</td>
+                        <td class="p-3 text-rose-600">₹${spent.toLocaleString('en-IN')}</td>
+                        <td class="p-3 font-bold text-emerald-600">₹${bal.toLocaleString('en-IN')}</td>
+                    </tr>
+                `;
+            });
+
+            // 2. Expenses Table
+            const expBody = document.getElementById('expenseTableBody');
+            expBody.innerHTML = '';
+            expenses.slice().reverse().forEach(ex => {
+                expBody.innerHTML += `
+                    <tr>
+                        <td class="p-3">${ex.Date || ex.date || '-'}</td>
+                        <td class="p-3 font-medium">${ex.Engineer || ex.engineer || '-'}</td>
+                        <td class="p-3">${ex.Site || ex.site || '-'}</td>
+                        <td class="p-3">${ex.Material || ex.material || '-'}</td>
+                        <td class="p-3">${ex.Qty || ex.qty || ''} ${ex.Unit || ex.unit || ''}</td>
+                        <td class="p-3 font-semibold">₹${Number(ex.Amount || ex.amount || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                `;
+            });
+
+            // 3. Admin Setup Lists
+            const setupEngList = document.getElementById('setupEngList');
+            setupEngList.innerHTML = '';
+            engineers.forEach(eng => {
+                setupEngList.innerHTML += `
+                    <div class="py-2 flex justify-between">
+                        <span>${eng.name}</span>
+                        <span class="font-bold">₹${Number(eng.totalGiven || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                `;
+            });
+
+            const setupSiteList = document.getElementById('setupSiteList');
+            setupSiteList.innerHTML = '';
+            sites.forEach(s => {
+                setupSiteList.innerHTML += `<div class="py-2">${s}</div>`;
+            });
+        }
+
+        async function addExpense(e) {
             e.preventDefault();
-            alert("Expense saved successfully!");
+            const btn = document.getElementById('btnSaveExp');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const newExp = {
+                Date: document.getElementById('expDate').value,
+                Engineer: document.getElementById('expEngineer').value,
+                Site: document.getElementById('expSite').value,
+                Material: document.getElementById('expMaterial').value,
+                Qty: document.getElementById('expQty').value,
+                Unit: document.getElementById('expUnit').value,
+                Amount: Number(document.getElementById('expAmount').value)
+            };
+
+            expenses.push(newExp);
+            localStorage.setItem('na_expenses', JSON.stringify(expenses));
+            renderAll();
+
+            try {
+                await fetch(SHEETDB_EXPENSES, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: [newExp] })
+                });
+                alert("Expense saved to Google Sheet!");
+            } catch (err) {
+                alert("Saved locally (Offline). Will sync later.");
+            }
+
+            e.target.reset();
+            document.getElementById('expDate').valueAsDate = new Date();
+            btn.disabled = false;
+            btn.innerText = "Save Expense";
+        }
+
+        async function addOrUpdateEngineer(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+
+            const btn = document.getElementById('btnSaveFund');
+            btn.disabled = true;
+            btn.innerText = "Updating...";
+
+            const name = document.getElementById('setupEngSelect').value;
+            const addAmt = Number(document.getElementById('setupEngFund').value);
+
+            let eng = engineers.find(item => item.name === name);
+            if (eng) {
+                eng.totalGiven = Number(eng.totalGiven || 0) + addAmt;
+            } else {
+                engineers.push({ name: name, totalGiven: addAmt });
+            }
+
+            localStorage.setItem('na_engineers', JSON.stringify(engineers));
+            renderAll();
+
+            try {
+                // Update in SheetDB Engineers sheet
+                await fetch(`${SHEETDB_ENGINEERS}/name/${encodeURIComponent(name)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: { totalGiven: eng.totalGiven } })
+                });
+                alert(`₹${addAmt.toLocaleString('en-IN')} added to ${name}!`);
+            } catch (err) {
+                alert("Fund updated locally!");
+            }
+
+            e.target.reset();
+            btn.disabled = false;
+            btn.innerText = "Add Fund to Engineer";
+        }
+
+        function addSite(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+            const newSite = document.getElementById('setupSiteName').value.trim();
+            if (newSite && !sites.includes(newSite)) {
+                sites.push(newSite);
+                localStorage.setItem('na_sites', JSON.stringify(sites));
+                
+                const expSite = document.getElementById('expSite');
+                expSite.innerHTML += `<option value="${newSite}">${newSite}</option>`;
+                
+                renderAll();
+                alert(`Site "${newSite}" added!`);
+            }
+            e.target.reset();
         }
 
         if (currentUser) {
             initApp();
         }
-
         lucide.createIcons();
     </script>
 </body>
