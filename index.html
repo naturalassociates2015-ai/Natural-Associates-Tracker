@@ -280,16 +280,22 @@
         }
 
         function formatDateVal(val) {
-            if (!val) return '-';
-            if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
-                const serial = Number(val);
-                const utcDays = Math.floor(serial - 25569);
-                const dateObj = new Date(utcDays * 86400 * 1000);
-                return dateObj.toLocaleDateString('en-IN');
-            }
-            return val;
+    if (!val) return '-';
+    if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
+        const serial = Number(val);
+        const utcDays = Math.floor(serial - 25569);
+        const dateObj = new Date(utcDays * 86400 * 1000);
+        return dateObj.toLocaleDateString('en-IN');
+    }
+    const str = String(val).trim();
+    if (str.includes('T')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('en-IN');
         }
-
+    }
+    return str;
+}
         let currentUser = localStorage.getItem('na_current_user') || null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
             name, totalGiven: 0, lastDate: "-", mode: "Cash"
