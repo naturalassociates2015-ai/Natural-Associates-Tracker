@@ -55,8 +55,8 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <button onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
-                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        <span>Sync</span>
+                        <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
+                        <span id="syncText">Sync</span>
                     </button>
                     <button onclick="handleLogout()" class="flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
                         <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
@@ -92,15 +92,15 @@
             <div id="view-dashboard" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <p class="text-sm text-slate-500">Total Funds Allocated</p>
+                        <p id="lblTotalFunds" class="text-sm text-slate-500">Total Funds Allocated</p>
                         <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <p class="text-sm text-slate-500">Total Expenses Spent</p>
+                        <p id="lblTotalExpenses" class="text-sm text-slate-500">Total Expenses Spent</p>
                         <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-rose-600 mt-1">₹0</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <p class="text-sm text-slate-500">Balance Available</p>
+                        <p id="lblBalance" class="text-sm text-slate-500">Balance Available</p>
                         <h3 id="balanceDisplay" class="text-2xl font-bold text-emerald-600 mt-1">₹0</h3>
                     </div>
                 </div>
@@ -385,19 +385,29 @@
 
         async function syncAllData(showAlert = false) {
             const btnSync = document.getElementById('btnSync');
+            const syncText = document.getElementById('syncText');
             if (btnSync) btnSync.disabled = true;
+            if (syncText) syncText.innerText = "Syncing...";
 
             try {
-                const expRes = await fetch(SHEETDB_EXPENSES + "?t=" + Date.now());
+                const expRes = await fetch(`${SHEETDB_EXPENSES}?sheet=EXPENSES&t=${Date.now()}`);
+                let expData = [];
                 if (expRes.ok) {
-                    const expData = await expRes.json();
-                    if (Array.isArray(expData)) {
-                        expenses = expData.filter(row => row.Material || row.material || row.Amount || row.amount);
-                        localStorage.setItem('na_expenses', JSON.stringify(expenses));
-                    }
+                    expData = await expRes.json();
+                } else {
+                    const fallbackExp = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`);
+                    if (fallbackExp.ok) expData = await fallbackExp.json();
                 }
 
-                const engRes = await fetch(SHEETDB_ENGINEERS + "?t=" + Date.now());
+                if (Array.isArray(expData)) {
+                    expenses = expData.filter(row =>
+                        (row.Material || row.material || row.Amount || row.amount) &&
+                        !(row.EntryType === 'FUND_HISTORY' || row.entryType === 'FUND_HISTORY')
+                    );
+                    localStorage.setItem('na_expenses', JSON.stringify(expenses));
+                }
+
+                const engRes = await fetch(`${SHEETDB_ENGINEERS}?t=${Date.now()}`);
                 if (engRes.ok) {
                     const engData = await engRes.json();
                     if (Array.isArray(engData) && engData.length > 0) {
@@ -406,60 +416,81 @@
                             mapByEng[name] = { name, totalGiven: 0, lastDate: "-", mode: "Cash" };
                         });
 
-                        const remoteHistory = [];
+                        const historyRows = [];
 
                         engData.forEach(row => {
+                            const entryType = (row.EntryType || row.entryType || "").trim();
                             const rawName = (row.name || row.Engineer || row.engineer || "").trim();
                             const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
-                            if (matchedName && !row.Material && !row.material) {
-                                const amt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
-                                const rowDate = row.lastDate || row.Date || row.date || new Date().toISOString().split('T')[0];
-                                const rowMode = row.mode || row.Mode || "Cash";
 
+                            if (entryType === 'FUND_HISTORY' && matchedName) {
+                                const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
+                                if (!Number.isNaN(amt)) {
+                                    historyRows.push({
+                                        id: row.id || row.ID || null,
+                                        date: row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0],
+                                        engineer: matchedName,
+                                        mode: row.Mode || row.mode || "Cash",
+                                        amount: amt
+                                    });
+                                }
+                            } else if (matchedName && !row.Material && !row.material) {
+                                const amt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
                                 if (!Number.isNaN(amt)) {
                                     mapByEng[matchedName] = {
                                         name: matchedName,
                                         totalGiven: amt,
-                                        lastDate: rowDate,
-                                        mode: rowMode
+                                        lastDate: row.lastDate || row.Date || "-",
+                                        mode: row.mode || row.Mode || "Cash"
                                     };
-                                    if (amt > 0) {
-                                        remoteHistory.push({
-                                            date: rowDate,
-                                            engineer: matchedName,
-                                            mode: rowMode,
-                                            amount: amt
-                                        });
-                                    }
                                 }
                             }
                         });
 
-                        engineers = VALID_ENGINEERS.map(name => mapByEng[name]);
-                        localStorage.setItem('na_engineers', JSON.stringify(engineers));
-
-                        if (remoteHistory.length > 0) {
-                            fundHistory = remoteHistory;
+                        if (historyRows.length > 0) {
+                            fundHistory = historyRows;
                             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
+                            recalculateEngineerTotals();
+                        } else {
+                            engineers = VALID_ENGINEERS.map(name => mapByEng[name]);
+                            localStorage.setItem('na_engineers', JSON.stringify(engineers));
                         }
                     }
                 }
+
                 renderAll();
-                if (showAlert) alert("Data synced with Google Sheet!");
+                if (showAlert) alert("Synced with Google Sheet!");
             } catch (err) {
-                console.log("Offline or sync error:", err);
+                console.log("Sync error:", err);
                 renderAll();
-                if (showAlert) alert("Could not sync right now. Showing saved data.");
+                if (showAlert) alert("Sync failed. Check internet / SheetDB.");
             }
 
             if (btnSync) btnSync.disabled = false;
+            if (syncText) syncText.innerText = "Sync";
         }
 
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
-            let totalFunds = engineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0);
-            let totalSpent = expenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
-            
+
+            // Each Engineer sees ONLY their own fund & expenses; Admin sees total across all
+            const scopedEngineers = isAdmin
+                ? engineers
+                : engineers.filter(e => e.name === currentUser);
+
+            const scopedExpenses = isAdmin
+                ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
+                : expenses
+                    .map((ex, idx) => ({ ex, realIdx: idx }))
+                    .filter(item => ((item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase()));
+
+            const totalFunds = scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0);
+            const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+
+            document.getElementById('lblTotalFunds').innerText = isAdmin ? "Total Funds Allocated" : `${currentUser} - Fund Received`;
+            document.getElementById('lblTotalExpenses').innerText = isAdmin ? "Total Expenses Spent" : `${currentUser} - Expenses Spent`;
+            document.getElementById('lblBalance').innerText = isAdmin ? "Balance Available" : `${currentUser} - Balance`;
+
             document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
             document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
             document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
@@ -469,7 +500,7 @@
             fundHistBody.innerHTML = '';
             const visibleHistory = isAdmin
                 ? fundHistory
-                : fundHistory.filter(fh => fh.engineer === currentUser);
+                : fundHistory.filter(fh => (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase());
 
             if (visibleHistory.length === 0) {
                 fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
@@ -489,11 +520,7 @@
             // Expenses Table
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
-            const visibleExpenses = isAdmin
-                ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
-                : expenses.map((ex, idx) => ({ ex, realIdx: idx })).filter(item => (item.ex.Engineer || item.ex.engineer) === currentUser);
-
-            visibleExpenses.slice().reverse().forEach(({ ex, realIdx }) => {
+            scopedExpenses.slice().reverse().forEach(({ ex, realIdx }) => {
                 const actionCell = isAdmin ? `
                     <td class="p-3 space-x-2 whitespace-nowrap">
                         <button onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
@@ -514,7 +541,7 @@
                 `;
             });
 
-            // Admin Setup: Funds Given by Admin (Specific to selected Engineer only)
+            // Admin Setup: Funds Given by Admin (Specific Engineer only)
             const setupEngList = document.getElementById('setupEngList');
             setupEngList.innerHTML = '';
             if (fundHistory.length === 0) {
@@ -611,6 +638,27 @@
             }
         }
 
+        async function pushFundHistoryEntryToSheet(entry) {
+            try {
+                await fetch(SHEETDB_ENGINEERS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data: [{
+                            EntryType: 'FUND_HISTORY',
+                            name: entry.engineer,
+                            Engineer: entry.engineer,
+                            Date: entry.date,
+                            Mode: entry.mode,
+                            Amount: entry.amount
+                        }]
+                    })
+                });
+            } catch (err) {
+                console.log("History sheet sync error:", err);
+            }
+        }
+
         async function editFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
@@ -622,6 +670,7 @@
             recalculateEngineerTotals();
             renderAll();
             await pushEngineerToSheet(entry.engineer);
+            await pushFundHistoryEntryToSheet(fundHistory[idx]);
         }
 
         async function deleteFundEntry(idx) {
@@ -684,7 +733,7 @@
             renderAll();
 
             try {
-                await fetch(SHEETDB_EXPENSES, {
+                await fetch(`${SHEETDB_EXPENSES}?sheet=EXPENSES`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: [newExp] })
@@ -713,17 +762,20 @@
             const mode = document.getElementById('setupFundMode').value;
             const amt = Number(document.getElementById('setupEngFund').value);
 
-            fundHistory.push({
+            const historyItem = {
                 date: payDate,
                 engineer: name,
                 mode: mode,
                 amount: amt
-            });
+            };
+
+            fundHistory.push(historyItem);
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
 
             recalculateEngineerTotals();
             renderAll();
             await pushEngineerToSheet(name);
+            await pushFundHistoryEntryToSheet(historyItem);
 
             alert(`₹${amt.toLocaleString('en-IN')} (${mode}) saved only for ${name} on ${formatDateVal(payDate)}!`);
 
