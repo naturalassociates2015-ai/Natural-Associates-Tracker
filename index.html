@@ -54,7 +54,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Live Sync On</span>
+                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Apps Script Sync</span>
                     <button onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
                         <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
                         <span id="syncText">Sync</span>
@@ -259,8 +259,7 @@
     </div>
 
     <script>
-        const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5yuo2r9ze4weu";
-        const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/06zchbzds5amc";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyA-mQjAVvW3F9LDGwTaLrkCk56sDXxBzHAvvPM1818nk1c2xfvskcz-qwbna-f4LZu/exec";
 
         const passwords = {
             "Admin": "admin123",
@@ -299,6 +298,16 @@
         let sites = JSON.parse(localStorage.getItem('na_sites')) || [...DEFAULT_SITES];
         let units = ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet", "Lumpsum"];
         let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
+
+        async function postToScript(payload) {
+            const res = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error("Apps Script POST failed");
+            return await res.json();
+        }
 
         function refreshSiteDropdown() {
             const expSite = document.getElementById('expSite');
@@ -422,29 +431,24 @@
             if (syncText) syncText.innerText = "Syncing...";
 
             try {
-                // 1. Fetch Expenses
-                const expRes = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`, { cache: 'no-store' });
-                if (expRes.ok) {
-                    const expData = await expRes.json();
-                    if (Array.isArray(expData)) {
-                        expenses = expData.filter(row =>
+                const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                if (res.ok) {
+                    const data = await res.json();
+
+                    if (Array.isArray(data.expenses)) {
+                        expenses = data.expenses.filter(row =>
                             (row.Material || row.material || row.Amount || row.amount) &&
                             !((row.EntryType || row.entryType || "").toUpperCase() === 'FUND_HISTORY')
                         );
                         localStorage.setItem('na_expenses', JSON.stringify(expenses));
                     }
-                }
 
-                // 2. Fetch Engineers, Fund History & Sites
-                const engRes = await fetch(`${SHEETDB_ENGINEERS}?t=${Date.now()}`, { cache: 'no-store' });
-                if (engRes.ok) {
-                    const engData = await engRes.json();
-                    if (Array.isArray(engData)) {
+                    if (Array.isArray(data.engineers)) {
                         const historyRows = [];
                         const summaryByEng = {};
                         const syncedSites = [...DEFAULT_SITES];
 
-                        engData.forEach(row => {
+                        data.engineers.forEach(row => {
                             const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
                             const siteVal = (row.Site || row.site || row.Sites || "").trim();
                             if (entryType === 'SITE_CONFIG' && siteVal && !syncedSites.includes(siteVal)) {
@@ -503,11 +507,11 @@
                 }
 
                 renderAll();
-                if (showAlert) alert("All devices synced with Google Sheet!");
+                if (showAlert) alert("Synced with Google Sheet via Apps Script!");
             } catch (err) {
                 console.log("Sync error:", err);
                 renderAll();
-                if (showAlert) alert("Sync failed. Check internet connection or SheetDB.");
+                if (showAlert) alert("Sync failed. Check internet connection or Apps Script deployment.");
             }
 
             if (btnSync) btnSync.disabled = false;
@@ -642,107 +646,45 @@
             });
         }
 
-        async function pushEngineerToSheet(engName) {
-            const updatedEng = engineers.find(e => e.name === engName);
-            if (!updatedEng) return;
-
-            try {
-                const res = await fetch(`${SHEETDB_ENGINEERS}/name/${encodeURIComponent(engName)}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        data: {
-                            totalGiven: updatedEng.totalGiven,
-                            lastDate: updatedEng.lastDate,
-                            mode: updatedEng.mode
-                        }
-                    })
-                });
-                if (res.ok) {
-                    const patchResult = await res.json();
-                    if (patchResult.updated === 0) {
-                        await fetch(SHEETDB_ENGINEERS, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                data: [{
-                                    name: updatedEng.name,
-                                    totalGiven: updatedEng.totalGiven,
-                                    lastDate: updatedEng.lastDate,
-                                    mode: updatedEng.mode
-                                }]
-                            })
-                        });
-                    }
-                }
-            } catch (err) {
-                console.log("Sheet sync error:", err);
-            }
-        }
-
-        async function pushFundHistoryEntryToSheet(entry) {
-            try {
-                await fetch(SHEETDB_ENGINEERS, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        data: [{
-                            RecordId: entry.id,
-                            EntryType: 'FUND_HISTORY',
-                            name: entry.engineer,
-                            Engineer: entry.engineer,
-                            Date: entry.date,
-                            Mode: entry.mode,
-                            Amount: entry.amount
-                        }]
-                    })
-                });
-            } catch (err) {
-                console.log("History sheet sync error:", err);
-            }
-        }
-
-        async function deleteFundHistoryFromSheet(entry) {
-            try {
-                if (entry.id) {
-                    const res = await fetch(`${SHEETDB_ENGINEERS}/RecordId/${encodeURIComponent(entry.id)}`, {
-                        method: 'DELETE'
-                    });
-                    if (res.ok) return;
-                }
-                // Fallback match by Engineer + Amount + Date if RecordId wasn't saved on older rows
-                await fetch(`${SHEETDB_ENGINEERS}/Engineer/${encodeURIComponent(entry.engineer)}?limit=1`, {
-                    method: 'DELETE'
-                });
-            } catch (err) {
-                console.log("History sheet delete error:", err);
-            }
-        }
-
         async function editFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
             const newAmt = prompt(`Edit Amount (₹) given to ${entry.engineer} on ${formatDateVal(entry.date)} (${entry.mode}):`, entry.amount);
             if (newAmt === null || isNaN(Number(newAmt))) return;
 
-            fundHistory[idx].amount = Number(newAmt);
+            const updatedAmt = Number(newAmt);
+            fundHistory[idx].amount = updatedAmt;
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
             recalculateEngineerTotals();
             renderAll();
 
-            await pushEngineerToSheet(entry.engineer);
-            if (entry.id) {
-                try {
-                    await fetch(`${SHEETDB_ENGINEERS}/RecordId/${encodeURIComponent(entry.id)}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: { Amount: Number(newAmt) } })
+            const updatedEng = engineers.find(e => e.name === entry.engineer);
+            try {
+                if (entry.id) {
+                    await postToScript({
+                        action: "updateFundHistory",
+                        target: "engineers",
+                        recordId: entry.id,
+                        data: { Amount: updatedAmt }
                     });
-                } catch (err) {
-                    console.log("History patch error:", err);
                 }
+                if (updatedEng) {
+                    await postToScript({
+                        action: "updateEngineerSummary",
+                        target: "engineers",
+                        name: entry.engineer,
+                        data: {
+                            totalGiven: updatedEng.totalGiven,
+                            lastDate: updatedEng.lastDate,
+                            mode: updatedEng.mode
+                        }
+                    });
+                }
+                await syncAllData(false);
+                alert("Fund updated across all devices!");
+            } catch (err) {
+                console.log("Fund edit sync error:", err);
             }
-            alert("Fund updated across all devices!");
         }
 
         async function deleteFundEntry(idx) {
@@ -755,9 +697,32 @@
             recalculateEngineerTotals();
             renderAll();
 
-            await deleteFundHistoryFromSheet(entry);
-            await pushEngineerToSheet(entry.engineer);
-            alert("Fund entry deleted across all devices!");
+            const updatedEng = engineers.find(e => e.name === entry.engineer);
+            try {
+                if (entry.id) {
+                    await postToScript({
+                        action: "deleteFundHistory",
+                        target: "engineers",
+                        recordId: entry.id
+                    });
+                }
+                if (updatedEng) {
+                    await postToScript({
+                        action: "updateEngineerSummary",
+                        target: "engineers",
+                        name: entry.engineer,
+                        data: {
+                            totalGiven: updatedEng.totalGiven,
+                            lastDate: updatedEng.lastDate,
+                            mode: updatedEng.mode
+                        }
+                    });
+                }
+                await syncAllData(false);
+                alert("Fund entry deleted across all devices!");
+            } catch (err) {
+                console.log("Fund delete sync error:", err);
+            }
         }
 
         async function openAdminEditExpense(index) {
@@ -769,6 +734,7 @@
             if (newAmt !== null && !isNaN(Number(newAmt))) {
                 const updatedMaterial = newMaterial.trim() || (item.Material || item.material);
                 const updatedAmt = Number(newAmt);
+                const recId = item.RecordId || item.recordId;
 
                 expenses[index].Material = updatedMaterial;
                 expenses[index].Amount = updatedAmt;
@@ -776,25 +742,19 @@
                 renderAll();
 
                 try {
-                    if (item.RecordId || item.recordId) {
-                        const recId = item.RecordId || item.recordId;
-                        await fetch(`${SHEETDB_EXPENSES}/RecordId/${encodeURIComponent(recId)}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data: { Material: updatedMaterial, Amount: updatedAmt } })
-                        });
-                    } else if (item.Material) {
-                        await fetch(`${SHEETDB_EXPENSES}/Material/${encodeURIComponent(item.Material)}?limit=1`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data: { Material: updatedMaterial, Amount: updatedAmt } })
+                    if (recId) {
+                        await postToScript({
+                            action: "updateExpense",
+                            target: "expenses",
+                            recordId: recId,
+                            data: { Material: updatedMaterial, Amount: updatedAmt }
                         });
                     }
+                    await syncAllData(false);
+                    alert("Expense updated across all devices!");
                 } catch (err) {
                     console.log("Expense edit sync error:", err);
                 }
-
-                alert("Expense updated across all devices!");
             }
         }
 
@@ -803,26 +763,24 @@
             const item = expenses[index];
             if (!confirm(`Delete expense "${item.Material || item.material}" (₹${Number(item.Amount || item.amount || 0).toLocaleString('en-IN')})?`)) return;
 
+            const recId = item.RecordId || item.recordId;
             expenses.splice(index, 1);
             localStorage.setItem('na_expenses', JSON.stringify(expenses));
             renderAll();
 
             try {
-                if (item.RecordId || item.recordId) {
-                    const recId = item.RecordId || item.recordId;
-                    await fetch(`${SHEETDB_EXPENSES}/RecordId/${encodeURIComponent(recId)}`, {
-                        method: 'DELETE'
-                    });
-                } else if (item.Material) {
-                    await fetch(`${SHEETDB_EXPENSES}/Material/${encodeURIComponent(item.Material)}?limit=1`, {
-                        method: 'DELETE'
+                if (recId) {
+                    await postToScript({
+                        action: "deleteExpense",
+                        target: "expenses",
+                        recordId: recId
                     });
                 }
+                await syncAllData(false);
+                alert("Expense deleted across all devices!");
             } catch (err) {
                 console.log("Expense delete sync error:", err);
             }
-
-            alert("Expense deleted across all devices!");
         }
 
         async function saveExpense(e) {
@@ -849,10 +807,10 @@
             renderAll();
 
             try {
-                await fetch(SHEETDB_EXPENSES, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: [newExp] })
+                await postToScript({
+                    action: "create",
+                    target: "expenses",
+                    data: [newExp]
                 });
                 await syncAllData(false);
                 alert("Expense saved and synced across devices!");
@@ -892,11 +850,39 @@
 
             recalculateEngineerTotals();
             renderAll();
-            await pushEngineerToSheet(name);
-            await pushFundHistoryEntryToSheet(historyItem);
-            await syncAllData(false);
 
-            alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} and synced!`);
+            const updatedEng = engineers.find(item => item.name === name);
+            try {
+                await postToScript({
+                    action: "addFundHistory",
+                    target: "engineers",
+                    data: {
+                        RecordId: historyItem.id,
+                        EntryType: "FUND_HISTORY",
+                        name: name,
+                        Engineer: name,
+                        Date: payDate,
+                        Mode: mode,
+                        Amount: amt
+                    }
+                });
+                if (updatedEng) {
+                    await postToScript({
+                        action: "updateEngineerSummary",
+                        target: "engineers",
+                        name: name,
+                        data: {
+                            totalGiven: updatedEng.totalGiven,
+                            lastDate: payDate,
+                            mode: mode
+                        }
+                    });
+                }
+                await syncAllData(false);
+                alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} and synced!`);
+            } catch (err) {
+                alert("Fund saved locally!");
+            }
 
             e.target.reset();
             document.getElementById('setupFundDate').value = new Date().toISOString().split('T')[0];
@@ -915,16 +901,16 @@
                 renderAll();
 
                 try {
-                    await fetch(SHEETDB_ENGINEERS, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            data: [{
-                                EntryType: 'SITE_CONFIG',
-                                Site: newSite
-                            }]
-                        })
+                    await postToScript({
+                        action: "create",
+                        target: "engineers",
+                        data: [{
+                            RecordId: makeRecordId(),
+                            EntryType: "SITE_CONFIG",
+                            Site: newSite
+                        }]
                     });
+                    await syncAllData(false);
                 } catch (err) {
                     console.log("Site sync error:", err);
                 }
