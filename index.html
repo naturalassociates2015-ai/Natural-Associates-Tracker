@@ -54,6 +54,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Live Sync On</span>
                     <button onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
                         <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
                         <span id="syncText">Sync</span>
@@ -258,8 +259,8 @@
     </div>
 
     <script>
-        const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5jtno86nn45ml";
-        const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/e92x2wxuf37nv";
+        const SHEETDB_EXPENSES = "https://sheetdb.io/api/v1/5yuo2r9ze4weu";
+        const SHEETDB_ENGINEERS = "https://sheetdb.io/api/v1/06zchbzds5amc";
 
         const passwords = {
             "Admin": "admin123",
@@ -270,6 +271,14 @@
         };
 
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "Manikandan"];
+        const DEFAULT_SITES = ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvachathiram"];
+
+        let syncTimer = null;
+        let isSyncing = false;
+
+        function makeRecordId() {
+            return "REC_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        }
 
         function formatDateVal(val) {
             if (!val) return '-';
@@ -283,16 +292,26 @@
         }
 
         let currentUser = localStorage.getItem('na_current_user') || null;
-        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
-            { name: "Sivashankar", totalGiven: 0, lastDate: "-", mode: "Cash" },
-            { name: "Yogesh", totalGiven: 0, lastDate: "-", mode: "Cash" },
-            { name: "Senthil", totalGiven: 0, lastDate: "-", mode: "Cash" },
-            { name: "Manikandan", totalGiven: 0, lastDate: "-", mode: "Cash" }
-        ];
+        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
+            name, totalGiven: 0, lastDate: "-", mode: "Cash"
+        }));
         let fundHistory = JSON.parse(localStorage.getItem('na_fund_history')) || [];
-        let sites = JSON.parse(localStorage.getItem('na_sites')) || ["Madhuravoyal", "Sithalapakam", "Oragadam", "Sunguvachathiram"];
+        let sites = JSON.parse(localStorage.getItem('na_sites')) || [...DEFAULT_SITES];
         let units = ["Bags", "Cft", "Tons", "Kg", "Nos", "Feet", "Lumpsum"];
         let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
+
+        function refreshSiteDropdown() {
+            const expSite = document.getElementById('expSite');
+            if (!expSite) return;
+            const currentVal = expSite.value;
+            expSite.innerHTML = '';
+            sites.forEach(site => {
+                expSite.innerHTML += `<option value="${site}">${site}</option>`;
+            });
+            if (currentVal && sites.includes(currentVal)) {
+                expSite.value = currentVal;
+            }
+        }
 
         function handleLogin(e) {
             e.preventDefault();
@@ -312,6 +331,10 @@
         function handleLogout() {
             localStorage.removeItem('na_current_user');
             currentUser = null;
+            if (syncTimer) {
+                clearInterval(syncTimer);
+                syncTimer = null;
+            }
             document.getElementById('mainApp').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('loginForm').reset();
@@ -351,9 +374,7 @@
                 expEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
             }
 
-            const expSite = document.getElementById('expSite');
-            expSite.innerHTML = '';
-            sites.forEach(site => { expSite.innerHTML += `<option value="${site}">${site}</option>`; });
+            refreshSiteDropdown();
 
             const expUnit = document.getElementById('expUnit');
             expUnit.innerHTML = '';
@@ -362,10 +383,17 @@
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('expDate').value = todayStr;
             document.getElementById('setupFundDate').value = todayStr;
-            
+
             recalculateEngineerTotals();
             renderAll();
             syncAllData(false);
+
+            if (syncTimer) clearInterval(syncTimer);
+            syncTimer = setInterval(() => {
+                if (currentUser && document.visibilityState === 'visible') {
+                    syncAllData(false);
+                }
+            }, 15000);
         }
 
         function switchTab(tabName) {
@@ -385,6 +413,9 @@
         }
 
         async function syncAllData(showAlert = false) {
+            if (isSyncing) return;
+            isSyncing = true;
+
             const btnSync = document.getElementById('btnSync');
             const syncText = document.getElementById('syncText');
             if (btnSync) btnSync.disabled = true;
@@ -392,7 +423,7 @@
 
             try {
                 // 1. Fetch Expenses
-                const expRes = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`);
+                const expRes = await fetch(`${SHEETDB_EXPENSES}?t=${Date.now()}`, { cache: 'no-store' });
                 if (expRes.ok) {
                     const expData = await expRes.json();
                     if (Array.isArray(expData)) {
@@ -404,16 +435,23 @@
                     }
                 }
 
-                // 2. Fetch Engineers & Fund History
-                const engRes = await fetch(`${SHEETDB_ENGINEERS}?t=${Date.now()}`);
+                // 2. Fetch Engineers, Fund History & Sites
+                const engRes = await fetch(`${SHEETDB_ENGINEERS}?t=${Date.now()}`, { cache: 'no-store' });
                 if (engRes.ok) {
                     const engData = await engRes.json();
                     if (Array.isArray(engData)) {
                         const historyRows = [];
                         const summaryByEng = {};
+                        const syncedSites = [...DEFAULT_SITES];
 
                         engData.forEach(row => {
                             const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
+                            const siteVal = (row.Site || row.site || row.Sites || "").trim();
+                            if (entryType === 'SITE_CONFIG' && siteVal && !syncedSites.includes(siteVal)) {
+                                syncedSites.push(siteVal);
+                                return;
+                            }
+
                             const rawName = (row.name || row.Engineer || row.engineer || "").trim();
                             const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
 
@@ -426,6 +464,7 @@
                                 const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
                                 if (!Number.isNaN(amt) && amt !== 0) {
                                     historyRows.push({
+                                        id: row.RecordId || row.recordId || row.id || null,
                                         date: rowDate,
                                         engineer: matchedName,
                                         mode: rowMode,
@@ -445,27 +484,35 @@
                             }
                         });
 
+                        sites = syncedSites;
+                        localStorage.setItem('na_sites', JSON.stringify(sites));
+                        refreshSiteDropdown();
+
+                        fundHistory = historyRows;
+                        localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
+
                         if (historyRows.length > 0) {
-                            fundHistory = historyRows;
-                            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
                             recalculateEngineerTotals();
                         } else if (Object.keys(summaryByEng).length > 0) {
                             engineers = VALID_ENGINEERS.map(name => summaryByEng[name] || { name, totalGiven: 0, lastDate: "-", mode: "Cash" });
                             localStorage.setItem('na_engineers', JSON.stringify(engineers));
+                        } else {
+                            recalculateEngineerTotals();
                         }
                     }
                 }
 
                 renderAll();
-                if (showAlert) alert("Synced with Google Sheet!");
+                if (showAlert) alert("All devices synced with Google Sheet!");
             } catch (err) {
                 console.log("Sync error:", err);
                 renderAll();
-                if (showAlert) alert("Sync failed. Check internet / SheetDB.");
+                if (showAlert) alert("Sync failed. Check internet connection or SheetDB.");
             }
 
             if (btnSync) btnSync.disabled = false;
             if (syncText) syncText.innerText = "Sync";
+            isSyncing = false;
         }
 
         function recalculateEngineerTotals() {
@@ -495,7 +542,6 @@
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
 
-            // Engineer sees ONLY their own fund & expenses; Admin sees total across all
             const scopedEngineers = isAdmin
                 ? engineers
                 : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
@@ -517,7 +563,6 @@
             document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
             document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
 
-            // Fund / Cash Received Details on First Page
             const fundHistBody = document.getElementById('fundHistoryBody');
             fundHistBody.innerHTML = '';
             const visibleHistory = isAdmin
@@ -539,7 +584,6 @@
                 });
             }
 
-            // Expenses Table
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
             scopedExpenses.slice().reverse().forEach(({ ex, realIdx }) => {
@@ -563,7 +607,6 @@
                 `;
             });
 
-            // Admin Setup: Funds Given by Admin
             const setupEngList = document.getElementById('setupEngList');
             setupEngList.innerHTML = '';
             if (fundHistory.length === 0) {
@@ -644,6 +687,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         data: [{
+                            RecordId: entry.id,
                             EntryType: 'FUND_HISTORY',
                             name: entry.engineer,
                             Engineer: entry.engineer,
@@ -658,6 +702,23 @@
             }
         }
 
+        async function deleteFundHistoryFromSheet(entry) {
+            try {
+                if (entry.id) {
+                    const res = await fetch(`${SHEETDB_ENGINEERS}/RecordId/${encodeURIComponent(entry.id)}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) return;
+                }
+                // Fallback match by Engineer + Amount + Date if RecordId wasn't saved on older rows
+                await fetch(`${SHEETDB_ENGINEERS}/Engineer/${encodeURIComponent(entry.engineer)}?limit=1`, {
+                    method: 'DELETE'
+                });
+            } catch (err) {
+                console.log("History sheet delete error:", err);
+            }
+        }
+
         async function editFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
@@ -668,8 +729,20 @@
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
             recalculateEngineerTotals();
             renderAll();
+
             await pushEngineerToSheet(entry.engineer);
-            await pushFundHistoryEntryToSheet(fundHistory[idx]);
+            if (entry.id) {
+                try {
+                    await fetch(`${SHEETDB_ENGINEERS}/RecordId/${encodeURIComponent(entry.id)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: { Amount: Number(newAmt) } })
+                    });
+                } catch (err) {
+                    console.log("History patch error:", err);
+                }
+            }
+            alert("Fund updated across all devices!");
         }
 
         async function deleteFundEntry(idx) {
@@ -681,32 +754,75 @@
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
             recalculateEngineerTotals();
             renderAll();
+
+            await deleteFundHistoryFromSheet(entry);
             await pushEngineerToSheet(entry.engineer);
+            alert("Fund entry deleted across all devices!");
         }
 
-        function openAdminEditExpense(index) {
+        async function openAdminEditExpense(index) {
             if (currentUser !== 'Admin') return;
             const item = expenses[index];
             const newMaterial = prompt("Edit Material / Description:", item.Material || item.material || "");
             if (newMaterial === null) return;
             const newAmt = prompt(`Edit Amount (₹) for ${item.Engineer || item.engineer}:`, item.Amount || item.amount);
             if (newAmt !== null && !isNaN(Number(newAmt))) {
-                expenses[index].Material = newMaterial.trim() || (item.Material || item.material);
-                expenses[index].Amount = Number(newAmt);
+                const updatedMaterial = newMaterial.trim() || (item.Material || item.material);
+                const updatedAmt = Number(newAmt);
+
+                expenses[index].Material = updatedMaterial;
+                expenses[index].Amount = updatedAmt;
                 localStorage.setItem('na_expenses', JSON.stringify(expenses));
                 renderAll();
-                alert("Expense entry updated!");
+
+                try {
+                    if (item.RecordId || item.recordId) {
+                        const recId = item.RecordId || item.recordId;
+                        await fetch(`${SHEETDB_EXPENSES}/RecordId/${encodeURIComponent(recId)}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: { Material: updatedMaterial, Amount: updatedAmt } })
+                        });
+                    } else if (item.Material) {
+                        await fetch(`${SHEETDB_EXPENSES}/Material/${encodeURIComponent(item.Material)}?limit=1`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: { Material: updatedMaterial, Amount: updatedAmt } })
+                        });
+                    }
+                } catch (err) {
+                    console.log("Expense edit sync error:", err);
+                }
+
+                alert("Expense updated across all devices!");
             }
         }
 
-        function deleteExpense(index) {
+        async function deleteExpense(index) {
             if (currentUser !== 'Admin') return;
-            if (confirm("Are you sure you want to delete this expense entry?")) {
-                expenses.splice(index, 1);
-                localStorage.setItem('na_expenses', JSON.stringify(expenses));
-                renderAll();
-                alert("Expense deleted!");
+            const item = expenses[index];
+            if (!confirm(`Delete expense "${item.Material || item.material}" (₹${Number(item.Amount || item.amount || 0).toLocaleString('en-IN')})?`)) return;
+
+            expenses.splice(index, 1);
+            localStorage.setItem('na_expenses', JSON.stringify(expenses));
+            renderAll();
+
+            try {
+                if (item.RecordId || item.recordId) {
+                    const recId = item.RecordId || item.recordId;
+                    await fetch(`${SHEETDB_EXPENSES}/RecordId/${encodeURIComponent(recId)}`, {
+                        method: 'DELETE'
+                    });
+                } else if (item.Material) {
+                    await fetch(`${SHEETDB_EXPENSES}/Material/${encodeURIComponent(item.Material)}?limit=1`, {
+                        method: 'DELETE'
+                    });
+                }
+            } catch (err) {
+                console.log("Expense delete sync error:", err);
             }
+
+            alert("Expense deleted across all devices!");
         }
 
         async function saveExpense(e) {
@@ -718,6 +834,7 @@
             btn.innerText = "Saving...";
 
             const newExp = {
+                RecordId: makeRecordId(),
                 Date: document.getElementById('expDate').value,
                 Engineer: document.getElementById('expEngineer').value,
                 Site: document.getElementById('expSite').value,
@@ -737,7 +854,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: [newExp] })
                 });
-                alert("Expense saved to Google Sheet!");
+                await syncAllData(false);
+                alert("Expense saved and synced across devices!");
             } catch (err) {
                 alert("Saved locally (Offline). Will sync later.");
             }
@@ -762,6 +880,7 @@
             const amt = Number(document.getElementById('setupEngFund').value);
 
             const historyItem = {
+                id: makeRecordId(),
                 date: payDate,
                 engineer: name,
                 mode: mode,
@@ -775,8 +894,9 @@
             renderAll();
             await pushEngineerToSheet(name);
             await pushFundHistoryEntryToSheet(historyItem);
+            await syncAllData(false);
 
-            alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} on ${formatDateVal(payDate)}!`);
+            alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} and synced!`);
 
             e.target.reset();
             document.getElementById('setupFundDate').value = new Date().toISOString().split('T')[0];
@@ -784,19 +904,32 @@
             btn.innerText = "Save Fund";
         }
 
-        function addSite(e) {
+        async function addSite(e) {
             e.preventDefault();
             if (currentUser !== 'Admin') return;
             const newSite = document.getElementById('setupSiteName').value.trim();
             if (newSite && !sites.includes(newSite)) {
                 sites.push(newSite);
                 localStorage.setItem('na_sites', JSON.stringify(sites));
-                
-                const expSite = document.getElementById('expSite');
-                expSite.innerHTML += `<option value="${newSite}">${newSite}</option>`;
-                
+                refreshSiteDropdown();
                 renderAll();
-                alert(`Site "${newSite}" added!`);
+
+                try {
+                    await fetch(SHEETDB_ENGINEERS, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            data: [{
+                                EntryType: 'SITE_CONFIG',
+                                Site: newSite
+                            }]
+                        })
+                    });
+                } catch (err) {
+                    console.log("Site sync error:", err);
+                }
+
+                alert(`Site "${newSite}" added and synced!`);
             }
             e.target.reset();
         }
