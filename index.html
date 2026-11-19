@@ -271,6 +271,17 @@
 
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "Manikandan"];
 
+        function formatDateVal(val) {
+            if (!val) return '-';
+            if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
+                const serial = Number(val);
+                const utcDays = Math.floor(serial - 25569);
+                const dateObj = new Date(utcDays * 86400 * 1000);
+                return dateObj.toLocaleDateString('en-IN');
+            }
+            return val;
+        }
+
         let currentUser = localStorage.getItem('na_current_user') || null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || [
             { name: "Sivashankar", totalGiven: 100000, lastDate: "-", mode: "Cash" },
@@ -440,7 +451,7 @@
                 visibleHistory.slice().reverse().forEach(fh => {
                     fundHistBody.innerHTML += `
                         <tr>
-                            <td class="p-3">${fh.date}</td>
+                            <td class="p-3">${formatDateVal(fh.date)}</td>
                             <td class="p-3 font-medium">${fh.engineer}</td>
                             <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span></td>
                             <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount).toLocaleString('en-IN')}</td>
@@ -466,7 +477,7 @@
 
                 expBody.innerHTML += `
                     <tr>
-                        <td class="p-3">${ex.Date || ex.date || '-'}</td>
+                        <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
                         <td class="p-3 font-medium">${ex.Engineer || ex.engineer || '-'}</td>
                         <td class="p-3">${ex.Site || ex.site || '-'}</td>
                         <td class="p-3">${ex.Material || ex.material || '-'}</td>
@@ -487,7 +498,7 @@
                             <div>
                                 <span class="font-medium text-slate-800">${eng.name}</span>
                                 <span class="ml-2 font-bold text-emerald-700">₹${Number(eng.totalGiven || 0).toLocaleString('en-IN')}</span>
-                                <span class="ml-2 text-xs text-slate-500">(${eng.lastDate || '-'} | ${eng.mode || 'Cash'})</span>
+                                <span class="ml-2 text-xs text-slate-500">(${formatDateVal(eng.lastDate)} | ${eng.mode || 'Cash'})</span>
                             </div>
                             <div class="flex items-center space-x-2 shrink-0">
                                 <button onclick="editFundHistoryByEngineer('${eng.name}')" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
@@ -506,7 +517,7 @@
                     setupEngList.innerHTML += `
                         <div class="py-2.5 flex justify-between items-center gap-2">
                             <div>
-                                <span class="text-xs text-slate-500">${fh.date}</span>
+                                <span class="text-xs text-slate-500">${formatDateVal(fh.date)}</span>
                                 <span class="ml-2 font-medium text-slate-800">${fh.engineer}</span>
                                 <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span>
                                 <span class="ml-2 font-bold text-emerald-700">₹${Number(fh.amount).toLocaleString('en-IN')}</span>
@@ -557,7 +568,7 @@
         async function editFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
-            const newAmt = prompt(`Edit Amount (₹) given to ${entry.engineer} on ${entry.date} (${entry.mode}):`, entry.amount);
+            const newAmt = prompt(`Edit Amount (₹) given to ${entry.engineer} on ${formatDateVal(entry.date)} (${entry.mode}):`, entry.amount);
             if (newAmt === null || isNaN(Number(newAmt))) return;
 
             fundHistory[idx].amount = Number(newAmt);
@@ -586,7 +597,7 @@
         async function deleteFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
-            if (!confirm(`Delete ₹${Number(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${entry.date} | ${entry.mode})?`)) return;
+            if (!confirm(`Delete ₹${Number(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
 
             fundHistory.splice(idx, 1);
             localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
@@ -777,7 +788,7 @@
                         }
                     })
                 });
-                alert(`₹${amt.toLocaleString('en-IN')} (${mode}) saved for ${name} on ${payDate}!`);
+                alert(`₹${amt.toLocaleString('en-IN')} (${mode}) saved for ${name} on ${formatDateVal(payDate)}!`);
             } catch (err) {
                 alert("Fund saved locally!");
             }
