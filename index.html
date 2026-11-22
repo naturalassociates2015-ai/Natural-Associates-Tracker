@@ -97,10 +97,10 @@
             <!-- 1. DASHBOARD / OVERVIEW TAB -->
             <div id="view-dashboard" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div onclick="openFundBreakdown()" class="bg-white p-6 rounded-2xl shadow-sm border cursor-pointer hover:border-emerald-400 transition">
+                    <div id="totalFundsCard" onclick="handleTotalFundsCardClick()" class="bg-white p-6 rounded-2xl shadow-sm border transition">
                         <div class="flex justify-between items-center">
                             <p id="lblTotalFunds" class="text-sm text-slate-500">Total Funds Allocated</p>
-                            <span class="text-[11px] text-emerald-600 font-medium">View Details &rarr;</span>
+                            <span id="fundBreakdownHint" class="hidden text-[11px] text-emerald-600 font-medium">View Details &rarr;</span>
                         </div>
                         <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
                     </div>
@@ -272,7 +272,7 @@
         </main>
     </div>
 
-    <!-- Engineer-wise Fund Breakdown Modal -->
+    <!-- Engineer-wise Fund Breakdown Modal (Admin Only) -->
     <div id="fundBreakdownModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
@@ -412,6 +412,17 @@
                 adminTab.classList.remove('hidden');
             } else {
                 adminTab.classList.add('hidden');
+            }
+
+            const totalFundsCard = document.getElementById('totalFundsCard');
+            const fundBreakdownHint = document.getElementById('fundBreakdownHint');
+            if (isAdmin) {
+                totalFundsCard.classList.add('cursor-pointer', 'hover:border-emerald-400');
+                fundBreakdownHint.classList.remove('hidden');
+            } else {
+                totalFundsCard.classList.remove('cursor-pointer', 'hover:border-emerald-400');
+                fundBreakdownHint.classList.add('hidden');
+                document.getElementById('fundBreakdownModal').classList.add('hidden');
             }
 
             const recordExpCard = document.getElementById('recordExpenseCard');
@@ -1070,15 +1081,19 @@
             e.target.reset();
         }
 
+        function handleTotalFundsCardClick() {
+            if (currentUser === 'Admin') {
+                openFundBreakdown();
+            }
+        }
+
         function openFundBreakdown() {
+            if (currentUser !== 'Admin') return;
+
             const listEl = document.getElementById('fundBreakdownList');
             listEl.innerHTML = '';
 
-            const visibleEngineers = currentUser === 'Admin'
-                ? engineers
-                : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
-
-            visibleEngineers.forEach(eng => {
+            engineers.forEach(eng => {
                 const allocated = Number(eng.totalGiven || 0);
                 const spent = expenses
                     .filter(e => ((e.Engineer || e.engineer || "").trim().toLowerCase() === eng.name.toLowerCase()))
@@ -1090,15 +1105,15 @@
                         <div class="font-bold text-slate-800 text-base mb-1">${eng.name}</div>
                         <div class="grid grid-cols-3 gap-2 text-xs">
                             <div>
-                                <span class="text-slate-500 block">கொடுத்தது</span>
+                                <span class="text-slate-500 block">Allocated</span>
                                 <span class="font-semibold text-emerald-700">₹${allocated.toLocaleString('en-IN')}</span>
                             </div>
                             <div>
-                                <span class="text-slate-500 block">செலவு</span>
+                                <span class="text-slate-500 block">Spent</span>
                                 <span class="font-semibold text-amber-700">₹${spent.toLocaleString('en-IN')}</span>
                             </div>
                             <div>
-                                <span class="text-slate-500 block">மீதி பேலன்ஸ்</span>
+                                <span class="text-slate-500 block">Balance</span>
                                 <span class="font-bold ${balance < 0 ? 'text-red-600' : 'text-slate-900'}">₹${balance.toLocaleString('en-IN')}</span>
                             </div>
                         </div>
