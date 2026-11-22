@@ -103,6 +103,7 @@
                             <span id="fundBreakdownHint" class="hidden text-[11px] text-emerald-600 font-medium">View Details &rarr;</span>
                         </div>
                         <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
+                        <p id="carryForwardNote" class="hidden text-[11px] text-emerald-700 mt-1 font-medium"></p>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p id="lblTotalExpenses" class="text-sm text-slate-500">Total Expenses Spent</p>
@@ -267,22 +268,33 @@
                         </div>
                     </div>
 
-                    <!-- Manage Sites -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                            <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
-                            <span>Manage Construction Sites</span>
-                        </h3>
-                        <form onsubmit="addSite(event)" class="space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
-                                <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
+                    <!-- Manage Sites & Engineer Period Cutoff -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Close / Settle Engineer Period</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <div id="engineerSettlementList" class="divide-y text-sm"></div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Manage Construction Sites</span>
+                            </h3>
+                            <form onsubmit="addSite(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
+                                    <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                </div>
+                                <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
+                            </form>
+                            <div class="pt-3 border-t">
+                                <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites (Edit & Delete):</p>
+                                <div id="setupSiteList" class="divide-y text-sm"></div>
                             </div>
-                            <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
-                        </form>
-                        <div class="pt-3 border-t">
-                            <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites (Edit & Delete):</p>
-                            <div id="setupSiteList" class="divide-y text-sm"></div>
                         </div>
                     </div>
                 </div>
@@ -324,6 +336,20 @@
             return "REC_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
         }
 
+        function parseRecordTs(row) {
+            const rawId = String(row.RecordId || row.recordId || row.id || "");
+            const match = rawId.match(/_(\d{10,})_/);
+            if (match && match[1]) {
+                return Number(match[1]);
+            }
+            const dStr = row.Date || row.date || row.lastDate;
+            if (dStr) {
+                const parsed = Date.parse(dStr);
+                if (!isNaN(parsed)) return parsed;
+            }
+            return 0;
+        }
+
         function formatDateVal(val) {
             if (!val) return '-';
             if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
@@ -362,7 +388,7 @@
 
         let currentUser = null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
-            name, totalGiven: 0, lastDate: "-", mode: "Cash"
+            name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
         }));
         let fundHistory = JSON.parse(localStorage.getItem('na_fund_history')) || [];
         let sites = JSON.parse(localStorage.getItem('na_sites')) || [...DEFAULT_SITES];
@@ -377,6 +403,31 @@
             });
             if (!res.ok) throw new Error("Apps Script POST failed");
             return await res.json();
+        }
+
+        function getEngineerCycleStats(engName, cutoffTs = 0, carryBalance = 0) {
+            const lowerName = (engName || "").trim().toLowerCase();
+            const cutoff = Number(cutoffTs || 0);
+            const carry = Number(carryBalance || 0);
+
+            const periodFunds = fundHistory.filter(fh => {
+                const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
+                const ts = Number(fh.ts || 0);
+                return matchEng && ts > cutoff;
+            });
+
+            const periodExpenses = expenses.filter(ex => {
+                const matchEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase() === lowerName;
+                const ts = Number(ex._ts || parseRecordTs(ex) || 0);
+                return matchEng && ts > cutoff;
+            });
+
+            const newFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+            const totalFunds = carry + newFunds;
+            const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
+            const balance = totalFunds - totalSpent;
+
+            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses };
         }
 
         function refreshSiteDropdowns() {
@@ -531,10 +582,12 @@
                     const data = await res.json();
 
                     if (Array.isArray(data.expenses)) {
-                        expenses = data.expenses.filter(row =>
-                            (row.Material || row.material || row.Amount || row.amount) &&
-                            !((row.EntryType || row.entryType || "").toUpperCase() === 'FUND_HISTORY')
-                        );
+                        expenses = data.expenses
+                            .filter(row =>
+                                (row.Material || row.material || row.Amount || row.amount) &&
+                                !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
+                            )
+                            .map(row => Object.assign({}, row, { _ts: row._ts || parseRecordTs(row) }));
                         localStorage.setItem('na_expenses', JSON.stringify(expenses));
                     }
 
@@ -558,6 +611,8 @@
 
                             const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
                             const rowMode = row.Mode || row.mode || "Cash";
+                            const rowCutoff = Number(row.CutoffTs ?? row.cutoffTs ?? 0) || 0;
+                            const rowCarry = Number(row.CarryBalance ?? row.carryBalance ?? 0) || 0;
 
                             if (entryType === 'FUND_HISTORY') {
                                 const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
@@ -567,19 +622,21 @@
                                         date: rowDate,
                                         engineer: matchedName,
                                         mode: rowMode,
-                                        amount: amt
+                                        amount: amt,
+                                        ts: parseRecordTs(row)
                                     });
                                 }
-                            } else {
+                            } else if (entryType !== 'SETTLEMENT_LOG') {
                                 const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
-                                if (!Number.isNaN(givenAmt)) {
-                                    summaryByEng[matchedName] = {
-                                        name: matchedName,
-                                        totalGiven: givenAmt,
-                                        lastDate: rowDate,
-                                        mode: rowMode
-                                    };
-                                }
+                                const prevSum = summaryByEng[matchedName] || {};
+                                summaryByEng[matchedName] = {
+                                    name: matchedName,
+                                    totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
+                                    lastDate: rowDate || prevSum.lastDate || "-",
+                                    mode: rowMode || prevSum.mode || "Cash",
+                                    cutoffTs: Math.max(prevSum.cutoffTs || 0, rowCutoff),
+                                    carryBalance: rowCutoff >= (prevSum.cutoffTs || 0) ? rowCarry : (prevSum.carryBalance || 0)
+                                };
                             }
                         });
 
@@ -590,14 +647,22 @@
                         fundHistory = historyRows;
                         localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
 
-                        if (historyRows.length > 0) {
-                            recalculateEngineerTotals();
-                        } else if (Object.keys(summaryByEng).length > 0) {
-                            engineers = VALID_ENGINEERS.map(name => summaryByEng[name] || { name, totalGiven: 0, lastDate: "-", mode: "Cash" });
-                            localStorage.setItem('na_engineers', JSON.stringify(engineers));
-                        } else {
-                            recalculateEngineerTotals();
-                        }
+                        const prevEngineers = JSON.parse(localStorage.getItem('na_engineers')) || [];
+                        engineers = VALID_ENGINEERS.map(name => {
+                            const prev = prevEngineers.find(p => p.name === name) || {};
+                            const sum = summaryByEng[name] || {};
+                            return {
+                                name,
+                                totalGiven: sum.totalGiven ?? prev.totalGiven ?? 0,
+                                lastDate: sum.lastDate || prev.lastDate || "-",
+                                mode: sum.mode || prev.mode || "Cash",
+                                cutoffTs: Math.max(Number(sum.cutoffTs || 0), Number(prev.cutoffTs || 0)),
+                                carryBalance: Number(sum.cutoffTs || 0) >= Number(prev.cutoffTs || 0)
+                                    ? Number(sum.carryBalance ?? prev.carryBalance ?? 0)
+                                    : Number(prev.carryBalance ?? 0)
+                            };
+                        });
+                        recalculateEngineerTotals();
                     }
                 }
 
@@ -617,7 +682,14 @@
         function recalculateEngineerTotals() {
             const totals = {};
             VALID_ENGINEERS.forEach(name => {
-                totals[name] = { totalGiven: 0, lastDate: "-", mode: "Cash" };
+                const existing = engineers.find(e => e.name === name) || {};
+                totals[name] = {
+                    totalGiven: 0,
+                    lastDate: existing.lastDate || "-",
+                    mode: existing.mode || "Cash",
+                    cutoffTs: Number(existing.cutoffTs || 0),
+                    carryBalance: Number(existing.carryBalance || 0)
+                };
             });
 
             fundHistory.forEach(fh => {
@@ -633,14 +705,64 @@
                 name,
                 totalGiven: totals[name].totalGiven,
                 lastDate: totals[name].lastDate,
-                mode: totals[name].mode
+                mode: totals[name].mode,
+                cutoffTs: totals[name].cutoffTs,
+                carryBalance: totals[name].carryBalance
             }));
             localStorage.setItem('na_engineers', JSON.stringify(engineers));
+        }
+
+        async function settleEngineerPeriod(engName) {
+            if (currentUser !== 'Admin') return;
+            const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+            const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+            const nextCarryBalance = stats.balance;
+
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Current Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Current Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance for Next Period: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld list entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will carry forward.`;
+            if (!confirm(confirmMsg)) return;
+
+            const cutoffTs = Date.now();
+            const settledDate = new Date().toISOString().split('T')[0];
+            const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
+
+            engineers = engineers.map(e => e.name === engName ? Object.assign({}, e, {
+                cutoffTs: cutoffTs,
+                carryBalance: nextCarryBalance,
+                lastDate: settledDate
+            }) : e);
+            localStorage.setItem('na_engineers', JSON.stringify(engineers));
+            renderAll();
+
+            try {
+                await postToScript({
+                    action: "settleEngineerPeriod",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        recordId: recId,
+                        engineer: engName,
+                        cutoffTs: cutoffTs,
+                        carryBalance: nextCarryBalance,
+                        date: settledDate
+                    }
+                });
+                await syncAllData(false);
+                alert(`Period settled for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+            } catch (err) {
+                console.log("Settle sync error:", err);
+                alert("Period settled locally. Will sync when online.");
+            }
         }
 
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
             const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
+
+            const currentEngObj = !isAdmin
+                ? (engineers.find(e => e.name.toLowerCase() === currentUser.toLowerCase()) || { cutoffTs: 0, carryBalance: 0 })
+                : null;
+            const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
+            const engCarryBalance = !isAdmin ? Number(currentEngObj.carryBalance || 0) : 0;
 
             const scopedEngineers = isAdmin
                 ? engineers
@@ -650,13 +772,20 @@
                 ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
                 : expenses
                     .map((ex, idx) => ({ ex, realIdx: idx }))
-                    .filter(item => ((item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase()));
+                    .filter(item => {
+                        const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                        const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
+                        return matchEng && ts > engCutoffTs;
+                    });
 
             const scopedExpenses = (filterSiteVal !== 'ALL')
                 ? rawScopedExpenses.filter(item => ((item.ex.Site || item.ex.site || "").trim().toLowerCase() === filterSiteVal.toLowerCase()))
                 : rawScopedExpenses;
 
-            const totalFunds = scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0);
+            const totalFunds = isAdmin
+                ? scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0)
+                : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
+
             const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
 
             document.getElementById('lblTotalFunds').innerText = isAdmin ? "Total Funds Allocated" : `${currentUser} - Fund Received`;
@@ -667,13 +796,37 @@
             document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
             document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
 
+            const carryNoteEl = document.getElementById('carryForwardNote');
+            if (!isAdmin && engCutoffTs > 0) {
+                carryNoteEl.classList.remove('hidden');
+                carryNoteEl.innerText = `Includes Carry-Forward Balance: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+            } else {
+                carryNoteEl.classList.add('hidden');
+                carryNoteEl.innerText = '';
+            }
+
             const fundHistBody = document.getElementById('fundHistoryBody');
             fundHistBody.innerHTML = '';
             const visibleHistory = isAdmin
                 ? fundHistory
-                : fundHistory.filter(fh => (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase());
+                : fundHistory.filter(fh => {
+                    const matchEng = (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                    const ts = Number(fh.ts || 0);
+                    return matchEng && ts > engCutoffTs;
+                });
 
-            if (visibleHistory.length === 0) {
+            if (!isAdmin && engCutoffTs > 0) {
+                fundHistBody.innerHTML += `
+                    <tr class="bg-emerald-50/50">
+                        <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
+                        <td class="p-3 font-medium">${currentUser}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">Carry Forward</span></td>
+                        <td class="p-3 font-semibold text-emerald-700">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+                    </tr>
+                `;
+            }
+
+            if (visibleHistory.length === 0 && (isAdmin || engCutoffTs === 0)) {
                 fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
             } else {
                 visibleHistory.slice().reverse().forEach(fh => {
@@ -728,6 +881,29 @@
                     </tr>
                 `;
             });
+
+            const settleListEl = document.getElementById('engineerSettlementList');
+            if (settleListEl) {
+                settleListEl.innerHTML = '';
+                VALID_ENGINEERS.forEach(engName => {
+                    const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0, lastDate: "-" };
+                    const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+                    settleListEl.innerHTML += `
+                        <div class="py-2.5 flex justify-between items-center gap-2">
+                            <div>
+                                <div class="font-semibold text-slate-800">${engName}</div>
+                                <div class="text-xs text-slate-500">
+                                    Active Bal: <span class="font-semibold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span>
+                                    ${Number(engObj.cutoffTs || 0) > 0 ? `<span class="ml-2 text-amber-700">(Settled: ${formatDateVal(engObj.lastDate)})</span>` : ''}
+                                </div>
+                            </div>
+                            <button onclick="settleEngineerPeriod('${engName}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-semibold shrink-0">
+                                Settle Period
+                            </button>
+                        </div>
+                    `;
+                });
+            }
 
             const setupEngList = document.getElementById('setupEngList');
             setupEngList.innerHTML = '';
@@ -1011,9 +1187,12 @@
             document.getElementById('expAmount').value = calcAmt;
 
             const siteVal = document.getElementById('expSite').value;
+            const recId = makeRecordId();
+            const recTs = parseRecordTs({ RecordId: recId });
 
             const newExp = {
-                RecordId: makeRecordId(),
+                RecordId: recId,
+                _ts: recTs,
                 Date: document.getElementById('expDate').value,
                 Engineer: document.getElementById('expEngineer').value,
                 Site: siteVal,
@@ -1060,13 +1239,16 @@
             const name = document.getElementById('setupEngSelect').value;
             const mode = document.getElementById('setupFundMode').value;
             const amt = Number(document.getElementById('setupEngFund').value);
+            const recId = makeRecordId();
+            const recTs = parseRecordTs({ RecordId: recId });
 
             const historyItem = {
-                id: makeRecordId(),
+                id: recId,
                 date: payDate,
                 engineer: name,
                 mode: mode,
-                amount: amt
+                amount: amt,
+                ts: recTs
             };
 
             fundHistory.push(historyItem);
