@@ -1,464 +1,1348 @@
 <!DOCTYPE html>
 <html lang="ta">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Natural Associates expense tracker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Poppins', sans-serif; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Natural Associates - Live Site Tracker</title>
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen">
+<body class="min-h-screen text-slate-800">
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-900 to-stone-800">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 text-center">
-      <h2 class="text-2xl font-bold text-emerald-900">Natural Associates</h2>
-      <p class="text-sm text-slate-500 mb-6">Expense & Site Fund Tracker</p>
-
-      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4 text-left">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Select User</label>
-          <select id="loginRole" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white">
-            <option value="MANIGANDAN">MANIGANDAN (Admin)</option>
-            <option value="Sivashankar">Sivashankar (Engineer)</option>
-            <option value="Yogesh">Yogesh (Coordinator)</option>
-            <option value="Senthil">Senthil</option>
-          </select>
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4 bg-slate-900">
+        <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-slate-900">Natural Associates</h1>
+                <p class="text-sm text-slate-500">Site Expense & Cash Flow Tracker</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Select User / Role</label>
+                    <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        <option value="">-- Choose Profile --</option>
+                        <option value="Admin">Admin (Full Access)</option>
+                        <option value="Sivashankar">Sivashankar (Engineer)</option>
+                        <option value="Yogesh">Yogesh (Engineer)</option>
+                        <option value="Senthil">Senthil (Engineer)</option>
+                        <option value="MANIGANDAN">MANIGANDAN (Engineer / Lead)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                    <input type="password" id="loginPass" placeholder="Enter password" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <p id="loginError" class="text-xs text-red-500 mt-1 hidden">Invalid password! Please try again.</p>
+                </div>
+                <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition">Login</button>
+            </form>
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-          <input id="loginPass" type="password" placeholder="Enter password" autocomplete="off"
-            class="w-full px-3 py-2.5 border border-slate-300 rounded-lg" />
-        </div>
-
-        <p id="loginError" class="hidden text-sm text-red-600 font-medium">தவறான பாஸ்வேர்ட்!</p>
-
-        <button type="submit"
-          class="w-full py-3 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white font-semibold transition">
-          Login
-        </button>
-      </form>
     </div>
-  </div>
 
-  <!-- MAIN APP -->
-  <div id="mainApp" class="hidden pb-12">
-    <header class="bg-emerald-900 text-white px-4 py-3.5 sticky top-0 z-30 shadow">
-      <div class="max-w-5xl mx-auto flex items-center justify-between gap-2">
-        <div>
-          <h1 class="text-base sm:text-lg font-bold leading-tight">Natural Associates</h1>
-          <span id="activeUserBadge" class="text-xs bg-white/15 px-2.5 py-0.5 rounded-full"></span>
+    <!-- MAIN APP INTERFACE -->
+    <div id="mainApp" class="hidden min-h-screen flex flex-col">
+        <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="building-2" class="w-6 h-6 text-emerald-400"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">Natural Associates</h1>
+                        <p id="userRoleDisplay" class="text-xs text-emerald-400 font-medium"></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Live Sheet Sync</span>
+                    <button type="button" onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
+                        <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
+                        <span id="syncText">Sync</span>
+                    </button>
+                    <button type="button" onclick="handleLogout()" class="flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs (Bottom on Mobile, Top on Desktop) -->
+        <nav class="bg-white border-t sm:border-t-0 sm:border-b shadow-lg sm:shadow-sm fixed bottom-0 left-0 right-0 z-40 sm:static">
+            <div class="max-w-7xl mx-auto px-2 sm:px-4 flex justify-around sm:justify-start sm:space-x-6 overflow-x-auto">
+                <button type="button" onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-emerald-600 text-emerald-600 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
+                    <span>Summary</span>
+                </button>
+                <button type="button" onclick="switchTab('expenses')" id="tab-expenses" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                    <i data-lucide="receipt" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
+                    <span>Expenses</span>
+                </button>
+                <button type="button" onclick="switchTab('settings')" id="tab-settings" class="hidden flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                    <i data-lucide="settings" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
+                    <span>Admin Setup</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="max-w-7xl mx-auto px-4 py-6 pb-24 sm:pb-6 flex-1 w-full space-y-6">
+
+            <!-- 1. DASHBOARD / OVERVIEW TAB -->
+            <div id="view-dashboard" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div id="totalFundsCard" onclick="handleTotalFundsCardClick()" class="bg-white p-6 rounded-2xl shadow-sm border transition">
+                        <div class="flex justify-between items-center">
+                            <p id="lblTotalFunds" class="text-sm text-slate-500">Total Funds Allocated</p>
+                            <span id="fundBreakdownHint" class="hidden text-[11px] text-emerald-600 font-medium">View Details &rarr;</span>
+                        </div>
+                        <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
+                        <p id="carryForwardNote" class="hidden text-[11px] text-emerald-700 mt-1 font-medium"></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p id="lblTotalExpenses" class="text-sm text-slate-500">Total Expenses Spent</p>
+                        <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-rose-600 mt-1">₹0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                        <p id="lblBalance" class="text-sm text-slate-500">Balance Available</p>
+                        <h3 id="balanceDisplay" class="text-2xl font-bold text-emerald-600 mt-1">₹0</h3>
+                    </div>
+                </div>
+
+                <!-- Fund / Cash Received Details -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <h2 class="text-lg font-bold mb-1">Fund / Cash Received Details</h2>
+                    <p class="text-xs text-slate-500 mb-4">எந்தத் தேதியில், எவ்வளவு பணம், எந்த முறையில் (Cash / Online / GPay) வந்துள்ளது என்ற விவரம்</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Engineer</th>
+                                    <th class="p-3">Payment Mode</th>
+                                    <th class="p-3">Amount Received</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fundHistoryBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. EXPENSES TAB -->
+            <div id="view-expenses" class="hidden space-y-6">
+                <div id="recordExpenseCard" class="bg-white p-6 rounded-2xl shadow-sm border">
+                    <h2 class="text-lg font-bold mb-4">Record New Expense</h2>
+                    <form onsubmit="saveExpense(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date</label>
+                            <input type="date" id="expDate" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Engineer</label>
+                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
+                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Material / Description</label>
+                            <input type="text" id="expMaterial" placeholder="e.g., Cement, M-Sand, Labor" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Quantity & Units</label>
+                            <div class="flex space-x-2">
+                                <input type="number" step="any" id="expQty" oninput="updateCalculatedAmount()" placeholder="Quantity" class="w-1/2 p-2.5 border rounded-xl text-sm" required>
+                                <select id="expUnit" class="w-1/2 p-2.5 border rounded-xl text-sm"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Rate (₹) & Amount (₹)</label>
+                            <div class="flex space-x-2 items-center">
+                                <input type="number" step="any" id="expRate" oninput="updateCalculatedAmount()" placeholder="Rate (₹)" class="w-1/2 p-2.5 border rounded-xl text-sm" required>
+                                <input type="number" step="any" id="expAmount" placeholder="Amount (₹)" class="w-1/2 p-2.5 border rounded-xl text-sm bg-slate-50 font-semibold text-emerald-700" readonly required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Remarks</label>
+                            <input type="text" id="expRemarks" placeholder="Optional notes (e.g., bill pending, morning load)" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Payment Status</label>
+                            <select id="expStatus" class="w-full p-2.5 border rounded-xl text-sm font-semibold">
+                                <option value="Paid" class="text-emerald-600">Paid</option>
+                                <option value="Unpaid" class="text-rose-600">Unpaid</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-3 flex items-center justify-between pt-1">
+                            <span id="calcFormulaHint" class="text-xs text-slate-500">Quantity × Rate = Amount</span>
+                            <button type="submit" id="btnSaveExp" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition text-sm">Save Expense</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Expense Logs Table -->
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-500">Filter Site:</span>
+                            <select id="filterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                <option value="ALL">ALL SITES</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Engineer</th>
+                                    <th class="p-3">Site</th>
+                                    <th class="p-3">Material</th>
+                                    <th class="p-3">Quantity</th>
+                                    <th class="p-3">Units</th>
+                                    <th class="p-3">Rate</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Remarks</th>
+                                    <th class="p-3">Status</th>
+                                    <th id="thExpenseAction" class="p-3 hidden">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseTableBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. ADMIN SETUP TAB -->
+            <div id="view-settings" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Give / Edit Engineer Fund</span>
+                        </h3>
+                        <form onsubmit="addOrUpdateEngineer(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Date</label>
+                                <input type="date" id="setupFundDate" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Engineer Name</label>
+                                <select id="setupEngSelect" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                    <option value="Sivashankar">Sivashankar</option>
+                                    <option value="Yogesh">Yogesh</option>
+                                    <option value="Senthil">Senthil</option>
+                                    <option value="MANIGANDAN">MANIGANDAN</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Payment Mode</label>
+                                <select id="setupFundMode" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Online">Online</option>
+                                    <option value="GPay">GPay</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Amount (₹)</label>
+                                <input type="number" id="setupEngFund" placeholder="Enter amount (e.g., 50000)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <button type="submit" id="btnSaveFund" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Save Fund</button>
+                        </form>
+
+                        <div class="pt-3 border-t">
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Funds Given by Admin:</p>
+                            <div id="setupEngList" class="divide-y text-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Close / Settle Engineer Period</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <div id="engineerSettlementList" class="divide-y text-sm"></div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Manage Construction Sites</span>
+                            </h3>
+                            <form onsubmit="addSite(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
+                                    <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                </div>
+                                <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
+                            </form>
+                            <div class="pt-3 border-t">
+                                <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites (Edit & Delete):</p>
+                                <div id="setupSiteList" class="divide-y text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Engineer-wise Fund Breakdown Modal (Admin Only) -->
+    <div id="fundBreakdownModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Engineer-wise Fund Details</h3>
+                <button type="button" onclick="document.getElementById('fundBreakdownModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none">&times;</button>
+            </div>
+            <div id="fundBreakdownList" class="space-y-3"></div>
         </div>
-        <div class="flex items-center gap-2">
-          <span id="syncStatus" class="text-xs bg-emerald-700 px-2.5 py-1 rounded">Live Sheet</span>
-          <button type="button" onclick="loadLiveData(true)"
-            class="text-xs bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold px-3 py-1.5 rounded">
-            Sync
-          </button>
-          <button type="button" onclick="handleLogout()"
-            class="text-xs bg-red-600 hover:bg-red-500 text-white font-semibold px-3 py-1.5 rounded">
-            Logout
-          </button>
-        </div>
-      </div>
-    </header>
+    </div>
 
-    <main class="max-w-5xl mx-auto px-4 pt-5 space-y-5">
-      <!-- SUMMARY CARDS -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow border-l-4 border-emerald-700">
-          <span class="text-xs text-slate-500 block">Fund Received (Active)</span>
-          <strong id="totalReceivedEl" class="text-2xl text-emerald-900">₹0</strong>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow border-l-4 border-amber-700">
-          <span class="text-xs text-slate-500 block">Expenses Spent (Active)</span>
-          <strong id="totalSpentEl" class="text-2xl text-slate-800">₹0</strong>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow border-l-4 border-stone-700">
-          <span class="text-xs text-slate-500 block">Balance Available</span>
-          <strong id="totalBalanceEl" class="text-2xl text-emerald-800">₹0</strong>
-        </div>
-      </div>
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
 
-      <!-- ADD EXPENSE FORM -->
-      <div class="bg-white p-5 rounded-xl shadow">
-        <h2 class="text-base font-bold text-slate-800 mb-4">Add Site Expense</h2>
-        <form id="expenseForm" onsubmit="handleAddExpense(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Date</label>
-            <input id="expDate" type="date" required class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Site</label>
-            <select id="expSite" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="Madhuravoyal">Madhuravoyal</option>
-              <option value="Sithalapakam">Sithalapakam</option>
-              <option value="Oragadam">Oragadam</option>
-              <option value="Madha school">Madha school</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Material / Work</label>
-            <input id="expMaterial" type="text" required placeholder="e.g. ARS Steel, Cement, M Sand"
-              class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Qty & Unit</label>
-            <input id="expQty" type="text" placeholder="e.g. 20 Bags"
-              class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (₹)</label>
-            <input id="expAmount" type="number" step="any" required placeholder="0"
-              class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Remarks</label>
-            <input id="expRemarks" type="text" placeholder="Optional"
-              class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div class="sm:col-span-2 md:col-span-3 flex justify-end pt-1">
-            <button type="submit" id="saveExpBtn"
-              class="px-5 py-2.5 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-sm font-semibold">
-              Save Expense
-            </button>
-          </div>
-        </form>
-      </div>
+        const passwords = {
+            "Admin": "sar2021",
+            "Sivashankar": "2962",
+            "Yogesh": "7699",
+            "Senthil": "1981",
+            "MANIGANDAN": "8889"
+        };
 
-      <!-- ADMIN FUND & SETTLE SECTION -->
-      <div id="adminPanel" class="hidden bg-white p-5 rounded-xl shadow space-y-4">
-        <h2 class="text-base font-bold text-slate-800">Admin: Fund Allocation & Settle</h2>
-        <form id="fundForm" onsubmit="handleAddFund(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Date</label>
-            <input id="fundDate" type="date" required class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Engineer</label>
-            <select id="fundEngineer" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="MANIGANDAN">MANIGANDAN</option>
-              <option value="Sivashankar">Sivashankar</option>
-              <option value="Yogesh">Yogesh</option>
-              <option value="Senthil">Senthil</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Mode</label>
-            <select id="fundMode" class="w-full px-3 py-2 border rounded-lg text-sm bg-white">
-              <option value="GPay">GPay</option>
-              <option value="Cash">Cash</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (₹)</label>
-            <input id="fundAmount" type="number" step="any" required placeholder="0"
-              class="w-full px-3 py-2 border rounded-lg text-sm" />
-          </div>
-          <div class="sm:col-span-4 flex flex-wrap justify-between items-center gap-2 pt-1">
-            <button type="button" onclick="handleSettleSelectedEngineer()"
-              class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold">
-              Mark Engineer Entries Settled (Hide Settled)
-            </button>
-            <button type="submit" id="saveFundBtn"
-              class="px-5 py-2.5 rounded-lg bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold">
-              Save Fund
-            </button>
-          </div>
-        </form>
-      </div>
+        const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "MANIGANDAN"];
+        const DEFAULT_SITES = ["Oragadam-Thyagarajan sir", "Valasaravakkam-Maran sir", "Sithalapakkam-Nakkiran sir", "Madhuravoyal-Kannan sir"];
+        const DEFAULT_UNITS = ["CFT", "Tons", "KG", "Nos", "Bundle", "Packet", "Units", "Liter", "Day", "Bags", "Transport", "WeekPayment", "Advance", "NMR"];
 
-      <!-- ACTIVE EXPENSES TABLE -->
-      <div class="bg-white p-5 rounded-xl shadow">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-bold text-slate-800">Active Expenses (Settled Hidden)</h2>
-          <span id="rowCountLabel" class="text-xs text-slate-500">0 items</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50 border-b text-slate-600">
-                <th class="py-2.5 px-3">Date</th>
-                <th class="py-2.5 px-3">Site</th>
-                <th class="py-2.5 px-3">Material</th>
-                <th class="py-2.5 px-3">Engineer</th>
-                <th class="py-2.5 px-3 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="expenseRows" class="divide-y"></tbody>
-          </table>
-        </div>
-      </div>
-    </main>
-  </div>
+        let syncTimer = null;
+        let isSyncing = false;
+        let currentUser = null;
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
+        let engineers = VALID_ENGINEERS.map(name => ({
+            name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
+        }));
+        let fundHistory = [];
+        let sites = [...DEFAULT_SITES];
+        let units = [...DEFAULT_UNITS];
+        let expenses = [];
 
-    const PASSWORDS = {
-      "MANIGANDAN": "admin123",
-      "Sivashankar": "1234",
-      "Yogesh": "1234",
-      "Senthil": "1234"
-    };
-
-    let currentUser = "";
-    let liveState = { engineers: [], expenses: [] };
-
-    function setSyncBadge(text, isError = false) {
-      const el = document.getElementById("syncStatus");
-      if (!el) return;
-      el.textContent = text;
-      el.className = isError
-        ? "text-xs bg-red-600 text-white px-2.5 py-1 rounded"
-        : "text-xs bg-emerald-700 text-white px-2.5 py-1 rounded";
-    }
-
-    function isSettledRow(row) {
-      if (!row) return false;
-      const status = String(row.Status || row.status || "").trim().toLowerCase();
-      const entryType = String(row.EntryType || row.entryType || "").trim().toUpperCase();
-      if (status === "settled" || entryType === "SETTLEMENT_LOG") return true;
-      return false;
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      const user = document.getElementById("loginRole").value;
-      const pass = document.getElementById("loginPass").value.trim();
-      const err = document.getElementById("loginError");
-
-      if (PASSWORDS[user] && PASSWORDS[user] === pass) {
-        err.classList.add("hidden");
-        currentUser = user;
-        sessionStorage.setItem("na_session_user", user);
-        document.getElementById("loginScreen").classList.add("hidden");
-        document.getElementById("mainApp").classList.remove("hidden");
-        document.getElementById("activeUserBadge").textContent = user;
-        document.getElementById("adminPanel").classList.toggle("hidden", user !== "MANIGANDAN");
-
-        const today = new Date().toISOString().split("T")[0];
-        document.getElementById("expDate").value = today;
-        document.getElementById("fundDate").value = today;
-
-        loadLiveData(true);
-      } else {
-        err.classList.remove("hidden");
-      }
-    }
-
-    function handleLogout() {
-      currentUser = "";
-      sessionStorage.removeItem("na_session_user");
-      document.getElementById("loginPass").value = "";
-      document.getElementById("mainApp").classList.add("hidden");
-      document.getElementById("loginScreen").classList.remove("hidden");
-    }
-
-    async function loadLiveData(showLoading = false) {
-      if (!currentUser) return;
-      if (showLoading) setSyncBadge("Syncing...");
-      try {
-        const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
-        const data = await res.json();
-        if (data && data.status === "ok") {
-          liveState = {
-            engineers: Array.isArray(data.engineers) ? data.engineers : [],
-            expenses: Array.isArray(data.expenses) ? data.expenses : []
-          };
-          renderAll();
-          setSyncBadge("Synced");
-        } else {
-          setSyncBadge("Sheet Error", true);
+        function makeRecordId(prefix = "REC") {
+            return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         }
-      } catch (err) {
-        setSyncBadge("Offline / Retry", true);
-      }
-    }
 
-    function renderAll() {
-      const isAdmin = currentUser === "MANIGANDAN";
+        function parseRecordTs(row) {
+            const rawId = String(row.RecordId || row.recordId || row.id || "");
+            const match = rawId.match(/_(\d{10,})_/);
+            if (match && match[1]) {
+                return Number(match[1]);
+            }
+            const dStr = row.Date || row.date || row.lastDate;
+            if (dStr) {
+                const parsed = Date.parse(dStr);
+                if (!isNaN(parsed)) return parsed;
+            }
+            return 0;
+        }
 
-      const activeFunds = liveState.engineers.filter(r => {
-        if (isSettledRow(r)) return false;
-        const eng = String(r.Engineer || r.name || "").trim();
-        return isAdmin || eng === currentUser;
-      });
+        function formatDateVal(val) {
+            if (!val) return '-';
+            if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
+                const serial = Number(val);
+                const utcDays = Math.floor(serial - 25569);
+                const dateObj = new Date(utcDays * 86400 * 1000);
+                return dateObj.toLocaleDateString('en-IN');
+            }
+            const str = String(val).trim();
+            if (str.includes('T')) {
+                const d = new Date(str);
+                if (!isNaN(d.getTime())) {
+                    return d.toLocaleDateString('en-IN');
+                }
+            }
+            return str;
+        }
 
-      const activeExpenses = liveState.expenses.filter(r => {
-        if (isSettledRow(r)) return false;
-        const eng = String(r.Engineer || "").trim();
-        return isAdmin || eng === currentUser;
-      });
+        function updateCalculatedAmount() {
+            const qtyInput = document.getElementById('expQty');
+            const rateInput = document.getElementById('expRate');
+            const amtInput = document.getElementById('expAmount');
+            const hint = document.getElementById('calcFormulaHint');
 
-      const totalReceived = activeFunds.reduce((sum, r) => sum + (Number(r.Amount) || 0), 0);
-      const totalSpent = activeExpenses.reduce((sum, r) => sum + (Number(r.Amount) || 0), 0);
-      const balance = totalReceived - totalSpent;
+            const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+            const rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+            const total = Math.round(qty * rate * 100) / 100;
 
-      document.getElementById("totalReceivedEl").textContent = "₹" + totalReceived.toLocaleString("en-IN");
-      document.getElementById("totalSpentEl").textContent = "₹" + totalSpent.toLocaleString("en-IN");
-      document.getElementById("totalBalanceEl").textContent = "₹" + balance.toLocaleString("en-IN");
+            if (amtInput) {
+                amtInput.value = (qtyInput.value !== '' || rateInput.value !== '') ? total : '';
+            }
+            if (hint) {
+                hint.innerText = `${qty || 0} × ₹${rate || 0} = ₹${total.toLocaleString('en-IN')}`;
+            }
+        }
 
-      const tbody = document.getElementById("expenseRows");
-      tbody.innerHTML = "";
+        async function postToScript(payload) {
+            const res = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error("Apps Script POST failed");
+            const result = await res.json();
+            if (result && result.status === "error") {
+                throw new Error(result.message || "Apps Script returned error");
+            }
+            return result;
+        }
 
-      const sortedExp = activeExpenses.slice().reverse();
-      document.getElementById("rowCountLabel").textContent = `${sortedExp.length} active items`;
+        function getEngineerCycleStats(engName, cutoffTs = 0, carryBalance = 0) {
+            const lowerName = (engName || "").trim().toLowerCase();
+            const cutoff = Number(cutoffTs || 0);
+            const carry = Number(carryBalance || 0);
 
-      if (sortedExp.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No active expenses found.</td></tr>`;
-        return;
-      }
+            const periodFunds = fundHistory.filter(fh => {
+                const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
+                const ts = Number(fh.ts || 0);
+                return matchEng && ts > cutoff;
+            });
 
-      sortedExp.forEach(item => {
-        const tr = document.createElement("tr");
-        const cleanDate = String(item.Date || "").split("T")[0];
-        const amt = Number(item.Amount || 0).toLocaleString("en-IN");
-        tr.innerHTML = `
-          <td class="py-2.5 px-3 whitespace-nowrap">${cleanDate}</td>
-          <td class="py-2.5 px-3">${item.Site || "-"}</td>
-          <td class="py-2.5 px-3">${item.Material || "-"}</td>
-          <td class="py-2.5 px-3">${item.Engineer || "-"}</td>
-          <td class="py-2.5 px-3 text-right font-semibold">₹${amt}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+            const periodExpenses = expenses.filter(ex => {
+                const matchEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase() === lowerName;
+                const ts = Number(ex._ts || parseRecordTs(ex) || 0);
+                return matchEng && ts > cutoff;
+            });
 
-    async function sendPost(payload) {
-      setSyncBadge("Saving...");
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
-      await new Promise(r => setTimeout(r, 900));
-      await loadLiveData(true);
-    }
+            const newFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+            const totalFunds = carry + newFunds;
+            const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
+            const balance = totalFunds - totalSpent;
 
-    async function handleAddExpense(e) {
-      e.preventDefault();
-      if (!currentUser) return;
-      const btn = document.getElementById("saveExpBtn");
-      btn.disabled = true;
-      try {
-        const siteVal = document.getElementById("expSite").value;
-        await sendPost({
-          action: "create",
-          target: siteVal,
-          data: {
-            RecordId: "EXP_" + Date.now(),
-            Date: document.getElementById("expDate").value,
-            Engineer: currentUser,
-            Site: siteVal,
-            Material: document.getElementById("expMaterial").value.trim(),
-            Qty: document.getElementById("expQty").value.trim(),
-            Unit: "",
-            Rate: "",
-            Amount: Number(document.getElementById("expAmount").value || 0),
-            Remarks: document.getElementById("expRemarks").value.trim(),
-            Status: "Active"
-          }
+            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses };
+        }
+
+        function refreshSiteDropdowns() {
+            const expSite = document.getElementById('expSite');
+            const filterSite = document.getElementById('filterSiteSelect');
+
+            const currentExpVal = expSite ? expSite.value : '';
+            const currentFilterVal = filterSite ? filterSite.value : 'ALL';
+
+            if (expSite) {
+                expSite.innerHTML = '';
+                sites.forEach(site => {
+                    expSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentExpVal && sites.includes(currentExpVal)) {
+                    expSite.value = currentExpVal;
+                }
+            }
+
+            if (filterSite) {
+                filterSite.innerHTML = `<option value="ALL">ALL SITES</option>`;
+                sites.forEach(site => {
+                    filterSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentFilterVal === 'ALL' || sites.includes(currentFilterVal)) {
+                    filterSite.value = currentFilterVal;
+                }
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value.trim();
+
+            if (passwords[user] && passwords[user] === pass) {
+                currentUser = user;
+                sessionStorage.setItem('na_active_user', user);
+                document.getElementById('loginError').classList.add('hidden');
+                initApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            sessionStorage.removeItem('na_active_user');
+            if (syncTimer) {
+                clearInterval(syncTimer);
+                syncTimer = null;
+            }
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('loginForm').reset();
+        }
+
+        function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
+
+            const isAdmin = currentUser === 'Admin';
+            const adminTab = document.getElementById('tab-settings');
+            if (isAdmin) {
+                adminTab.classList.remove('hidden');
+            } else {
+                adminTab.classList.add('hidden');
+            }
+
+            const totalFundsCard = document.getElementById('totalFundsCard');
+            const fundBreakdownHint = document.getElementById('fundBreakdownHint');
+            if (isAdmin) {
+                totalFundsCard.classList.add('cursor-pointer', 'hover:border-emerald-400');
+                fundBreakdownHint.classList.remove('hidden');
+            } else {
+                totalFundsCard.classList.remove('cursor-pointer', 'hover:border-emerald-400');
+                fundBreakdownHint.classList.add('hidden');
+                document.getElementById('fundBreakdownModal').classList.add('hidden');
+            }
+
+            const recordExpCard = document.getElementById('recordExpenseCard');
+            const thAction = document.getElementById('thExpenseAction');
+            if (isAdmin) {
+                recordExpCard.classList.add('hidden');
+                thAction.classList.remove('hidden');
+            } else {
+                recordExpCard.classList.remove('hidden');
+                thAction.classList.add('hidden');
+            }
+
+            switchTab('dashboard');
+
+            const expEngineer = document.getElementById('expEngineer');
+            expEngineer.innerHTML = '';
+            if (isAdmin) {
+                VALID_ENGINEERS.forEach(engName => { expEngineer.innerHTML += `<option value="${engName}">${engName}</option>`; });
+            } else {
+                expEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
+            }
+
+            refreshSiteDropdowns();
+
+            const expUnit = document.getElementById('expUnit');
+            expUnit.innerHTML = '';
+            units.forEach(u => { expUnit.innerHTML += `<option value="${u}">${u}</option>`; });
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('expDate').value = todayStr;
+            document.getElementById('setupFundDate').value = todayStr;
+            updateCalculatedAmount();
+
+            renderAll();
+            syncAllData(false);
+
+            if (syncTimer) clearInterval(syncTimer);
+            syncTimer = setInterval(() => {
+                if (currentUser && document.visibilityState === 'visible') {
+                    syncAllData(false);
+                }
+            }, 15000);
+        }
+
+        function switchTab(tabName) {
+            if (tabName === 'settings' && currentUser !== 'Admin') {
+                return;
+            }
+
+            ['dashboard', 'expenses', 'settings'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('border-emerald-600', 'text-emerald-600');
+                document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-slate-500');
+            });
+
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.remove('border-transparent', 'text-slate-500');
+            document.getElementById(`tab-${tabName}`).classList.add('border-emerald-600', 'text-emerald-600');
+        }
+
+        function handleTotalFundsCardClick() {
+            if (currentUser !== 'Admin') return;
+            const listEl = document.getElementById('fundBreakdownList');
+            listEl.innerHTML = '';
+            VALID_ENGINEERS.forEach(engName => {
+                const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+                const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+                listEl.innerHTML += `
+                    <div class="p-3.5 rounded-xl border bg-slate-50 space-y-1">
+                        <div class="font-bold text-slate-900">${engName}</div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Active Funds (incl. Carry):</span><span class="font-semibold text-slate-900">₹${stats.totalFunds.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Active Expenses:</span><span class="font-semibold text-rose-600">₹${stats.totalSpent.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between border-t pt-1"><span>Balance:</span><span class="font-bold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span></div>
+                    </div>
+                `;
+            });
+            document.getElementById('fundBreakdownModal').classList.remove('hidden');
+        }
+
+        async function syncAllData(showAlert = false) {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const btnSync = document.getElementById('btnSync');
+            const syncText = document.getElementById('syncText');
+            const statusEl = document.getElementById('liveSyncStatus');
+            if (btnSync) btnSync.disabled = true;
+            if (syncText) syncText.innerText = "Syncing...";
+
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                if (!res.ok) throw new Error("Network response was not ok");
+
+                const data = await res.json();
+                if (data.status === "error") throw new Error(data.message || "Sheet read error");
+
+                if (Array.isArray(data.expenses)) {
+                    expenses = data.expenses
+                        .filter(row =>
+                            (row.Material || row.material || row.Amount || row.amount) &&
+                            !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
+                        )
+                        .map(row => Object.assign({}, row, { _ts: parseRecordTs(row) }));
+                } else {
+                    expenses = [];
+                }
+
+                const historyRows = [];
+                const summaryByEng = {};
+                const syncedSites = [...DEFAULT_SITES];
+                const deletedSites = new Set();
+
+                if (Array.isArray(data.engineers)) {
+                    data.engineers.forEach(row => {
+                        const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
+                        const siteVal = (row.Site || row.site || row.Sites || "").trim();
+
+                        if (entryType === 'SITE_CONFIG' || entryType === 'SITE') {
+                            if (siteVal) {
+                                deletedSites.delete(siteVal.toLowerCase());
+                                if (!syncedSites.some(s => s.toLowerCase() === siteVal.toLowerCase())) {
+                                    syncedSites.push(siteVal);
+                                }
+                            }
+                            return;
+                        }
+
+                        if (entryType === 'SITE_DELETED') {
+                            if (siteVal) deletedSites.add(siteVal.toLowerCase());
+                            return;
+                        }
+
+                        const rawName = (row.name || row.Engineer || row.engineer || "").trim();
+                        const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
+                        if (!matchedName || row.Material || row.material) return;
+
+                        const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
+                        const rowMode = row.Mode || row.mode || "Cash";
+                        const rowCutoff = Number(row.CutoffTs ?? row.cutoffTs ?? row.Cutoffs ?? row.cutoffs ?? 0) || 0;
+                        const rowCarry = Number(row.CarryBalance ?? row.carryBalance ?? 0) || 0;
+
+                        if (entryType === 'FUND_HISTORY') {
+                            const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
+                            if (!Number.isNaN(amt) && amt !== 0) {
+                                historyRows.push({
+                                    id: row.RecordId || row.recordId || row.id || null,
+                                    date: rowDate,
+                                    engineer: matchedName,
+                                    mode: rowMode,
+                                    amount: amt,
+                                    ts: parseRecordTs(row)
+                                });
+                            }
+                        } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
+                            const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
+                            const prevSum = summaryByEng[matchedName] || {};
+                            const isNewerCutoff = rowCutoff >= (prevSum.cutoffTs || 0);
+                            summaryByEng[matchedName] = {
+                                name: matchedName,
+                                totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
+                                lastDate: isNewerCutoff ? (rowDate || prevSum.lastDate || "-") : (prevSum.lastDate || "-"),
+                                mode: rowMode || prevSum.mode || "Cash",
+                                cutoffTs: Math.max(prevSum.cutoffTs || 0, rowCutoff),
+                                carryBalance: isNewerCutoff ? rowCarry : (prevSum.carryBalance || 0)
+                            };
+                        }
+                    });
+                }
+
+                sites = syncedSites.filter(s => !deletedSites.has(s.toLowerCase()));
+                refreshSiteDropdowns();
+
+                fundHistory = historyRows;
+
+                engineers = VALID_ENGINEERS.map(name => {
+                    const sum = summaryByEng[name] || {};
+                    const calcGiven = fundHistory
+                        .filter(fh => fh.engineer.toLowerCase() === name.toLowerCase())
+                        .reduce((acc, fh) => acc + Number(fh.amount || 0), 0);
+
+                    return {
+                        name,
+                        totalGiven: sum.totalGiven !== undefined ? Number(sum.totalGiven) : calcGiven,
+                        lastDate: sum.lastDate || "-",
+                        mode: sum.mode || "Cash",
+                        cutoffTs: Number(sum.cutoffTs || 0),
+                        carryBalance: Number(sum.carryBalance || 0)
+                    };
+                });
+
+                recalculateEngineerTotalsFromSheet();
+                renderAll();
+
+                if (statusEl) statusEl.innerText = `Live Synced (${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})`;
+                if (showAlert) alert("Synced live with Google Sheet!");
+            } catch (err) {
+                console.log("Sync error:", err);
+                renderAll();
+                if (statusEl) statusEl.innerText = "Sync Retry...";
+                if (showAlert) alert("Sync failed. Please check internet connection or Apps Script deployment.");
+            }
+
+            if (btnSync) btnSync.disabled = false;
+            if (syncText) syncText.innerText = "Sync";
+            isSyncing = false;
+        }
+
+        function recalculateEngineerTotalsFromSheet() {
+            const totals = {};
+            VALID_ENGINEERS.forEach(name => {
+                const existing = engineers.find(e => e.name === name) || {};
+                totals[name] = {
+                    totalGiven: 0,
+                    lastDate: existing.lastDate || "-",
+                    mode: existing.mode || "Cash",
+                    cutoffTs: Number(existing.cutoffTs || 0),
+                    carryBalance: Number(existing.carryBalance || 0)
+                };
+            });
+
+            fundHistory.forEach(fh => {
+                const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === (fh.engineer || "").trim().toLowerCase());
+                if (matchedName) {
+                    totals[matchedName].totalGiven += Number(fh.amount || 0);
+                    if (Number(totals[matchedName].cutoffTs || 0) === 0) {
+                        totals[matchedName].lastDate = fh.date;
+                    }
+                    totals[matchedName].mode = fh.mode;
+                }
+            });
+
+            engineers = VALID_ENGINEERS.map(name => ({
+                name,
+                totalGiven: totals[name].totalGiven,
+                lastDate: totals[name].lastDate,
+                mode: totals[name].mode,
+                cutoffTs: totals[name].cutoffTs,
+                carryBalance: totals[name].carryBalance
+            }));
+        }
+
+        async function settleEngineerPeriod(engName) {
+            if (currentUser !== 'Admin') return;
+            const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+            const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+            const nextCarryBalance = stats.balance;
+
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Current Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Current Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance for Next Period: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld list entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will carry forward.`;
+            if (!confirm(confirmMsg)) return;
+
+            const cutoffTs = Date.now();
+            const settledDate = new Date().toISOString().split('T')[0];
+            const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
+
+            try {
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        RecordId: recId,
+                        EntryType: "ENGINEER_SUMMARY",
+                        name: engName,
+                        Engineer: engName,
+                        lastDate: settledDate,
+                        Date: settledDate,
+                        Cutoffs: cutoffTs,
+                        CutoffTs: cutoffTs,
+                        CarryBalance: nextCarryBalance
+                    }
+                });
+                await syncAllData(false);
+                alert(`Period settled for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+            } catch (err) {
+                console.log("Settle sync error:", err);
+                alert("Failed to settle period on Google Sheet. Please try again.");
+            }
+        }
+
+        function renderAll() {
+            const isAdmin = currentUser === 'Admin';
+            const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
+
+            const currentEngObj = !isAdmin
+                ? (engineers.find(e => e.name.toLowerCase() === currentUser.toLowerCase()) || { cutoffTs: 0, carryBalance: 0 })
+                : null;
+            const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
+            const engCarryBalance = !isAdmin ? Number(currentEngObj.carryBalance || 0) : 0;
+
+            const scopedEngineers = isAdmin
+                ? engineers
+                : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
+
+            const rawScopedExpenses = isAdmin
+                ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
+                : expenses
+                    .map((ex, idx) => ({ ex, realIdx: idx }))
+                    .filter(item => {
+                        const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                        const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
+                        return matchEng && ts > engCutoffTs;
+                    });
+
+            const scopedExpenses = (filterSiteVal !== 'ALL')
+                ? rawScopedExpenses.filter(item => ((item.ex.Site || item.ex.site || "").trim().toLowerCase() === filterSiteVal.toLowerCase()))
+                : rawScopedExpenses;
+
+            const totalFunds = isAdmin
+                ? scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0)
+                : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
+
+            const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+
+            document.getElementById('lblTotalFunds').innerText = isAdmin ? "Total Funds Allocated" : `${currentUser} - Fund Received`;
+            document.getElementById('lblTotalExpenses').innerText = isAdmin ? "Total Expenses Spent" : `${currentUser} - Expenses Spent`;
+            document.getElementById('lblBalance').innerText = isAdmin ? "Balance Available" : `${currentUser} - Balance`;
+
+            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
+            document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+            document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
+
+            const carryNoteEl = document.getElementById('carryForwardNote');
+            if (!isAdmin && engCutoffTs > 0) {
+                carryNoteEl.classList.remove('hidden');
+                carryNoteEl.innerText = `Includes Carry-Forward Balance: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+            } else {
+                carryNoteEl.classList.add('hidden');
+                carryNoteEl.innerText = '';
+            }
+
+            const fundHistBody = document.getElementById('fundHistoryBody');
+            fundHistBody.innerHTML = '';
+            const visibleHistory = isAdmin
+                ? fundHistory
+                : fundHistory.filter(fh => {
+                    const matchEng = (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                    const ts = Number(fh.ts || 0);
+                    return matchEng && ts > engCutoffTs;
+                });
+
+            if (!isAdmin && engCutoffTs > 0) {
+                fundHistBody.innerHTML += `
+                    <tr class="bg-emerald-50/50">
+                        <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
+                        <td class="p-3 font-medium">${currentUser}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">Carry Forward</span></td>
+                        <td class="p-3 font-semibold text-emerald-700">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+                    </tr>
+                `;
+            }
+
+            if (visibleHistory.length === 0 && (isAdmin || engCutoffTs === 0)) {
+                fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
+            } else {
+                visibleHistory.slice().reverse().forEach(fh => {
+                    fundHistBody.innerHTML += `
+                        <tr>
+                            <td class="p-3">${formatDateVal(fh.date)}</td>
+                            <td class="p-3 font-medium">${fh.engineer}</td>
+                            <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span></td>
+                            <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount).toLocaleString('en-IN')}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const expBody = document.getElementById('expenseTableBody');
+            expBody.innerHTML = '';
+            scopedExpenses.slice().reverse().forEach(({ ex, realIdx }) => {
+                const qtyVal = Number(ex.Qty || ex.qty || 0);
+                const unitVal = ex.Unit || ex.unit || ex.Units || ex.units || '-';
+                const amtVal = Number(ex.Amount || ex.amount || 0);
+                const rawRate = ex.Rate || ex.rate;
+                const rateVal = (rawRate !== undefined && rawRate !== null && rawRate !== '')
+                    ? Number(rawRate)
+                    : (qtyVal > 0 ? Math.round((amtVal / qtyVal) * 100) / 100 : 0);
+
+                const remarksVal = ex.Remarks || ex.remarks || ex.Remark || ex.remark || '-';
+                const statusVal = ex.Status || ex.status || 'Paid';
+                const statusBadge = (statusVal.toLowerCase() === 'paid')
+                    ? `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Paid</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">Unpaid</span>`;
+
+                const actionCell = isAdmin ? `
+                    <td class="p-3 space-x-2 whitespace-nowrap">
+                        <button type="button" onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
+                        <button type="button" onclick="deleteExpense(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">Delete</button>
+                    </td>
+                ` : '';
+
+                expBody.innerHTML += `
+                    <tr>
+                        <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
+                        <td class="p-3 font-medium">${ex.Engineer || ex.engineer || '-'}</td>
+                        <td class="p-3 font-semibold text-emerald-700">${ex.Site || ex.site || '-'}</td>
+                        <td class="p-3">${ex.Material || ex.material || '-'}</td>
+                        <td class="p-3">${qtyVal || ''}</td>
+                        <td class="p-3">${unitVal}</td>
+                        <td class="p-3">₹${rateVal.toLocaleString('en-IN')}</td>
+                        <td class="p-3 font-semibold">₹${amtVal.toLocaleString('en-IN')}</td>
+                        <td class="p-3 italic text-slate-500">${remarksVal}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        ${actionCell}
+                    </tr>
+                `;
+            });
+
+            const settleListEl = document.getElementById('engineerSettlementList');
+            if (settleListEl) {
+                settleListEl.innerHTML = '';
+                VALID_ENGINEERS.forEach(engName => {
+                    const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0, lastDate: "-" };
+                    const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+                    settleListEl.innerHTML += `
+                        <div class="py-2.5 flex justify-between items-center gap-2">
+                            <div>
+                                <div class="font-semibold text-slate-800">${engName}</div>
+                                <div class="text-xs text-slate-500">
+                                    Active Bal: <span class="font-semibold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span>
+                                    ${Number(engObj.cutoffTs || 0) > 0 ? `<span class="ml-2 text-amber-700">(Settled: ${formatDateVal(engObj.lastDate)})</span>` : ''}
+                                </div>
+                            </div>
+                            <button type="button" onclick="settleEngineerPeriod('${engName}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-semibold shrink-0">
+                                Settle Period
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+
+            const setupEngList = document.getElementById('setupEngList');
+            setupEngList.innerHTML = '';
+            if (fundHistory.length === 0) {
+                setupEngList.innerHTML = `<div class="py-2.5 text-slate-400">No fund entries added yet.</div>`;
+            } else {
+                fundHistory.slice().reverse().forEach((fh, revIdx) => {
+                    const realIdx = fundHistory.length - 1 - revIdx;
+                    setupEngList.innerHTML += `
+                        <div class="py-2.5 flex justify-between items-center gap-2">
+                            <div>
+                                <span class="text-xs text-slate-500">${formatDateVal(fh.date)}</span>
+                                <span class="ml-2 font-medium text-slate-800">${fh.engineer}</span>
+                                <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span>
+                                <span class="ml-2 font-bold text-emerald-700">₹${Number(fh.amount).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <button type="button" onclick="editFundEntry(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                    Edit
+                                </button>
+                                <button type="button" onclick="deleteFundEntry(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const setupSiteList = document.getElementById('setupSiteList');
+            setupSiteList.innerHTML = '';
+            if (sites.length === 0) {
+                setupSiteList.innerHTML = `<div class="py-2 text-slate-400">No sites available.</div>`;
+            } else {
+                sites.forEach((s, siteIdx) => {
+                    setupSiteList.innerHTML += `
+                        <div class="py-2 flex justify-between items-center gap-2">
+                            <span class="font-medium text-slate-800">${s}</span>
+                            <div class="flex items-center space-x-2 shrink-0">
+                                <button type="button" onclick="editSite(${siteIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                    Edit
+                                </button>
+                                <button type="button" onclick="deleteSite(${siteIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        async function addSite(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+            const inputEl = document.getElementById('setupSiteName');
+            const newSite = inputEl.value.trim();
+            if (!newSite) return;
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [{
+                        RecordId: makeRecordId("SITE"),
+                        EntryType: "SITE_CONFIG",
+                        Site: newSite
+                    }]
+                });
+                inputEl.value = "";
+                await syncAllData(false);
+                alert(`Site "${newSite}" added!`);
+            } catch (err) {
+                console.log("Add site error:", err);
+                alert("Failed to add site on Google Sheet.");
+            }
+        }
+
+        async function editSite(siteIdx) {
+            if (currentUser !== 'Admin') return;
+            const oldSite = sites[siteIdx];
+            const updatedInput = prompt(`Edit Site Name ("${oldSite}"):`, oldSite);
+            if (updatedInput === null) return;
+            const newSite = updatedInput.trim();
+            if (!newSite || newSite === oldSite) return;
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [
+                        {
+                            RecordId: makeRecordId("SITEDEL"),
+                            EntryType: "SITE_DELETED",
+                            Site: oldSite
+                        },
+                        {
+                            RecordId: makeRecordId("SITE"),
+                            EntryType: "SITE_CONFIG",
+                            Site: newSite
+                        }
+                    ]
+                });
+                await syncAllData(false);
+                alert(`Site updated to "${newSite}"!`);
+            } catch (err) {
+                console.log("Site edit sync error:", err);
+                alert("Failed to update site on Google Sheet.");
+            }
+        }
+
+        async function deleteSite(siteIdx) {
+            if (currentUser !== 'Admin') return;
+            const siteToDelete = sites[siteIdx];
+            if (!confirm(`Delete site "${siteToDelete}" from list?`)) return;
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [{
+                        RecordId: makeRecordId("SITEDEL"),
+                        EntryType: "SITE_DELETED",
+                        Site: siteToDelete
+                    }]
+                });
+                await syncAllData(false);
+                alert(`Site "${siteToDelete}" removed!`);
+            } catch (err) {
+                console.log("Site delete sync error:", err);
+                alert("Failed to delete site on Google Sheet.");
+            }
+        }
+
+        async function editFundEntry(idx) {
+            if (currentUser !== 'Admin') return;
+            const entry = fundHistory[idx];
+            const newAmt = prompt(`Edit Amount (₹) given to ${entry.engineer} on ${formatDateVal(entry.date)} (${entry.mode}):`, entry.amount);
+            if (newAmt === null || isNaN(Number(newAmt))) return;
+
+            const updatedAmt = Number(newAmt);
+
+            try {
+                if (entry.id) {
+                    await postToScript({
+                        action: "updateFundHistory",
+                        target: "engineers",
+                        recordId: entry.id,
+                        data: { Amount: updatedAmt }
+                    });
+                }
+                const calcTotal = fundHistory
+                    .filter((fh) => fh.engineer === entry.engineer)
+                    .reduce((sum, fh, i) => sum + (fh.id === entry.id ? updatedAmt : Number(fh.amount || 0)), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: entry.engineer,
+                    data: {
+                        totalGiven: calcTotal,
+                        lastDate: entry.date,
+                        mode: entry.mode
+                    }
+                });
+                await syncAllData(false);
+                alert("Fund updated across all devices!");
+            } catch (err) {
+                console.log("Fund edit sync error:", err);
+                alert("Failed to update fund on Google Sheet.");
+            }
+        }
+
+        async function deleteFundEntry(idx) {
+            if (currentUser !== 'Admin') return;
+            const entry = fundHistory[idx];
+            if (!confirm(`Delete ₹${Number(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
+
+            try {
+                if (entry.id) {
+                    await postToScript({
+                        action: "deleteFundHistory",
+                        target: "engineers",
+                        recordId: entry.id
+                    });
+                }
+                const remainingTotal = fundHistory
+                    .filter((_, i) => i !== idx && fundHistory[i].engineer === entry.engineer)
+                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: entry.engineer,
+                    data: {
+                        totalGiven: remainingTotal
+                    }
+                });
+                await syncAllData(false);
+                alert("Fund entry deleted across all devices!");
+            } catch (err) {
+                console.log("Fund delete sync error:", err);
+                alert("Failed to delete fund entry on Google Sheet.");
+            }
+        }
+
+        async function openAdminEditExpense(index) {
+            if (currentUser !== 'Admin') return;
+            const item = expenses[index];
+            const newMaterial = prompt("Edit Material / Description:", item.Material || item.material || "");
+            if (newMaterial === null) return;
+
+            const currentQty = Number(item.Qty || item.qty || 1);
+            const newQtyInput = prompt("Edit Quantity:", currentQty);
+            if (newQtyInput === null || isNaN(Number(newQtyInput))) return;
+
+            const currentUnit = item.Unit || item.unit || item.Units || item.units || "Units";
+            const newUnitInput = prompt("Edit Units:", currentUnit);
+            if (newUnitInput === null) return;
+
+            const currentAmt = Number(item.Amount || item.amount || 0);
+            const currentRate = (item.Rate || item.rate) ? Number(item.Rate || item.rate) : (currentQty > 0 ? Math.round((currentAmt / currentQty) * 100) / 100 : 0);
+            const newRateInput = prompt("Edit Rate (₹):", currentRate);
+            if (newRateInput === null || isNaN(Number(newRateInput))) return;
+
+            const currentRemarks = item.Remarks || item.remarks || item.Remark || item.remark || "";
+            const newRemarksInput = prompt("Edit Remarks:", currentRemarks);
+            if (newRemarksInput === null) return;
+
+            const currentStatus = item.Status || item.status || "Paid";
+            const newStatusInput = prompt('Edit Status ("Paid" or "Unpaid"):', currentStatus);
+            if (newStatusInput === null) return;
+
+            const updatedMaterial = newMaterial.trim() || (item.Material || item.material);
+            const updatedQty = Number(newQtyInput);
+            const updatedUnit = newUnitInput.trim() || currentUnit;
+            const updatedRate = Number(newRateInput);
+            const updatedRemarks = newRemarksInput.trim();
+            const updatedStatus = newStatusInput.trim() || "Paid";
+            const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
+            const recId = item.RecordId || item.recordId;
+
+            try {
+                if (recId) {
+                    await postToScript({
+                        action: "updateExpense",
+                        target: "expenses",
+                        recordId: recId,
+                        data: {
+                            Material: updatedMaterial,
+                            Qty: updatedQty,
+                            Unit: updatedUnit,
+                            Rate: updatedRate,
+                            Amount: updatedAmt,
+                            Remarks: updatedRemarks,
+                            Status: updatedStatus
+                        }
+                    });
+                }
+                await syncAllData(false);
+                alert("Expense updated across all devices!");
+            } catch (err) {
+                console.log("Expense edit sync error:", err);
+                alert("Failed to update expense on Google Sheet.");
+            }
+        }
+
+        async function deleteExpense(index) {
+            if (currentUser !== 'Admin') return;
+            const item = expenses[index];
+            if (!confirm(`Delete expense "${item.Material || item.material}" (₹${Number(item.Amount || item.amount || 0).toLocaleString('en-IN')})?`)) return;
+
+            const recId = item.RecordId || item.recordId;
+
+            try {
+                if (recId) {
+                    await postToScript({
+                        action: "deleteExpense",
+                        target: "expenses",
+                        recordId: recId
+                    });
+                }
+                await syncAllData(false);
+                alert("Expense deleted across all devices!");
+            } catch (err) {
+                console.log("Expense delete sync error:", err);
+                alert("Failed to delete expense on Google Sheet.");
+            }
+        }
+
+        async function saveExpense(e) {
+            e.preventDefault();
+            if (currentUser === 'Admin') return;
+
+            const btn = document.getElementById('btnSaveExp');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const qtyNum = parseFloat(document.getElementById('expQty').value) || 0;
+            const unitVal = document.getElementById('expUnit').value;
+            const rateNum = parseFloat(document.getElementById('expRate').value) || 0;
+            const calcAmt = Math.round(qtyNum * rateNum * 100) / 100;
+            document.getElementById('expAmount').value = calcAmt;
+
+            const siteVal = document.getElementById('expSite').value;
+            const recId = makeRecordId("EXP");
+            const recTs = parseRecordTs({ RecordId: recId });
+
+            const newExp = {
+                RecordId: recId,
+                _ts: recTs,
+                Date: document.getElementById('expDate').value,
+                Engineer: document.getElementById('expEngineer').value,
+                Site: siteVal,
+                Material: document.getElementById('expMaterial').value,
+                Qty: qtyNum,
+                Unit: unitVal,
+                Rate: rateNum,
+                Amount: calcAmt,
+                Remarks: document.getElementById('expRemarks').value.trim(),
+                Status: document.getElementById('expStatus').value
+            };
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: siteVal,
+                    data: [newExp]
+                });
+                await syncAllData(false);
+                e.target.reset();
+                document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
+                updateCalculatedAmount();
+                alert("Expense saved to Google Sheet!");
+            } catch (err) {
+                console.log("Expense save error:", err);
+                alert("Failed to save expense. Please check internet connection.");
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Save Expense";
+        }
+
+        async function addOrUpdateEngineer(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+
+            const btn = document.getElementById('btnSaveFund');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const dateVal = document.getElementById('setupFundDate').value;
+            const engName = document.getElementById('setupEngSelect').value;
+            const modeVal = document.getElementById('setupFundMode').value;
+            const amtVal = Number(document.getElementById('setupEngFund').value || 0);
+
+            const recId = makeRecordId("FND");
+
+            try {
+                await postToScript({
+                    action: "addFundHistory",
+                    target: "engineers",
+                    data: {
+                        RecordId: recId,
+                        EntryType: "FUND_HISTORY",
+                        name: engName,
+                        Engineer: engName,
+                        Date: dateVal,
+                        Mode: modeVal,
+                        Amount: amtVal
+                    }
+                });
+
+                const prevTotal = fundHistory
+                    .filter(fh => fh.engineer === engName)
+                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        totalGiven: prevTotal + amtVal,
+                        lastDate: dateVal,
+                        mode: modeVal
+                    }
+                });
+
+                document.getElementById('setupEngFund').value = "";
+                await syncAllData(false);
+                alert(`₹${amtVal.toLocaleString('en-IN')} added for ${engName}!`);
+            } catch (err) {
+                console.log("Fund save error:", err);
+                alert("Failed to save fund to Google Sheet.");
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Save Fund";
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            const savedUser = sessionStorage.getItem('na_active_user');
+            if (savedUser && passwords[savedUser]) {
+                currentUser = savedUser;
+                initApp();
+            }
         });
-        document.getElementById("expMaterial").value = "";
-        document.getElementById("expQty").value = "";
-        document.getElementById("expAmount").value = "";
-        document.getElementById("expRemarks").value = "";
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function handleAddFund(e) {
-      e.preventDefault();
-      if (currentUser !== "MANIGANDAN") return;
-      const btn = document.getElementById("saveFundBtn");
-      btn.disabled = true;
-      try {
-        const engVal = document.getElementById("fundEngineer").value;
-        await sendPost({
-          action: "addFundHistory",
-          data: {
-            RecordId: "FND_" + Date.now(),
-            EntryType: "FUND_HISTORY",
-            name: engVal,
-            Engineer: engVal,
-            Date: document.getElementById("fundDate").value,
-            Mode: document.getElementById("fundMode").value,
-            Amount: Number(document.getElementById("fundAmount").value || 0)
-          }
-        });
-        document.getElementById("fundAmount").value = "";
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function handleSettleSelectedEngineer() {
-      if (currentUser !== "MANIGANDAN") return;
-      const engVal = document.getElementById("fundEngineer").value;
-
-      const targetExpenses = liveState.expenses.filter(r =>
-        String(r.Engineer || "").trim() === engVal && !isSettledRow(r) && r.RecordId
-      );
-      const targetFunds = liveState.engineers.filter(r =>
-        String(r.Engineer || r.name || "").trim() === engVal && !isSettledRow(r) && r.RecordId
-      );
-
-      if (targetExpenses.length === 0 && targetFunds.length === 0) {
-        alert(`${engVal}-க்கு settle பண்ண active entries எதுவும் இல்ல.`);
-        return;
-      }
-
-      setSyncBadge("Settling...");
-      for (const exp of targetExpenses) {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify({
-            action: "updateExpense",
-            recordId: exp.RecordId,
-            data: { Status: "Settled" }
-          })
-        });
-      }
-      for (const fnd of targetFunds) {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          body: JSON.stringify({
-            action: "updateFundHistory",
-            recordId: fnd.RecordId,
-            data: { EntryType: "SETTLEMENT_LOG" }
-          })
-        });
-      }
-
-      await new Promise(r => setTimeout(r, 1000));
-      await loadLiveData(true);
-      alert(`${engVal} settled! இனி settled ஆன எண்ட்ரிகள் காட்டாது.`);
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedSessionUser = sessionStorage.getItem("na_session_user");
-      if (savedSessionUser && PASSWORDS[savedSessionUser]) {
-        currentUser = savedSessionUser;
-        document.getElementById("loginScreen").classList.add("hidden");
-        document.getElementById("mainApp").classList.remove("hidden");
-        document.getElementById("activeUserBadge").textContent = currentUser;
-        document.getElementById("adminPanel").classList.toggle("hidden", currentUser !== "MANIGANDAN");
-        const today = new Date().toISOString().split("T")[0];
-        document.getElementById("expDate").value = today;
-        document.getElementById("fundDate").value = today;
-        loadLiveData(true);
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
