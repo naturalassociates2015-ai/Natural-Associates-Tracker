@@ -341,7 +341,8 @@
             }
         }
 
-        let currentUser = localStorage.getItem('na_current_user') || null;
+        localStorage.removeItem('na_current_user');
+        let currentUser = null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
             name, totalGiven: 0, lastDate: "-", mode: "Cash"
         }));
@@ -380,7 +381,6 @@
 
             if (passwords[user] && passwords[user] === pass) {
                 currentUser = user;
-                localStorage.setItem('na_current_user', user);
                 document.getElementById('loginError').classList.add('hidden');
                 initApp();
             } else {
@@ -1125,10 +1125,6 @@
         }
 
         lucide.createIcons();
-
-        if (currentUser && passwords[currentUser]) {
-            initApp();
-        }
     </script>
 </body>
 </html>
