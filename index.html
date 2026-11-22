@@ -136,7 +136,7 @@
 
             <!-- 2. EXPENSES TAB -->
             <div id="view-expenses" class="hidden space-y-6">
-                <!-- Record New Expense Card (Hidden for Admin, Visible for Engineers) -->
+                <!-- Record New Expense Card (Visible for Engineers) -->
                 <div id="recordExpenseCard" class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-4">Record New Expense</h2>
                     <form onsubmit="saveExpense(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -150,7 +150,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
-                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Material / Description</label>
@@ -170,6 +170,17 @@
                                 <input type="number" step="any" id="expAmount" placeholder="Amount (₹)" class="w-1/2 p-2.5 border rounded-xl text-sm bg-slate-50 font-semibold text-emerald-700" readonly required>
                             </div>
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Remarks</label>
+                            <input type="text" id="expRemarks" placeholder="Optional notes (e.g., bill pending, morning load)" class="w-full p-2.5 border rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Payment Status</label>
+                            <select id="expStatus" class="w-full p-2.5 border rounded-xl text-sm font-semibold">
+                                <option value="Paid" class="text-emerald-600">Paid</option>
+                                <option value="Unpaid" class="text-rose-600">Unpaid</option>
+                            </select>
+                        </div>
                         <div class="md:col-span-3 flex items-center justify-between pt-1">
                             <span id="calcFormulaHint" class="text-xs text-slate-500">Quantity × Rate = Amount</span>
                             <button type="submit" id="btnSaveExp" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-emerald-700 transition text-sm">Save Expense</button>
@@ -179,8 +190,14 @@
 
                 <!-- Expense Logs Table -->
                 <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <div class="p-6 border-b">
+                    <div class="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-500">Filter Site:</span>
+                            <select id="filterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                <option value="ALL">ALL SITES</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
@@ -194,6 +211,8 @@
                                     <th class="p-3">Units</th>
                                     <th class="p-3">Rate</th>
                                     <th class="p-3">Amount</th>
+                                    <th class="p-3">Remarks</th>
+                                    <th class="p-3">Status</th>
                                     <th id="thExpenseAction" class="p-3 hidden">Action</th>
                                 </tr>
                             </thead>
@@ -241,9 +260,9 @@
                             <button type="submit" id="btnSaveFund" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Save Fund</button>
                         </form>
 
-                        <!-- Admin Fund Given History (Date, Engineer, Mode, Amount, Edit & Delete) -->
+                        <!-- Admin Fund Given History -->
                         <div class="pt-3 border-t">
-                            <p class="text-xs font-semibold text-slate-500 mb-2">Funds Given by Admin (Date, Mode, Edit & Delete):</p>
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Funds Given by Admin:</p>
                             <div id="setupEngList" class="divide-y text-sm"></div>
                         </div>
                     </div>
@@ -257,7 +276,7 @@
                         <form onsubmit="addSite(event)" class="space-y-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
-                                <input type="text" id="setupSiteName" placeholder="e.g., Tambaram, Porur" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
                             </div>
                             <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
                         </form>
@@ -284,7 +303,7 @@
     </div>
 
     <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfQT9IqvFzblsdaeGnvqvkRRBerNN0wFIv1MT_zYpQpQfKxTKiqC-6iK4nW5bAiuw8yw/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfJFenxViRXVxjgWPZuLgNIDjHy_ELPKdfR24q9yc5ArArj1c4ikBP9TqngCi30lHMqA/exec";
 
         const passwords = {
             "Admin": "sar2021",
@@ -295,7 +314,7 @@
         };
 
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "MANIGANDAN"];
-        const DEFAULT_SITES = ["Madhuravoyal", "Sithalapakam", "Oragadam"];
+        const DEFAULT_SITES = ["Oragadam-Thyagarajan sir", "Valasaravakkam-Maran sir", "Sithalapakkam-Nakkiran sir", "Madhuravoyal-Kannan sir"];
         const DEFAULT_UNITS = ["CFT", "Tons", "KG", "Nos", "Bundle", "Packet", "Units", "Liter", "Day", "Bags", "Transport", "WeekPayment", "Advance", "NMR"];
 
         let syncTimer = null;
@@ -341,7 +360,6 @@
             }
         }
 
-        localStorage.removeItem('na_current_user');
         let currentUser = null;
         let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
             name, totalGiven: 0, lastDate: "-", mode: "Cash"
@@ -361,16 +379,31 @@
             return await res.json();
         }
 
-        function refreshSiteDropdown() {
+        function refreshSiteDropdowns() {
             const expSite = document.getElementById('expSite');
-            if (!expSite) return;
-            const currentVal = expSite.value;
-            expSite.innerHTML = '';
-            sites.forEach(site => {
-                expSite.innerHTML += `<option value="${site}">${site}</option>`;
-            });
-            if (currentVal && sites.includes(currentVal)) {
-                expSite.value = currentVal;
+            const filterSite = document.getElementById('filterSiteSelect');
+            
+            const currentExpVal = expSite ? expSite.value : '';
+            const currentFilterVal = filterSite ? filterSite.value : 'ALL';
+
+            if (expSite) {
+                expSite.innerHTML = '';
+                sites.forEach(site => {
+                    expSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentExpVal && sites.includes(currentExpVal)) {
+                    expSite.value = currentExpVal;
+                }
+            }
+
+            if (filterSite) {
+                filterSite.innerHTML = `<option value="ALL">ALL SITES</option>`;
+                sites.forEach(site => {
+                    filterSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentFilterVal === 'ALL' || sites.includes(currentFilterVal)) {
+                    filterSite.value = currentFilterVal;
+                }
             }
         }
 
@@ -389,7 +422,6 @@
         }
 
         function handleLogout() {
-            localStorage.removeItem('na_current_user');
             currentUser = null;
             if (syncTimer) {
                 clearInterval(syncTimer);
@@ -445,7 +477,7 @@
                 expEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
             }
 
-            refreshSiteDropdown();
+            refreshSiteDropdowns();
 
             const expUnit = document.getElementById('expUnit');
             expUnit.innerHTML = '';
@@ -514,7 +546,7 @@
                         data.engineers.forEach(row => {
                             const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
                             const siteVal = (row.Site || row.site || row.Sites || "").trim();
-                            if (entryType === 'SITE_CONFIG' && siteVal && !syncedSites.includes(siteVal)) {
+                            if ((entryType === 'SITE_CONFIG' || entryType === 'SITE') && siteVal && !syncedSites.includes(siteVal)) {
                                 syncedSites.push(siteVal);
                                 return;
                             }
@@ -553,7 +585,7 @@
 
                         sites = syncedSites;
                         localStorage.setItem('na_sites', JSON.stringify(sites));
-                        refreshSiteDropdown();
+                        refreshSiteDropdowns();
 
                         fundHistory = historyRows;
                         localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
@@ -608,16 +640,21 @@
 
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
+            const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
 
             const scopedEngineers = isAdmin
                 ? engineers
                 : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
 
-            const scopedExpenses = isAdmin
+            const rawScopedExpenses = isAdmin
                 ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
                 : expenses
                     .map((ex, idx) => ({ ex, realIdx: idx }))
                     .filter(item => ((item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase()));
+
+            const scopedExpenses = (filterSiteVal !== 'ALL')
+                ? rawScopedExpenses.filter(item => ((item.ex.Site || item.ex.site || "").trim().toLowerCase() === filterSiteVal.toLowerCase()))
+                : rawScopedExpenses;
 
             const totalFunds = scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0);
             const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
@@ -662,6 +699,12 @@
                     ? Number(rawRate)
                     : (qtyVal > 0 ? Math.round((amtVal / qtyVal) * 100) / 100 : 0);
 
+                const remarksVal = ex.Remarks || ex.remarks || ex.Remark || ex.remark || '-';
+                const statusVal = ex.Status || ex.status || 'Paid';
+                const statusBadge = (statusVal.toLowerCase() === 'paid')
+                    ? `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Paid</span>`
+                    : `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">Unpaid</span>`;
+
                 const actionCell = isAdmin ? `
                     <td class="p-3 space-x-2 whitespace-nowrap">
                         <button onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
@@ -673,12 +716,14 @@
                     <tr>
                         <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
                         <td class="p-3 font-medium">${ex.Engineer || ex.engineer || '-'}</td>
-                        <td class="p-3">${ex.Site || ex.site || '-'}</td>
+                        <td class="p-3 font-semibold text-emerald-700">${ex.Site || ex.site || '-'}</td>
                         <td class="p-3">${ex.Material || ex.material || '-'}</td>
                         <td class="p-3">${qtyVal || ''}</td>
                         <td class="p-3">${unitVal}</td>
                         <td class="p-3">₹${rateVal.toLocaleString('en-IN')}</td>
                         <td class="p-3 font-semibold">₹${amtVal.toLocaleString('en-IN')}</td>
+                        <td class="p-3 italic text-slate-500">${remarksVal}</td>
+                        <td class="p-3">${statusBadge}</td>
                         ${actionCell}
                     </tr>
                 `;
@@ -745,7 +790,7 @@
 
             sites[siteIdx] = newSite;
             localStorage.setItem('na_sites', JSON.stringify(sites));
-            refreshSiteDropdown();
+            refreshSiteDropdowns();
             renderAll();
 
             try {
@@ -772,7 +817,7 @@
 
             sites.splice(siteIdx, 1);
             localStorage.setItem('na_sites', JSON.stringify(sites));
-            refreshSiteDropdown();
+            refreshSiteDropdowns();
             renderAll();
         }
 
@@ -874,10 +919,21 @@
             const newRateInput = prompt("Edit Rate (₹):", currentRate);
             if (newRateInput === null || isNaN(Number(newRateInput))) return;
 
+            const currentRemarks = item.Remarks || item.remarks || item.Remark || item.remark || "";
+            const newRemarksInput = prompt("Edit Remarks:", currentRemarks);
+            if (newRemarksInput === null) return;
+
+            const currentStatus = item.Status || item.status || "Paid";
+            const newStatusInput = prompt('Edit Status ("Paid" or "Unpaid"):', currentStatus);
+            if (newStatusInput === null) return;
+
             const updatedMaterial = newMaterial.trim() || (item.Material || item.material);
             const updatedQty = Number(newQtyInput);
             const updatedUnit = newUnitInput.trim() || currentUnit;
             const updatedRate = Number(newRateInput);
+            const updatedRemarks = newRemarksInput.trim();
+            const updatedStatus = newStatusInput.trim() || "Paid";
+
             const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
             const recId = item.RecordId || item.recordId;
 
@@ -886,6 +942,8 @@
             expenses[index].Unit = updatedUnit;
             expenses[index].Rate = updatedRate;
             expenses[index].Amount = updatedAmt;
+            expenses[index].Remarks = updatedRemarks;
+            expenses[index].Status = updatedStatus;
             localStorage.setItem('na_expenses', JSON.stringify(expenses));
             renderAll();
 
@@ -900,7 +958,9 @@
                             Qty: updatedQty,
                             Unit: updatedUnit,
                             Rate: updatedRate,
-                            Amount: updatedAmt
+                            Amount: updatedAmt,
+                            Remarks: updatedRemarks,
+                            Status: updatedStatus
                         }
                     });
                 }
@@ -950,16 +1010,20 @@
             const calcAmt = Math.round(qtyNum * rateNum * 100) / 100;
             document.getElementById('expAmount').value = calcAmt;
 
+            const siteVal = document.getElementById('expSite').value;
+
             const newExp = {
                 RecordId: makeRecordId(),
                 Date: document.getElementById('expDate').value,
                 Engineer: document.getElementById('expEngineer').value,
-                Site: document.getElementById('expSite').value,
+                Site: siteVal,
                 Material: document.getElementById('expMaterial').value,
                 Qty: qtyNum,
                 Unit: unitVal,
                 Rate: rateNum,
-                Amount: calcAmt
+                Amount: calcAmt,
+                Remarks: document.getElementById('expRemarks').value.trim(),
+                Status: document.getElementById('expStatus').value
             };
 
             expenses.push(newExp);
@@ -969,7 +1033,7 @@
             try {
                 await postToScript({
                     action: "create",
-                    target: "expenses",
+                    target: siteVal,
                     data: [newExp]
                 });
                 await syncAllData(false);
@@ -1058,7 +1122,7 @@
             if (newSite && !sites.includes(newSite)) {
                 sites.push(newSite);
                 localStorage.setItem('na_sites', JSON.stringify(sites));
-                refreshSiteDropdown();
+                refreshSiteDropdowns();
                 renderAll();
 
                 try {
