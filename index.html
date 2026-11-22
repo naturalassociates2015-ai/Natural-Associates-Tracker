@@ -1037,9 +1037,8 @@
                     data: [newExp]
                 });
                 await syncAllData(false);
-                alert("Expense saved and synced across devices!");
             } catch (err) {
-                alert("Saved locally (Offline). Will sync later.");
+                console.log("Saved locally (Offline). Will sync later:", err);
             }
 
             e.target.reset();
