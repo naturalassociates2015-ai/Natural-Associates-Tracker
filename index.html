@@ -275,7 +275,11 @@
                                 <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
                                 <span>Close / Settle Engineer Period</span>
                             </h3>
-                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <p class="text-xs text-slate-500">Cutoff தேதி மற்றும் அதற்கு முந்தைய என்ட்ரிகள் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Settle Cutoff Date</label>
+                                <input type="date" id="settleCutoffDate" class="w-full p-2.5 border rounded-xl text-sm">
+                            </div>
                             <div id="engineerSettlementList" class="divide-y text-sm"></div>
                         </div>
 
@@ -336,16 +340,49 @@
             return "REC_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
         }
 
+        function toDateOnlyStr(val) {
+            if (!val) return "";
+            if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
+                const serial = Number(val);
+                const utcDays = Math.floor(serial - 25569);
+                const d = new Date(utcDays * 86400 * 1000);
+                return d.toISOString().split('T')[0];
+            }
+            const str = String(val).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                return str.slice(0, 10);
+            }
+            const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (slashMatch) {
+                const day = slashMatch[1].padStart(2, '0');
+                const month = slashMatch[2].padStart(2, '0');
+                return `${slashMatch[3]}-${month}-${day}`;
+            }
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) {
+                return parsed.toISOString().split('T')[0];
+            }
+            return "";
+        }
+
+        function endOfDayTsFromDateStr(dateStr) {
+            const clean = toDateOnlyStr(dateStr);
+            if (!clean) return 0;
+            const parts = clean.split('-').map(Number);
+            return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999).getTime();
+        }
+
         function parseRecordTs(row) {
+            const dVal = row.Date || row.date || row.lastDate;
+            const dateOnly = toDateOnlyStr(dVal);
+            if (dateOnly) {
+                const parts = dateOnly.split('-').map(Number);
+                return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0).getTime();
+            }
             const rawId = String(row.RecordId || row.recordId || row.id || "");
             const match = rawId.match(/_(\d{10,})_/);
             if (match && match[1]) {
                 return Number(match[1]);
-            }
-            const dStr = row.Date || row.date || row.lastDate;
-            if (dStr) {
-                const parsed = Date.parse(dStr);
-                if (!isNaN(parsed)) return parsed;
             }
             return 0;
         }
@@ -412,7 +449,7 @@
 
             const periodFunds = fundHistory.filter(fh => {
                 const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
-                const ts = Number(fh.ts || 0);
+                const ts = Number(fh.ts || parseRecordTs(fh) || 0);
                 return matchEng && ts > cutoff;
             });
 
@@ -537,6 +574,10 @@
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('expDate').value = todayStr;
             document.getElementById('setupFundDate').value = todayStr;
+            const cutoffInput = document.getElementById('settleCutoffDate');
+            if (cutoffInput && !cutoffInput.value) {
+                cutoffInput.value = todayStr;
+            }
             updateCalculatedAmount();
 
             recalculateEngineerTotals();
@@ -587,7 +628,7 @@
                                 (row.Material || row.material || row.Amount || row.amount) &&
                                 !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
                             )
-                            .map(row => Object.assign({}, row, { _ts: row._ts || parseRecordTs(row) }));
+                            .map(row => Object.assign({}, row, { _ts: parseRecordTs(row) }));
                         localStorage.setItem('na_expenses', JSON.stringify(expenses));
                     }
 
@@ -651,15 +692,17 @@
                         engineers = VALID_ENGINEERS.map(name => {
                             const prev = prevEngineers.find(p => p.name === name) || {};
                             const sum = summaryByEng[name] || {};
+                            const mergedCutoff = Math.max(Number(sum.cutoffTs || 0), Number(prev.cutoffTs || 0));
+                            const mergedCarry = Number(sum.cutoffTs || 0) >= Number(prev.cutoffTs || 0)
+                                ? Number(sum.carryBalance ?? prev.carryBalance ?? 0)
+                                : Number(prev.carryBalance ?? 0);
                             return {
                                 name,
                                 totalGiven: sum.totalGiven ?? prev.totalGiven ?? 0,
                                 lastDate: sum.lastDate || prev.lastDate || "-",
                                 mode: sum.mode || prev.mode || "Cash",
-                                cutoffTs: Math.max(Number(sum.cutoffTs || 0), Number(prev.cutoffTs || 0)),
-                                carryBalance: Number(sum.cutoffTs || 0) >= Number(prev.cutoffTs || 0)
-                                    ? Number(sum.carryBalance ?? prev.carryBalance ?? 0)
-                                    : Number(prev.carryBalance ?? 0)
+                                cutoffTs: mergedCutoff,
+                                carryBalance: mergedCarry
                             };
                         });
                         recalculateEngineerTotals();
@@ -714,21 +757,25 @@
 
         async function settleEngineerPeriod(engName) {
             if (currentUser !== 'Admin') return;
+            const cutoffDateInput = document.getElementById('settleCutoffDate');
+            const selectedDateStr = (cutoffDateInput && cutoffDateInput.value)
+                ? cutoffDateInput.value
+                : new Date().toISOString().split('T')[0];
+
+            const cutoffTs = endOfDayTsFromDateStr(selectedDateStr);
             const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
             const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
             const nextCarryBalance = stats.balance;
 
-            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Current Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Current Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance for Next Period: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld list entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will carry forward.`;
+            const confirmMsg = `Close & Settle period up to ${formatDateVal(selectedDateStr)} for ${engName}?\n\n• Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nEntries on or before ${formatDateVal(selectedDateStr)} will be hidden for ${engName}.`;
             if (!confirm(confirmMsg)) return;
 
-            const cutoffTs = Date.now();
-            const settledDate = new Date().toISOString().split('T')[0];
             const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
 
             engineers = engineers.map(e => e.name === engName ? Object.assign({}, e, {
                 cutoffTs: cutoffTs,
                 carryBalance: nextCarryBalance,
-                lastDate: settledDate
+                lastDate: selectedDateStr
             }) : e);
             localStorage.setItem('na_engineers', JSON.stringify(engineers));
             renderAll();
@@ -743,11 +790,11 @@
                         engineer: engName,
                         cutoffTs: cutoffTs,
                         carryBalance: nextCarryBalance,
-                        date: settledDate
+                        date: selectedDateStr
                     }
                 });
                 await syncAllData(false);
-                alert(`Period settled for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+                alert(`Period settled up to ${formatDateVal(selectedDateStr)} for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
             } catch (err) {
                 console.log("Settle sync error:", err);
                 alert("Period settled locally. Will sync when online.");
@@ -811,7 +858,7 @@
                 ? fundHistory
                 : fundHistory.filter(fh => {
                     const matchEng = (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-                    const ts = Number(fh.ts || 0);
+                    const ts = Number(fh.ts || parseRecordTs(fh) || 0);
                     return matchEng && ts > engCutoffTs;
                 });
 
@@ -1187,13 +1234,14 @@
             document.getElementById('expAmount').value = calcAmt;
 
             const siteVal = document.getElementById('expSite').value;
+            const expDateVal = document.getElementById('expDate').value;
             const recId = makeRecordId();
-            const recTs = parseRecordTs({ RecordId: recId });
+            const recTs = parseRecordTs({ Date: expDateVal, RecordId: recId });
 
             const newExp = {
                 RecordId: recId,
                 _ts: recTs,
-                Date: document.getElementById('expDate').value,
+                Date: expDateVal,
                 Engineer: document.getElementById('expEngineer').value,
                 Site: siteVal,
                 Material: document.getElementById('expMaterial').value,
@@ -1240,7 +1288,7 @@
             const mode = document.getElementById('setupFundMode').value;
             const amt = Number(document.getElementById('setupEngFund').value);
             const recId = makeRecordId();
-            const recTs = parseRecordTs({ RecordId: recId });
+            const recTs = parseRecordTs({ Date: payDate, RecordId: recId });
 
             const historyItem = {
                 id: recId,
