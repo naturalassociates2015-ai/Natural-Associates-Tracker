@@ -25,7 +25,7 @@
                 <h1 class="text-2xl font-bold text-slate-900">Natural Associates expense tracker</h1>
                 <p class="text-sm text-slate-500">Site Expense & Cash Flow Tracker</p>
             </div>
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <form id="loginForm" onsubmit="handleLogin(event); loadDataFromServer();" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Select User / Role</label>
                     <select id="loginUser" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" required>
@@ -424,13 +424,31 @@
         }
 
         let currentUser = null;
-        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
-            name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
-        }));
-        let fundHistory = JSON.parse(localStorage.getItem('na_fund_history')) || [];
-        let sites = JSON.parse(localStorage.getItem('na_sites')) || [...DEFAULT_SITES];
-        let units = [...DEFAULT_UNITS];
-        let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
+let engineers = [];
+let fundHistory = [];
+let sites = [];
+let units = [];
+let expenses = [];
+
+async function loadDataFromServer() {
+  try {
+    isSyncing = true;
+    const response = await fetch(APPS_SCRIPT_URL);
+    if (!response.ok) throw new Error("Network response was not ok");
+    const result = await response.json();
+
+    if (result.engineers) engineers = result.engineers;
+    if (result.fundHistory) fundHistory = result.fundHistory;
+    if (result.sites) sites = result.sites;
+    if (result.units) units = result.units;
+    if (result.expenses) expenses = result.expenses;
+  } catch (err) {
+    console.error("Server sync error:", err);
+  } finally {
+    isSyncing = false;
+  }
+}
+}
 
         async function postToScript(payload) {
             const res = await fetch(APPS_SCRIPT_URL, {
