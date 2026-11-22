@@ -72,7 +72,7 @@
             </div>
         </header>
 
-        <!-- Navigation Tabs (Bottom on Mobile, Top on Desktop) -->
+        <!-- Navigation Tabs -->
         <nav class="bg-white border-t sm:border-t-0 sm:border-b shadow-lg sm:shadow-sm fixed bottom-0 left-0 right-0 z-40 sm:static">
             <div class="max-w-7xl mx-auto px-2 sm:px-4 flex justify-around sm:justify-start sm:space-x-6 overflow-x-auto">
                 <button type="button" onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-emerald-600 text-emerald-600 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
@@ -270,7 +270,7 @@
                                 <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
                                 <span>Close / Settle Engineer Period</span>
                             </h3>
-                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை புதிய Fund Received / Carry Balance ஆகச் சேரும்.</p>
                             <div id="engineerSettlementList" class="divide-y text-sm"></div>
                         </div>
 
@@ -404,21 +404,25 @@
             return result;
         }
 
+        // Settle ஆன பிறகு:
+        // - cutoffTs-க்கு முந்தைய பழைய funds மற்றும் பழைய expenses hide ஆகும்
+        // - carryBalance (செட்டில் நேரத்தில் இருந்த மீதி) + புதிய funds = Fund Received ஆகும்
         function getEngineerCycleStats(engName, cutoffTs = 0, carryBalance = 0) {
             const lowerName = (engName || "").trim().toLowerCase();
             const cutoff = Number(cutoffTs || 0);
-            const carry = Number(carryBalance || 0);
+            const hasSettled = cutoff > 0;
+            const carry = hasSettled ? Number(carryBalance || 0) : 0;
 
             const periodFunds = fundHistory.filter(fh => {
                 const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
                 const ts = Number(fh.ts || 0);
-                return matchEng && ts > cutoff;
+                return matchEng && (!hasSettled || ts > cutoff);
             });
 
             const periodExpenses = expenses.filter(ex => {
                 const matchEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase() === lowerName;
                 const ts = Number(ex._ts || parseRecordTs(ex) || 0);
-                return matchEng && ts > cutoff;
+                return matchEng && (!hasSettled || ts > cutoff);
             });
 
             const newFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
@@ -426,7 +430,7 @@
             const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
             const balance = totalFunds - totalSpent;
 
-            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses };
+            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses, hasSettled };
         }
 
         function refreshSiteDropdowns() {
@@ -576,7 +580,7 @@
                 listEl.innerHTML += `
                     <div class="p-3.5 rounded-xl border bg-slate-50 space-y-1">
                         <div class="font-bold text-slate-900">${engName}</div>
-                        <div class="text-xs text-slate-600 flex justify-between"><span>Active Funds (incl. Carry):</span><span class="font-semibold text-slate-900">₹${stats.totalFunds.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Fund Received (Active):</span><span class="font-semibold text-slate-900">₹${stats.totalFunds.toLocaleString('en-IN')}</span></div>
                         <div class="text-xs text-slate-600 flex justify-between"><span>Active Expenses:</span><span class="font-semibold text-rose-600">₹${stats.totalSpent.toLocaleString('en-IN')}</span></div>
                         <div class="text-xs text-slate-600 flex justify-between border-t pt-1"><span>Balance:</span><span class="font-bold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span></div>
                     </div>
@@ -696,7 +700,6 @@
                     };
                 });
 
-                recalculateEngineerTotalsFromSheet();
                 renderAll();
 
                 if (statusEl) statusEl.innerText = `Live Synced (${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})`;
@@ -713,47 +716,13 @@
             isSyncing = false;
         }
 
-        function recalculateEngineerTotalsFromSheet() {
-            const totals = {};
-            VALID_ENGINEERS.forEach(name => {
-                const existing = engineers.find(e => e.name === name) || {};
-                totals[name] = {
-                    totalGiven: 0,
-                    lastDate: existing.lastDate || "-",
-                    mode: existing.mode || "Cash",
-                    cutoffTs: Number(existing.cutoffTs || 0),
-                    carryBalance: Number(existing.carryBalance || 0)
-                };
-            });
-
-            fundHistory.forEach(fh => {
-                const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === (fh.engineer || "").trim().toLowerCase());
-                if (matchedName) {
-                    totals[matchedName].totalGiven += Number(fh.amount || 0);
-                    if (Number(totals[matchedName].cutoffTs || 0) === 0) {
-                        totals[matchedName].lastDate = fh.date;
-                    }
-                    totals[matchedName].mode = fh.mode;
-                }
-            });
-
-            engineers = VALID_ENGINEERS.map(name => ({
-                name,
-                totalGiven: totals[name].totalGiven,
-                lastDate: totals[name].lastDate,
-                mode: totals[name].mode,
-                cutoffTs: totals[name].cutoffTs,
-                carryBalance: totals[name].carryBalance
-            }));
-        }
-
         async function settleEngineerPeriod(engName) {
             if (currentUser !== 'Admin') return;
             const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
             const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
             const nextCarryBalance = stats.balance;
 
-            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Current Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Current Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance for Next Period: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld list entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will carry forward.`;
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Active Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
             if (!confirm(confirmMsg)) return;
 
             const cutoffTs = Date.now();
@@ -778,7 +747,7 @@
                     }
                 });
                 await syncAllData(false);
-                alert(`Period settled for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+                alert(`Period settled for ${engName}! New Fund Received: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
             } catch (err) {
                 console.log("Settle sync error:", err);
                 alert("Failed to settle period on Google Sheet. Please try again.");
@@ -793,11 +762,8 @@
                 ? (engineers.find(e => e.name.toLowerCase() === currentUser.toLowerCase()) || { cutoffTs: 0, carryBalance: 0 })
                 : null;
             const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
-            const engCarryBalance = !isAdmin ? Number(currentEngObj.carryBalance || 0) : 0;
-
-            const scopedEngineers = isAdmin
-                ? engineers
-                : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
+            const hasEngSettled = !isAdmin && engCutoffTs > 0;
+            const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
 
             const rawScopedExpenses = isAdmin
                 ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
@@ -806,7 +772,7 @@
                     .filter(item => {
                         const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
                         const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
-                        return matchEng && ts > engCutoffTs;
+                        return matchEng && (!hasEngSettled || ts > engCutoffTs);
                     });
 
             const scopedExpenses = (filterSiteVal !== 'ALL')
@@ -814,7 +780,10 @@
                 : rawScopedExpenses;
 
             const totalFunds = isAdmin
-                ? scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0)
+                ? VALID_ENGINEERS.reduce((sum, engName) => {
+                    const eObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+                    return sum + getEngineerCycleStats(engName, eObj.cutoffTs, eObj.carryBalance).totalFunds;
+                }, 0)
                 : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
             const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
@@ -828,36 +797,40 @@
             document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
 
             const carryNoteEl = document.getElementById('carryForwardNote');
-            if (!isAdmin && engCutoffTs > 0) {
+            if (hasEngSettled) {
                 carryNoteEl.classList.remove('hidden');
-                carryNoteEl.innerText = `Includes Carry-Forward Balance: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+                carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
             } else {
                 carryNoteEl.classList.add('hidden');
                 carryNoteEl.innerText = '';
             }
 
+            // Fund Received Details Table:
+            // Settle ஆன பிறகு பழைய entries காட்டாது; Carry-Forward தொகை + அதன் பின் வரும் புதிய fund entries மட்டும் காட்டும்
             const fundHistBody = document.getElementById('fundHistoryBody');
             fundHistBody.innerHTML = '';
-            const visibleHistory = isAdmin
-                ? fundHistory
-                : fundHistory.filter(fh => {
-                    const matchEng = (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-                    const ts = Number(fh.ts || 0);
-                    return matchEng && ts > engCutoffTs;
-                });
 
-            if (!isAdmin && engCutoffTs > 0) {
+            if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
                 fundHistBody.innerHTML += `
-                    <tr class="bg-emerald-50/50">
+                    <tr>
                         <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
                         <td class="p-3 font-medium">${currentUser}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">Carry Forward</span></td>
-                        <td class="p-3 font-semibold text-emerald-700">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Settled Balance</span></td>
+                        <td class="p-3 font-semibold text-slate-900">₹${engCarryBalance.toLocaleString('en-IN')}</td>
                     </tr>
                 `;
             }
 
-            if (visibleHistory.length === 0 && (isAdmin || engCutoffTs === 0)) {
+            const visibleHistory = fundHistory.filter(fh => {
+                const matchEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                if (!matchEng) return false;
+                if (!isAdmin && hasEngSettled) {
+                    return Number(fh.ts || 0) > engCutoffTs;
+                }
+                return true;
+            });
+
+            if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
                 fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
             } else {
                 visibleHistory.slice().reverse().forEach(fh => {
@@ -1088,7 +1061,7 @@
                 }
                 const calcTotal = fundHistory
                     .filter((fh) => fh.engineer === entry.engineer)
-                    .reduce((sum, fh, i) => sum + (fh.id === entry.id ? updatedAmt : Number(fh.amount || 0)), 0);
+                    .reduce((sum, fh) => sum + (fh.id === entry.id ? updatedAmt : Number(fh.amount || 0)), 0);
 
                 await postToScript({
                     action: "updateEngineerSummary",
