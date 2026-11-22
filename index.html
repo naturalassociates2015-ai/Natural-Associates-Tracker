@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Natural Associates - Live Site Tracker</title>
-    <title>Natural Associates expense tracker</title>
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
@@ -24,7 +23,6 @@
         <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl">
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold text-slate-900">Natural Associates</h1>
-                <h1 class="text-2xl font-bold text-slate-900">Natural Associates expense tracker</h1>
                 <p class="text-sm text-slate-500">Site Expense & Cash Flow Tracker</p>
             </div>
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
@@ -57,17 +55,16 @@
                     <i data-lucide="building-2" class="w-6 h-6 text-emerald-400"></i>
                     <div>
                         <h1 class="text-xl font-bold">Natural Associates</h1>
-                        <h1 class="text-xl font-bold">Natural Associates expense tracker</h1>
                         <p id="userRoleDisplay" class="text-xs text-emerald-400 font-medium"></p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Apps Script Sync</span>
-                    <button onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
+                    <span id="liveSyncStatus" class="hidden sm:inline-block text-[11px] text-emerald-300 bg-slate-800 px-2.5 py-1 rounded-md">Live Sheet Sync</span>
+                    <button type="button" onclick="syncAllData(true)" id="btnSync" class="flex items-center space-x-1 text-xs bg-emerald-600 px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">
                         <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5"></i>
                         <span id="syncText">Sync</span>
                     </button>
-                    <button onclick="handleLogout()" class="flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
+                    <button type="button" onclick="handleLogout()" class="flex items-center space-x-1 text-xs bg-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition">
                         <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
                         <span>Logout</span>
                     </button>
@@ -75,19 +72,18 @@
             </div>
         </header>
 
-        <!-- Navigation Tabs (Bottom on Mobile, Top on Desktop) -->
+        <!-- Navigation Tabs -->
         <nav class="bg-white border-t sm:border-t-0 sm:border-b shadow-lg sm:shadow-sm fixed bottom-0 left-0 right-0 z-40 sm:static">
             <div class="max-w-7xl mx-auto px-2 sm:px-4 flex justify-around sm:justify-start sm:space-x-6 overflow-x-auto">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-emerald-600 text-emerald-600 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                <button type="button" onclick="switchTab('dashboard')" id="tab-dashboard" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-emerald-600 text-emerald-600 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
                     <span>Summary</span>
                 </button>
-                <button onclick="switchTab('expenses')" id="tab-expenses" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                <button type="button" onclick="switchTab('expenses')" id="tab-expenses" class="flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
                     <i data-lucide="receipt" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
                     <span>Expenses</span>
                 </button>
-                <!-- Admin Setup Tab (Strictly Admin Only) -->
-                <button onclick="switchTab('settings')" id="tab-settings" class="hidden flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
+                <button type="button" onclick="switchTab('settings')" id="tab-settings" class="hidden flex-1 sm:flex-initial py-2.5 sm:py-4 px-2 sm:px-3 border-t-2 sm:border-t-0 sm:border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium flex flex-col sm:flex-row items-center justify-center sm:space-x-2 text-xs sm:text-base whitespace-nowrap">
                     <i data-lucide="settings" class="w-4 h-4 mb-0.5 sm:mb-0"></i>
                     <span>Admin Setup</span>
                 </button>
@@ -118,7 +114,7 @@
                     </div>
                 </div>
 
-                <!-- Fund / Cash Received Details on First Page -->
+                <!-- Fund / Cash Received Details -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-1">Fund / Cash Received Details</h2>
                     <p class="text-xs text-slate-500 mb-4">எந்தத் தேதியில், எவ்வளவு பணம், எந்த முறையில் (Cash / Online / GPay) வந்துள்ளது என்ற விவரம்</p>
@@ -140,7 +136,6 @@
 
             <!-- 2. EXPENSES TAB -->
             <div id="view-expenses" class="hidden space-y-6">
-                <!-- Record New Expense Card (Visible for Engineers) -->
                 <div id="recordExpenseCard" class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-4">Record New Expense</h2>
                     <form onsubmit="saveExpense(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -226,10 +221,9 @@
                 </div>
             </div>
 
-            <!-- 3. ADMIN SETUP TAB (Strictly Admin Only) -->
+            <!-- 3. ADMIN SETUP TAB -->
             <div id="view-settings" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Give / Edit / Delete Engineer Fund -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
                             <i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>
@@ -264,21 +258,19 @@
                             <button type="submit" id="btnSaveFund" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Save Fund</button>
                         </form>
 
-                        <!-- Admin Fund Given History -->
                         <div class="pt-3 border-t">
                             <p class="text-xs font-semibold text-slate-500 mb-2">Funds Given by Admin:</p>
                             <div id="setupEngList" class="divide-y text-sm"></div>
                         </div>
                     </div>
 
-                    <!-- Manage Sites & Engineer Period Cutoff -->
                     <div class="space-y-6">
                         <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                             <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
                                 <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
                                 <span>Close / Settle Engineer Period</span>
                             </h3>
-                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை Carry-Forward Balance ஆகச் சேரும்.</p>
+                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை புதிய Fund Received / Carry Balance ஆகச் சேரும்.</p>
                             <div id="engineerSettlementList" class="divide-y text-sm"></div>
                         </div>
 
@@ -311,7 +303,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3 mb-4">
                 <h3 class="text-lg font-bold text-slate-800">Engineer-wise Fund Details</h3>
-                <button onclick="document.getElementById('fundBreakdownModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none">&times;</button>
+                <button type="button" onclick="document.getElementById('fundBreakdownModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none">&times;</button>
             </div>
             <div id="fundBreakdownList" class="space-y-3"></div>
         </div>
@@ -319,7 +311,6 @@
 
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-        
 
         const passwords = {
             "Admin": "sar2021",
@@ -331,14 +322,22 @@
 
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "MANIGANDAN"];
         const DEFAULT_SITES = ["Oragadam-Thyagarajan sir", "Valasaravakkam-Maran sir", "Sithalapakkam-Nakkiran sir", "Madhuravoyal-Kannan sir"];
-        const DEFAULT_SITES = ["Madhuravoyal", "Sithalapakam", "Oragadam", "Madha school"];
         const DEFAULT_UNITS = ["CFT", "Tons", "KG", "Nos", "Bundle", "Packet", "Units", "Liter", "Day", "Bags", "Transport", "WeekPayment", "Advance", "NMR"];
 
         let syncTimer = null;
         let isSyncing = false;
+        let currentUser = null;
 
-        function makeRecordId() {
-            return "REC_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+        let engineers = VALID_ENGINEERS.map(name => ({
+            name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
+        }));
+        let fundHistory = [];
+        let sites = [...DEFAULT_SITES];
+        let units = [...DEFAULT_UNITS];
+        let expenses = [];
+
+        function makeRecordId(prefix = "REC") {
+            return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         }
 
         function parseRecordTs(row) {
@@ -391,15 +390,6 @@
             }
         }
 
-        let currentUser = null;
-        let engineers = JSON.parse(localStorage.getItem('na_engineers')) || VALID_ENGINEERS.map(name => ({
-            name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
-        }));
-        let fundHistory = JSON.parse(localStorage.getItem('na_fund_history')) || [];
-        let sites = JSON.parse(localStorage.getItem('na_sites')) || [...DEFAULT_SITES];
-        let units = [...DEFAULT_UNITS];
-        let expenses = JSON.parse(localStorage.getItem('na_expenses')) || [];
-
         async function postToScript(payload) {
             const res = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
@@ -407,24 +397,32 @@
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error("Apps Script POST failed");
-            return await res.json();
+            const result = await res.json();
+            if (result && result.status === "error") {
+                throw new Error(result.message || "Apps Script returned error");
+            }
+            return result;
         }
 
+        // Settle ஆன பிறகு:
+        // - cutoffTs-க்கு முந்தைய பழைய funds மற்றும் பழைய expenses hide ஆகும்
+        // - carryBalance (செட்டில் நேரத்தில் இருந்த மீதி) + புதிய funds = Fund Received ஆகும்
         function getEngineerCycleStats(engName, cutoffTs = 0, carryBalance = 0) {
             const lowerName = (engName || "").trim().toLowerCase();
             const cutoff = Number(cutoffTs || 0);
-            const carry = Number(carryBalance || 0);
+            const hasSettled = cutoff > 0;
+            const carry = hasSettled ? Number(carryBalance || 0) : 0;
 
             const periodFunds = fundHistory.filter(fh => {
                 const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
                 const ts = Number(fh.ts || 0);
-                return matchEng && ts > cutoff;
+                return matchEng && (!hasSettled || ts > cutoff);
             });
 
             const periodExpenses = expenses.filter(ex => {
                 const matchEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase() === lowerName;
                 const ts = Number(ex._ts || parseRecordTs(ex) || 0);
-                return matchEng && ts > cutoff;
+                return matchEng && (!hasSettled || ts > cutoff);
             });
 
             const newFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
@@ -432,7 +430,7 @@
             const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
             const balance = totalFunds - totalSpent;
 
-            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses };
+            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses, hasSettled };
         }
 
         function refreshSiteDropdowns() {
@@ -466,10 +464,11 @@
         function handleLogin(e) {
             e.preventDefault();
             const user = document.getElementById('loginUser').value;
-            const pass = document.getElementById('loginPass').value;
+            const pass = document.getElementById('loginPass').value.trim();
 
             if (passwords[user] && passwords[user] === pass) {
                 currentUser = user;
+                sessionStorage.setItem('na_active_user', user);
                 document.getElementById('loginError').classList.add('hidden');
                 initApp();
             } else {
@@ -479,6 +478,7 @@
 
         function handleLogout() {
             currentUser = null;
+            sessionStorage.removeItem('na_active_user');
             if (syncTimer) {
                 clearInterval(syncTimer);
                 syncTimer = null;
@@ -494,7 +494,6 @@
             document.getElementById('userRoleDisplay').innerText = `Logged in as: ${currentUser}`;
 
             const isAdmin = currentUser === 'Admin';
-
             const adminTab = document.getElementById('tab-settings');
             if (isAdmin) {
                 adminTab.classList.remove('hidden');
@@ -544,7 +543,6 @@
             document.getElementById('setupFundDate').value = todayStr;
             updateCalculatedAmount();
 
-            recalculateEngineerTotals();
             renderAll();
             syncAllData(false);
 
@@ -572,149 +570,150 @@
             document.getElementById(`tab-${tabName}`).classList.add('border-emerald-600', 'text-emerald-600');
         }
 
+        function handleTotalFundsCardClick() {
+            if (currentUser !== 'Admin') return;
+            const listEl = document.getElementById('fundBreakdownList');
+            listEl.innerHTML = '';
+            VALID_ENGINEERS.forEach(engName => {
+                const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+                const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+                listEl.innerHTML += `
+                    <div class="p-3.5 rounded-xl border bg-slate-50 space-y-1">
+                        <div class="font-bold text-slate-900">${engName}</div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Fund Received (Active):</span><span class="font-semibold text-slate-900">₹${stats.totalFunds.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Active Expenses:</span><span class="font-semibold text-rose-600">₹${stats.totalSpent.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between border-t pt-1"><span>Balance:</span><span class="font-bold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span></div>
+                    </div>
+                `;
+            });
+            document.getElementById('fundBreakdownModal').classList.remove('hidden');
+        }
+
         async function syncAllData(showAlert = false) {
             if (isSyncing) return;
             isSyncing = true;
 
             const btnSync = document.getElementById('btnSync');
             const syncText = document.getElementById('syncText');
+            const statusEl = document.getElementById('liveSyncStatus');
             if (btnSync) btnSync.disabled = true;
             if (syncText) syncText.innerText = "Syncing...";
 
             try {
                 const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
-                if (res.ok) {
-                    const data = await res.json();
+                if (!res.ok) throw new Error("Network response was not ok");
 
-                    if (Array.isArray(data.expenses)) {
-                        expenses = data.expenses
-                            .filter(row =>
-                                (row.Material || row.material || row.Amount || row.amount) &&
-                                !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
-                            )
-                            .map(row => Object.assign({}, row, { _ts: row._ts || parseRecordTs(row) }));
-                        localStorage.setItem('na_expenses', JSON.stringify(expenses));
-                    }
+                const data = await res.json();
+                if (data.status === "error") throw new Error(data.message || "Sheet read error");
 
-                    if (Array.isArray(data.engineers)) {
-                        const historyRows = [];
-                        const summaryByEng = {};
-                        const syncedSites = [...DEFAULT_SITES];
-
-                        data.engineers.forEach(row => {
-                            const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
-                            const siteVal = (row.Site || row.site || row.Sites || "").trim();
-                            if ((entryType === 'SITE_CONFIG' || entryType === 'SITE') && siteVal && !syncedSites.includes(siteVal)) {
-                                syncedSites.push(siteVal);
-                                return;
-                            }
-
-                            const rawName = (row.name || row.Engineer || row.engineer || "").trim();
-                            const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
-
-                            if (!matchedName || row.Material || row.material) return;
-
-                            const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
-                            const rowMode = row.Mode || row.mode || "Cash";
-                            const rowCutoff = Number(row.CutoffTs ?? row.cutoffTs ?? 0) || 0;
-                            const rowCarry = Number(row.CarryBalance ?? row.carryBalance ?? 0) || 0;
-
-                            if (entryType === 'FUND_HISTORY') {
-                                const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
-                                if (!Number.isNaN(amt) && amt !== 0) {
-                                    historyRows.push({
-                                        id: row.RecordId || row.recordId || row.id || null,
-                                        date: rowDate,
-                                        engineer: matchedName,
-                                        mode: rowMode,
-                                        amount: amt,
-                                        ts: parseRecordTs(row)
-                                    });
-                                }
-                            } else if (entryType !== 'SETTLEMENT_LOG') {
-                                const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
-                                const prevSum = summaryByEng[matchedName] || {};
-                                summaryByEng[matchedName] = {
-                                    name: matchedName,
-                                    totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
-                                    lastDate: rowDate || prevSum.lastDate || "-",
-                                    mode: rowMode || prevSum.mode || "Cash",
-                                    cutoffTs: Math.max(prevSum.cutoffTs || 0, rowCutoff),
-                                    carryBalance: rowCutoff >= (prevSum.cutoffTs || 0) ? rowCarry : (prevSum.carryBalance || 0)
-                                };
-                            }
-                        });
-
-                        sites = syncedSites;
-                        localStorage.setItem('na_sites', JSON.stringify(sites));
-                        refreshSiteDropdowns();
-
-                        fundHistory = historyRows;
-                        localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
-
-                        const prevEngineers = JSON.parse(localStorage.getItem('na_engineers')) || [];
-                        engineers = VALID_ENGINEERS.map(name => {
-                            const prev = prevEngineers.find(p => p.name === name) || {};
-                            const sum = summaryByEng[name] || {};
-                            return {
-                                name,
-                                totalGiven: sum.totalGiven ?? prev.totalGiven ?? 0,
-                                lastDate: sum.lastDate || prev.lastDate || "-",
-                                mode: sum.mode || prev.mode || "Cash",
-                                cutoffTs: Math.max(Number(sum.cutoffTs || 0), Number(prev.cutoffTs || 0)),
-                                carryBalance: Number(sum.cutoffTs || 0) >= Number(prev.cutoffTs || 0)
-                                    ? Number(sum.carryBalance ?? prev.carryBalance ?? 0)
-                                    : Number(prev.carryBalance ?? 0)
-                            };
-                        });
-                        recalculateEngineerTotals();
-                    }
+                if (Array.isArray(data.expenses)) {
+                    expenses = data.expenses
+                        .filter(row =>
+                            (row.Material || row.material || row.Amount || row.amount) &&
+                            !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
+                        )
+                        .map(row => Object.assign({}, row, { _ts: parseRecordTs(row) }));
+                } else {
+                    expenses = [];
                 }
 
+                const historyRows = [];
+                const summaryByEng = {};
+                const syncedSites = [...DEFAULT_SITES];
+                const deletedSites = new Set();
+
+                if (Array.isArray(data.engineers)) {
+                    data.engineers.forEach(row => {
+                        const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
+                        const siteVal = (row.Site || row.site || row.Sites || "").trim();
+
+                        if (entryType === 'SITE_CONFIG' || entryType === 'SITE') {
+                            if (siteVal) {
+                                deletedSites.delete(siteVal.toLowerCase());
+                                if (!syncedSites.some(s => s.toLowerCase() === siteVal.toLowerCase())) {
+                                    syncedSites.push(siteVal);
+                                }
+                            }
+                            return;
+                        }
+
+                        if (entryType === 'SITE_DELETED') {
+                            if (siteVal) deletedSites.add(siteVal.toLowerCase());
+                            return;
+                        }
+
+                        const rawName = (row.name || row.Engineer || row.engineer || "").trim();
+                        const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === rawName.toLowerCase());
+                        if (!matchedName || row.Material || row.material) return;
+
+                        const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
+                        const rowMode = row.Mode || row.mode || "Cash";
+                        const rowCutoff = Number(row.CutoffTs ?? row.cutoffTs ?? row.Cutoffs ?? row.cutoffs ?? 0) || 0;
+                        const rowCarry = Number(row.CarryBalance ?? row.carryBalance ?? 0) || 0;
+
+                        if (entryType === 'FUND_HISTORY') {
+                            const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
+                            if (!Number.isNaN(amt) && amt !== 0) {
+                                historyRows.push({
+                                    id: row.RecordId || row.recordId || row.id || null,
+                                    date: rowDate,
+                                    engineer: matchedName,
+                                    mode: rowMode,
+                                    amount: amt,
+                                    ts: parseRecordTs(row)
+                                });
+                            }
+                        } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
+                            const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
+                            const prevSum = summaryByEng[matchedName] || {};
+                            const isNewerCutoff = rowCutoff >= (prevSum.cutoffTs || 0);
+                            summaryByEng[matchedName] = {
+                                name: matchedName,
+                                totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
+                                lastDate: isNewerCutoff ? (rowDate || prevSum.lastDate || "-") : (prevSum.lastDate || "-"),
+                                mode: rowMode || prevSum.mode || "Cash",
+                                cutoffTs: Math.max(prevSum.cutoffTs || 0, rowCutoff),
+                                carryBalance: isNewerCutoff ? rowCarry : (prevSum.carryBalance || 0)
+                            };
+                        }
+                    });
+                }
+
+                sites = syncedSites.filter(s => !deletedSites.has(s.toLowerCase()));
+                refreshSiteDropdowns();
+
+                fundHistory = historyRows;
+
+                engineers = VALID_ENGINEERS.map(name => {
+                    const sum = summaryByEng[name] || {};
+                    const calcGiven = fundHistory
+                        .filter(fh => fh.engineer.toLowerCase() === name.toLowerCase())
+                        .reduce((acc, fh) => acc + Number(fh.amount || 0), 0);
+
+                    return {
+                        name,
+                        totalGiven: sum.totalGiven !== undefined ? Number(sum.totalGiven) : calcGiven,
+                        lastDate: sum.lastDate || "-",
+                        mode: sum.mode || "Cash",
+                        cutoffTs: Number(sum.cutoffTs || 0),
+                        carryBalance: Number(sum.carryBalance || 0)
+                    };
+                });
+
                 renderAll();
-                if (showAlert) alert("Synced with Google Sheet via Apps Script!");
+
+                if (statusEl) statusEl.innerText = `Live Synced (${new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})`;
+                if (showAlert) alert("Synced live with Google Sheet!");
             } catch (err) {
                 console.log("Sync error:", err);
                 renderAll();
-                if (showAlert) alert("Sync failed. Check internet connection or Apps Script deployment.");
+                if (statusEl) statusEl.innerText = "Sync Retry...";
+                if (showAlert) alert("Sync failed. Please check internet connection or Apps Script deployment.");
             }
 
             if (btnSync) btnSync.disabled = false;
             if (syncText) syncText.innerText = "Sync";
             isSyncing = false;
-        }
-
-        function recalculateEngineerTotals() {
-            const totals = {};
-            VALID_ENGINEERS.forEach(name => {
-                const existing = engineers.find(e => e.name === name) || {};
-                totals[name] = {
-                    totalGiven: 0,
-                    lastDate: existing.lastDate || "-",
-                    mode: existing.mode || "Cash",
-                    cutoffTs: Number(existing.cutoffTs || 0),
-                    carryBalance: Number(existing.carryBalance || 0)
-                };
-            });
-
-            fundHistory.forEach(fh => {
-                const matchedName = VALID_ENGINEERS.find(n => n.toLowerCase() === (fh.engineer || "").trim().toLowerCase());
-                if (matchedName) {
-                    totals[matchedName].totalGiven += Number(fh.amount || 0);
-                    totals[matchedName].lastDate = fh.date;
-                    totals[matchedName].mode = fh.mode;
-                }
-            });
-
-            engineers = VALID_ENGINEERS.map(name => ({
-                name,
-                totalGiven: totals[name].totalGiven,
-                lastDate: totals[name].lastDate,
-                mode: totals[name].mode,
-                cutoffTs: totals[name].cutoffTs,
-                carryBalance: totals[name].carryBalance
-            }));
-            localStorage.setItem('na_engineers', JSON.stringify(engineers));
         }
 
         async function settleEngineerPeriod(engName) {
@@ -723,39 +722,35 @@
             const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
             const nextCarryBalance = stats.balance;
 
-            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Current Period Funds (incl. Carry): ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Current Period Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• Carry-Forward Balance for Next Period: ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld list entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will carry forward.`;
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Active Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
             if (!confirm(confirmMsg)) return;
 
             const cutoffTs = Date.now();
             const settledDate = new Date().toISOString().split('T')[0];
             const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
 
-            engineers = engineers.map(e => e.name === engName ? Object.assign({}, e, {
-                cutoffTs: cutoffTs,
-                carryBalance: nextCarryBalance,
-                lastDate: settledDate
-            }) : e);
-            localStorage.setItem('na_engineers', JSON.stringify(engineers));
-            renderAll();
-
             try {
                 await postToScript({
-                    action: "settleEngineerPeriod",
+                    action: "updateEngineerSummary",
                     target: "engineers",
                     name: engName,
                     data: {
-                        recordId: recId,
-                        engineer: engName,
-                        cutoffTs: cutoffTs,
-                        carryBalance: nextCarryBalance,
-                        date: settledDate
+                        RecordId: recId,
+                        EntryType: "ENGINEER_SUMMARY",
+                        name: engName,
+                        Engineer: engName,
+                        lastDate: settledDate,
+                        Date: settledDate,
+                        Cutoffs: cutoffTs,
+                        CutoffTs: cutoffTs,
+                        CarryBalance: nextCarryBalance
                     }
                 });
                 await syncAllData(false);
-                alert(`Period settled for ${engName}! Carry-forward balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+                alert(`Period settled for ${engName}! New Fund Received: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
             } catch (err) {
                 console.log("Settle sync error:", err);
-                alert("Period settled locally. Will sync when online.");
+                alert("Failed to settle period on Google Sheet. Please try again.");
             }
         }
 
@@ -767,11 +762,8 @@
                 ? (engineers.find(e => e.name.toLowerCase() === currentUser.toLowerCase()) || { cutoffTs: 0, carryBalance: 0 })
                 : null;
             const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
-            const engCarryBalance = !isAdmin ? Number(currentEngObj.carryBalance || 0) : 0;
-
-            const scopedEngineers = isAdmin
-                ? engineers
-                : engineers.filter(e => e.name.toLowerCase() === currentUser.toLowerCase());
+            const hasEngSettled = !isAdmin && engCutoffTs > 0;
+            const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
 
             const rawScopedExpenses = isAdmin
                 ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
@@ -780,7 +772,7 @@
                     .filter(item => {
                         const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
                         const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
-                        return matchEng && ts > engCutoffTs;
+                        return matchEng && (!hasEngSettled || ts > engCutoffTs);
                     });
 
             const scopedExpenses = (filterSiteVal !== 'ALL')
@@ -788,7 +780,10 @@
                 : rawScopedExpenses;
 
             const totalFunds = isAdmin
-                ? scopedEngineers.reduce((sum, e) => sum + Number(e.totalGiven || 0), 0)
+                ? VALID_ENGINEERS.reduce((sum, engName) => {
+                    const eObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+                    return sum + getEngineerCycleStats(engName, eObj.cutoffTs, eObj.carryBalance).totalFunds;
+                }, 0)
                 : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
             const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
@@ -802,36 +797,40 @@
             document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
 
             const carryNoteEl = document.getElementById('carryForwardNote');
-            if (!isAdmin && engCutoffTs > 0) {
+            if (hasEngSettled) {
                 carryNoteEl.classList.remove('hidden');
-                carryNoteEl.innerText = `Includes Carry-Forward Balance: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+                carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
             } else {
                 carryNoteEl.classList.add('hidden');
                 carryNoteEl.innerText = '';
             }
 
+            // Fund Received Details Table:
+            // Settle ஆன பிறகு பழைய entries காட்டாது; Carry-Forward தொகை + அதன் பின் வரும் புதிய fund entries மட்டும் காட்டும்
             const fundHistBody = document.getElementById('fundHistoryBody');
             fundHistBody.innerHTML = '';
-            const visibleHistory = isAdmin
-                ? fundHistory
-                : fundHistory.filter(fh => {
-                    const matchEng = (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-                    const ts = Number(fh.ts || 0);
-                    return matchEng && ts > engCutoffTs;
-                });
 
-            if (!isAdmin && engCutoffTs > 0) {
+            if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
                 fundHistBody.innerHTML += `
-                    <tr class="bg-emerald-50/50">
+                    <tr>
                         <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
                         <td class="p-3 font-medium">${currentUser}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-50 text-amber-700 border border-amber-200">Carry Forward</span></td>
-                        <td class="p-3 font-semibold text-emerald-700">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Settled Balance</span></td>
+                        <td class="p-3 font-semibold text-slate-900">₹${engCarryBalance.toLocaleString('en-IN')}</td>
                     </tr>
                 `;
             }
 
-            if (visibleHistory.length === 0 && (isAdmin || engCutoffTs === 0)) {
+            const visibleHistory = fundHistory.filter(fh => {
+                const matchEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                if (!matchEng) return false;
+                if (!isAdmin && hasEngSettled) {
+                    return Number(fh.ts || 0) > engCutoffTs;
+                }
+                return true;
+            });
+
+            if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
                 fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
             } else {
                 visibleHistory.slice().reverse().forEach(fh => {
@@ -865,8 +864,8 @@
 
                 const actionCell = isAdmin ? `
                     <td class="p-3 space-x-2 whitespace-nowrap">
-                        <button onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
-                        <button onclick="deleteExpense(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">Delete</button>
+                        <button type="button" onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
+                        <button type="button" onclick="deleteExpense(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">Delete</button>
                     </td>
                 ` : '';
 
@@ -902,7 +901,7 @@
                                     ${Number(engObj.cutoffTs || 0) > 0 ? `<span class="ml-2 text-amber-700">(Settled: ${formatDateVal(engObj.lastDate)})</span>` : ''}
                                 </div>
                             </div>
-                            <button onclick="settleEngineerPeriod('${engName}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-semibold shrink-0">
+                            <button type="button" onclick="settleEngineerPeriod('${engName}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-semibold shrink-0">
                                 Settle Period
                             </button>
                         </div>
@@ -926,10 +925,10 @@
                                 <span class="ml-2 font-bold text-emerald-700">₹${Number(fh.amount).toLocaleString('en-IN')}</span>
                             </div>
                             <div class="flex items-center space-x-2 shrink-0">
-                                <button onclick="editFundEntry(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                <button type="button" onclick="editFundEntry(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
                                     Edit
                                 </button>
-                                <button onclick="deleteFundEntry(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
+                                <button type="button" onclick="deleteFundEntry(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
                                     Delete
                                 </button>
                             </div>
@@ -948,16 +947,42 @@
                         <div class="py-2 flex justify-between items-center gap-2">
                             <span class="font-medium text-slate-800">${s}</span>
                             <div class="flex items-center space-x-2 shrink-0">
-                                <button onclick="editSite(${siteIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
+                                <button type="button" onclick="editSite(${siteIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
                                     Edit
                                 </button>
-                                <button onclick="deleteSite(${siteIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
+                                <button type="button" onclick="deleteSite(${siteIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
                                     Delete
                                 </button>
                             </div>
                         </div>
                     `;
                 });
+            }
+        }
+
+        async function addSite(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+            const inputEl = document.getElementById('setupSiteName');
+            const newSite = inputEl.value.trim();
+            if (!newSite) return;
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [{
+                        RecordId: makeRecordId("SITE"),
+                        EntryType: "SITE_CONFIG",
+                        Site: newSite
+                    }]
+                });
+                inputEl.value = "";
+                await syncAllData(false);
+                alert(`Site "${newSite}" added!`);
+            } catch (err) {
+                console.log("Add site error:", err);
+                alert("Failed to add site on Google Sheet.");
             }
         }
 
@@ -969,25 +994,28 @@
             const newSite = updatedInput.trim();
             if (!newSite || newSite === oldSite) return;
 
-            sites[siteIdx] = newSite;
-            localStorage.setItem('na_sites', JSON.stringify(sites));
-            refreshSiteDropdowns();
-            renderAll();
-
             try {
                 await postToScript({
                     action: "create",
                     target: "engineers",
-                    data: [{
-                        RecordId: makeRecordId(),
-                        EntryType: "SITE_CONFIG",
-                        Site: newSite
-                    }]
+                    data: [
+                        {
+                            RecordId: makeRecordId("SITEDEL"),
+                            EntryType: "SITE_DELETED",
+                            Site: oldSite
+                        },
+                        {
+                            RecordId: makeRecordId("SITE"),
+                            EntryType: "SITE_CONFIG",
+                            Site: newSite
+                        }
+                    ]
                 });
                 await syncAllData(false);
                 alert(`Site updated to "${newSite}"!`);
             } catch (err) {
                 console.log("Site edit sync error:", err);
+                alert("Failed to update site on Google Sheet.");
             }
         }
 
@@ -996,10 +1024,22 @@
             const siteToDelete = sites[siteIdx];
             if (!confirm(`Delete site "${siteToDelete}" from list?`)) return;
 
-            sites.splice(siteIdx, 1);
-            localStorage.setItem('na_sites', JSON.stringify(sites));
-            refreshSiteDropdowns();
-            renderAll();
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [{
+                        RecordId: makeRecordId("SITEDEL"),
+                        EntryType: "SITE_DELETED",
+                        Site: siteToDelete
+                    }]
+                });
+                await syncAllData(false);
+                alert(`Site "${siteToDelete}" removed!`);
+            } catch (err) {
+                console.log("Site delete sync error:", err);
+                alert("Failed to delete site on Google Sheet.");
+            }
         }
 
         async function editFundEntry(idx) {
@@ -1009,12 +1049,7 @@
             if (newAmt === null || isNaN(Number(newAmt))) return;
 
             const updatedAmt = Number(newAmt);
-            fundHistory[idx].amount = updatedAmt;
-            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
-            recalculateEngineerTotals();
-            renderAll();
 
-            const updatedEng = engineers.find(e => e.name === entry.engineer);
             try {
                 if (entry.id) {
                     await postToScript({
@@ -1024,22 +1059,25 @@
                         data: { Amount: updatedAmt }
                     });
                 }
-                if (updatedEng) {
-                    await postToScript({
-                        action: "updateEngineerSummary",
-                        target: "engineers",
-                        name: entry.engineer,
-                        data: {
-                            totalGiven: updatedEng.totalGiven,
-                            lastDate: updatedEng.lastDate,
-                            mode: updatedEng.mode
-                        }
-                    });
-                }
+                const calcTotal = fundHistory
+                    .filter((fh) => fh.engineer === entry.engineer)
+                    .reduce((sum, fh) => sum + (fh.id === entry.id ? updatedAmt : Number(fh.amount || 0)), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: entry.engineer,
+                    data: {
+                        totalGiven: calcTotal,
+                        lastDate: entry.date,
+                        mode: entry.mode
+                    }
+                });
                 await syncAllData(false);
                 alert("Fund updated across all devices!");
             } catch (err) {
                 console.log("Fund edit sync error:", err);
+                alert("Failed to update fund on Google Sheet.");
             }
         }
 
@@ -1048,12 +1086,6 @@
             const entry = fundHistory[idx];
             if (!confirm(`Delete ₹${Number(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
 
-            fundHistory.splice(idx, 1);
-            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
-            recalculateEngineerTotals();
-            renderAll();
-
-            const updatedEng = engineers.find(e => e.name === entry.engineer);
             try {
                 if (entry.id) {
                     await postToScript({
@@ -1062,22 +1094,23 @@
                         recordId: entry.id
                     });
                 }
-                if (updatedEng) {
-                    await postToScript({
-                        action: "updateEngineerSummary",
-                        target: "engineers",
-                        name: entry.engineer,
-                        data: {
-                            totalGiven: updatedEng.totalGiven,
-                            lastDate: updatedEng.lastDate,
-                            mode: updatedEng.mode
-                        }
-                    });
-                }
+                const remainingTotal = fundHistory
+                    .filter((_, i) => i !== idx && fundHistory[i].engineer === entry.engineer)
+                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: entry.engineer,
+                    data: {
+                        totalGiven: remainingTotal
+                    }
+                });
                 await syncAllData(false);
                 alert("Fund entry deleted across all devices!");
             } catch (err) {
                 console.log("Fund delete sync error:", err);
+                alert("Failed to delete fund entry on Google Sheet.");
             }
         }
 
@@ -1114,19 +1147,8 @@
             const updatedRate = Number(newRateInput);
             const updatedRemarks = newRemarksInput.trim();
             const updatedStatus = newStatusInput.trim() || "Paid";
-
             const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
             const recId = item.RecordId || item.recordId;
-
-            expenses[index].Material = updatedMaterial;
-            expenses[index].Qty = updatedQty;
-            expenses[index].Unit = updatedUnit;
-            expenses[index].Rate = updatedRate;
-            expenses[index].Amount = updatedAmt;
-            expenses[index].Remarks = updatedRemarks;
-            expenses[index].Status = updatedStatus;
-            localStorage.setItem('na_expenses', JSON.stringify(expenses));
-            renderAll();
 
             try {
                 if (recId) {
@@ -1149,6 +1171,7 @@
                 alert("Expense updated across all devices!");
             } catch (err) {
                 console.log("Expense edit sync error:", err);
+                alert("Failed to update expense on Google Sheet.");
             }
         }
 
@@ -1158,9 +1181,6 @@
             if (!confirm(`Delete expense "${item.Material || item.material}" (₹${Number(item.Amount || item.amount || 0).toLocaleString('en-IN')})?`)) return;
 
             const recId = item.RecordId || item.recordId;
-            expenses.splice(index, 1);
-            localStorage.setItem('na_expenses', JSON.stringify(expenses));
-            renderAll();
 
             try {
                 if (recId) {
@@ -1174,6 +1194,7 @@
                 alert("Expense deleted across all devices!");
             } catch (err) {
                 console.log("Expense delete sync error:", err);
+                alert("Failed to delete expense on Google Sheet.");
             }
         }
 
@@ -1192,7 +1213,7 @@
             document.getElementById('expAmount').value = calcAmt;
 
             const siteVal = document.getElementById('expSite').value;
-            const recId = makeRecordId();
+            const recId = makeRecordId("EXP");
             const recTs = parseRecordTs({ RecordId: recId });
 
             const newExp = {
@@ -1210,10 +1231,6 @@
                 Status: document.getElementById('expStatus').value
             };
 
-            expenses.push(newExp);
-            localStorage.setItem('na_expenses', JSON.stringify(expenses));
-            renderAll();
-
             try {
                 await postToScript({
                     action: "create",
@@ -1221,13 +1238,15 @@
                     data: [newExp]
                 });
                 await syncAllData(false);
+                e.target.reset();
+                document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
+                updateCalculatedAmount();
+                alert("Expense saved to Google Sheet!");
             } catch (err) {
-                console.log("Saved locally (Offline). Will sync later:", err);
+                console.log("Expense save error:", err);
+                alert("Failed to save expense. Please check internet connection.");
             }
 
-            e.target.reset();
-            document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
-            updateCalculatedAmount();
             btn.disabled = false;
             btn.innerText = "Save Expense";
         }
@@ -1240,141 +1259,63 @@
             btn.disabled = true;
             btn.innerText = "Saving...";
 
-            const payDate = document.getElementById('setupFundDate').value;
-            const name = document.getElementById('setupEngSelect').value;
-            const mode = document.getElementById('setupFundMode').value;
-            const amt = Number(document.getElementById('setupEngFund').value);
-            const recId = makeRecordId();
-            const recTs = parseRecordTs({ RecordId: recId });
+            const dateVal = document.getElementById('setupFundDate').value;
+            const engName = document.getElementById('setupEngSelect').value;
+            const modeVal = document.getElementById('setupFundMode').value;
+            const amtVal = Number(document.getElementById('setupEngFund').value || 0);
 
-            const historyItem = {
-                id: recId,
-                date: payDate,
-                engineer: name,
-                mode: mode,
-                amount: amt,
-                ts: recTs
-            };
+            const recId = makeRecordId("FND");
 
-            fundHistory.push(historyItem);
-            localStorage.setItem('na_fund_history', JSON.stringify(fundHistory));
-
-            recalculateEngineerTotals();
-            renderAll();
-
-            const updatedEng = engineers.find(item => item.name === name);
             try {
                 await postToScript({
                     action: "addFundHistory",
                     target: "engineers",
                     data: {
-                        RecordId: historyItem.id,
+                        RecordId: recId,
                         EntryType: "FUND_HISTORY",
-                        name: name,
-                        Engineer: name,
-                        Date: payDate,
-                        Mode: mode,
-                        Amount: amt
+                        name: engName,
+                        Engineer: engName,
+                        Date: dateVal,
+                        Mode: modeVal,
+                        Amount: amtVal
                     }
                 });
-                if (updatedEng) {
-                    await postToScript({
-                        action: "updateEngineerSummary",
-                        target: "engineers",
-                        name: name,
-                        data: {
-                            totalGiven: updatedEng.totalGiven,
-                            lastDate: payDate,
-                            mode: mode
-                        }
-                    });
-                }
+
+                const prevTotal = fundHistory
+                    .filter(fh => fh.engineer === engName)
+                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        totalGiven: prevTotal + amtVal,
+                        lastDate: dateVal,
+                        mode: modeVal
+                    }
+                });
+
+                document.getElementById('setupEngFund').value = "";
                 await syncAllData(false);
-                alert(`₹${amt.toLocaleString('en-IN')} (${mode}) added to ${name} and synced!`);
+                alert(`₹${amtVal.toLocaleString('en-IN')} added for ${engName}!`);
             } catch (err) {
-                alert("Fund saved locally!");
+                console.log("Fund save error:", err);
+                alert("Failed to save fund to Google Sheet.");
             }
 
-            e.target.reset();
-            document.getElementById('setupFundDate').value = new Date().toISOString().split('T')[0];
             btn.disabled = false;
             btn.innerText = "Save Fund";
         }
 
-        async function addSite(e) {
-            e.preventDefault();
-            if (currentUser !== 'Admin') return;
-            const newSite = document.getElementById('setupSiteName').value.trim();
-            if (newSite && !sites.includes(newSite)) {
-                sites.push(newSite);
-                localStorage.setItem('na_sites', JSON.stringify(sites));
-                refreshSiteDropdowns();
-                renderAll();
-
-                try {
-                    await postToScript({
-                        action: "create",
-                        target: "engineers",
-                        data: [{
-                            RecordId: makeRecordId(),
-                            EntryType: "SITE_CONFIG",
-                            Site: newSite
-                        }]
-                    });
-                    await syncAllData(false);
-                } catch (err) {
-                    console.log("Site sync error:", err);
-                }
-
-                alert(`Site "${newSite}" added and synced!`);
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            const savedUser = sessionStorage.getItem('na_active_user');
+            if (savedUser && passwords[savedUser]) {
+                currentUser = savedUser;
+                initApp();
             }
-            e.target.reset();
-        }
-
-        function handleTotalFundsCardClick() {
-            if (currentUser === 'Admin') {
-                openFundBreakdown();
-            }
-        }
-
-        function openFundBreakdown() {
-            if (currentUser !== 'Admin') return;
-
-            const listEl = document.getElementById('fundBreakdownList');
-            listEl.innerHTML = '';
-
-            engineers.forEach(eng => {
-                const allocated = Number(eng.totalGiven || 0);
-                const spent = expenses
-                    .filter(e => ((e.Engineer || e.engineer || "").trim().toLowerCase() === eng.name.toLowerCase()))
-                    .reduce((sum, e) => sum + Number(e.Amount || e.amount || 0), 0);
-                const balance = allocated - spent;
-
-                listEl.innerHTML += `
-                    <div class="p-3 border rounded-xl bg-slate-50">
-                        <div class="font-bold text-slate-800 text-base mb-1">${eng.name}</div>
-                        <div class="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                                <span class="text-slate-500 block">Allocated</span>
-                                <span class="font-semibold text-emerald-700">₹${allocated.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-500 block">Spent</span>
-                                <span class="font-semibold text-amber-700">₹${spent.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-500 block">Balance</span>
-                                <span class="font-bold ${balance < 0 ? 'text-red-600' : 'text-slate-900'}">₹${balance.toLocaleString('en-IN')}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            document.getElementById('fundBreakdownModal').classList.remove('hidden');
-        }
-
-        lucide.createIcons();
+        });
     </script>
 </body>
 </html>
