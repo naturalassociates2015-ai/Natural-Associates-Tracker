@@ -750,21 +750,38 @@
             const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
 
             try {
-                await postToScript({
-                    action: "addFundHistory",
-                    target: "engineers",
-                    data: {
-                        RecordId: recId,
-                        EntryType: "SETTLEMENT_LOG",
-                        name: engName,
-                        Engineer: engName,
-                        Date: settledDate,
-                        Mode: "Carry Forward",
-                        Amount: nextCarryBalance,
-                        CutoffTs: cutoffTs,
-                        CarryBalance: nextCarryBalance
-                    }
-                });
+               await postToScript({
+    action: "addFundHistory",
+    target: "engineers",
+    data: {
+        RecordId: recId,
+        EntryType: "SETTLEMENT_LOG",
+        name: engName,
+        Engineer: engName,
+        Date: settledDate,
+        Mode: "Carry Forward",
+        Amount: nextCarryBalance,
+        CutoffTs: cutoffTs,
+        CarryBalance: nextCarryBalance
+    }
+});
+
+// இதைச் சேர்க்கவும்: engineers ஷீட்டில் CarryBalance & CutoffTs அப்டேட் செய்ய
+await postToScript({
+    action: "updateEngineerSummary",
+    target: "engineers",
+    name: engName,
+    data: {
+        EntryType: "ENGINEER_SUMMARY",
+        name: engName,
+        Engineer: engName,
+        Date: settledDate,
+        lastDate: settledDate,
+        CutoffTs: cutoffTs,
+        Cutoffs: cutoffTs,
+        CarryBalance: nextCarryBalance
+    }
+});
                 await syncAllData(false);
                 alert(`Period settled for ${engName}! New Fund Received: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
             } catch (err) {
@@ -840,14 +857,17 @@
             }
 
             const visibleHistory = fundHistory.filter(fh => {
-                const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
-                if (!matchingEng) return false;
-                if (!isAdmin && hasEngSettled) {
-                    return Number(fh.ts || 0) > engCutoffTs && (!cutoffDateStr || cutoffDateStr === '-' || String(fh.date || '') >= cutoffDateStr);
-                }
-                return true;
-            });
-
+    const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
+    if (!matchingEng) return false;
+    if (!isAdmin && hasEngSettled) {
+        const fhTs = Number(fh.ts || fh.CutoffTs || (typeof parseRecordTs === 'function' ? parseRecordTs(fh) : 0) || 0);
+        if (fhTs > 0) {
+            return fhTs >= (engCutoffTs - 60000);
+        }
+        return true;
+    }
+    return true;
+});
             if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
                 fundHistBody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>';
             } else {
@@ -1334,5 +1354,6 @@
     </script>
 </body>
 </html>
+
 
 
