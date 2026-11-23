@@ -677,17 +677,23 @@
                                     ts: parseRecordTs(row)
                                 });
                             }
-                        } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
+                      } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
+                            const parsedTs = parseRecordTs(row);
+                            const effectiveCutoff = rowCutoff > 0 ? rowCutoff : (entryType === 'SETTLEMENT_LOG' ? parsedTs : 0);
+                            const effectiveCarry = entryType === 'SETTLEMENT_LOG'
+                                ? Number(row.CarryBalance ?? row.carryBalance ?? row.Amount ?? row.amount ?? 0)
+                                : rowCarry;
+
                             const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
                             const prevSum = summaryByEng[matchedName] || {};
-                            const isNewerCutoff = rowCutoff >= (prevSum.cutoffTs || 0);
+                            const isNewerCutoff = effectiveCutoff >= (prevSum.cutoffTs || 0);
                             summaryByEng[matchedName] = {
                                 name: matchedName,
                                 totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
                                 lastDate: isNewerCutoff ? (rowDate || prevSum.lastDate || "-") : (prevSum.lastDate || "-"),
                                 mode: rowMode || prevSum.mode || "Cash",
-                                cutoffTs: Math.max(prevSum.cutoffTs || 0, rowCutoff),
-                                carryBalance: isNewerCutoff ? rowCarry : (prevSum.carryBalance || 0)
+                                cutoffTs: Math.max(prevSum.cutoffTs || 0, effectiveCutoff),
+                                carryBalance: isNewerCutoff ? effectiveCarry : (prevSum.carryBalance || 0)
                             };
                         }
                     });
@@ -745,17 +751,16 @@
 
             try {
                 await postToScript({
-                    action: "updateEngineerSummary",
+                    action: "addFundHistory",
                     target: "engineers",
-                    name: engName,
                     data: {
                         RecordId: recId,
-                        EntryType: "ENGINEER_SUMMARY",
+                        EntryType: "SETTLEMENT_LOG",
                         name: engName,
                         Engineer: engName,
-                        lastDate: settledDate,
                         Date: settledDate,
-                        Cutoffs: cutoffTs,
+                        Mode: "Carry Forward",
+                        Amount: nextCarryBalance,
                         CutoffTs: cutoffTs,
                         CarryBalance: nextCarryBalance
                     }
@@ -767,7 +772,6 @@
                 alert("Failed to settle period on Google Sheet. Please try again.");
             }
         }
-
     function renderAll() {
             const isAdmin = currentUser === 'Admin';
             const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
@@ -1330,4 +1334,5 @@
     </script>
 </body>
 </html>
+
 
