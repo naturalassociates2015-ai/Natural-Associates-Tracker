@@ -754,211 +754,190 @@
             }
         }
 
-        function renderAll() {
-            const isAdmin = currentUser === 'Admin';
-            const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
+      function renderAll() {
+  const isAdmin = currentUser === 'Admin';
+  const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
 
-            const currentEngObj = !isAdmin
-                ? (engineers.find(e => e.name.toLowerCase() === currentUser.toLowerCase()) || { cutoffTs: 0, carryBalance: 0 })
-                : null;
-            const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
-            const hasEngSettled = !isAdmin && engCutoffTs > 0;
-            const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
+  const currentEngObj = !isAdmin
+    ? (engineers.find(e => e.name.trim().toLowerCase() === currentUser.trim().toLowerCase()) || null)
+    : null;
 
-            const rawScopedExpenses = isAdmin
-                ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
-                : expenses
-                    .map((ex, idx) => ({ ex, realIdx: idx }))
-                    .filter(item => {
-                        const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-                        const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
-                        return matchEng && (!hasEngSettled || ts > engCutoffTs);
-                    });
+  const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
+  const hasEngSettled = !isAdmin && engCutoffTs > 0;
+  const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
 
-            const scopedExpenses = (filterSiteVal !== 'ALL')
-                ? rawScopedExpenses.filter(item => ((item.ex.Site || item.ex.site || "").trim().toLowerCase() === filterSiteVal.toLowerCase()))
-                : rawScopedExpenses;
+  const cutoffDateStr = currentEngObj ? (currentEngObj.lastDate || '') : '';
 
-            const totalFunds = isAdmin
-                ? VALID_ENGINEERS.reduce((sum, engName) => {
-                    const eObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
-                    return sum + getEngineerCycleStats(engName, eObj.cutoffTs, eObj.carryBalance).totalFunds;
-                }, 0)
-                : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
+  const rawScopedExpenses = isAdmin
+    ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
+    : expenses.map((ex, idx) => ({ ex, realIdx: idx }));
 
-            const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+  const scopedExpenses = rawScopedExpenses.filter(item => {
+    const matchingEng = isAdmin || (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
+    const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
+    const isAfterCutoff = ts > engCutoffTs && (!cutoffDateStr || String(item.ex.Date || item.ex.date || '') >= cutoffDateStr);
+    return matchingEng && (!hasEngSettled || isAfterCutoff);
+  });
 
-            document.getElementById('lblTotalFunds').innerText = isAdmin ? "Total Funds Allocated" : `${currentUser} - Fund Received`;
-            document.getElementById('lblTotalExpenses').innerText = isAdmin ? "Total Expenses Spent" : `${currentUser} - Expenses Spent`;
-            document.getElementById('lblBalance').innerText = isAdmin ? "Balance Available" : `${currentUser} - Balance`;
+  const totalFunds = isAdmin
+    ? VALID_ENGINEERS.reduce((sum, engName) => {
+        const eObj = engineers.find(e => e.name === engName) || { cutoffs: 0, carryBalance: 0 };
+        return sum + getEngineerCycleStats(engName, eObj.cutoffs, eObj.carryBalance).totalFunds;
+      }, 0)
+    : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
-            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
-            document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
-            document.getElementById('balanceDisplay').innerText = `₹${(totalFunds - totalSpent).toLocaleString('en-IN')}`;
+  const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+  const balance = totalFunds - totalSpent;
 
-            const carryNoteEl = document.getElementById('carryForwardNote');
-            if (hasEngSettled) {
-                carryNoteEl.classList.remove('hidden');
-                carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
-            } else {
-                carryNoteEl.classList.add('hidden');
-                carryNoteEl.innerText = '';
-            }
+  document.getElementById('lblTotalFunds').innerText = isAdmin ? `Total Funds Allocated : ${totalFunds.toLocaleString('en-IN')}` : `Fund Received : ${totalFunds.toLocaleString('en-IN')}`;
+  document.getElementById('lblTotalExpenses').innerText = isAdmin ? `Total Expenses Spent : ${totalSpent.toLocaleString('en-IN')}` : `Expenses Spent : ${totalSpent.toLocaleString('en-IN')}`;
+  document.getElementById('lblBalance').innerText = isAdmin ? `Balance Available : ${balance.toLocaleString('en-IN')}` : `Balance : ${balance.toLocaleString('en-IN')}`;
 
-            // Fund Received Details Table:
-            // Settle ஆன பிறகு பழைய entries காட்டாது; Carry-Forward தொகை + அதன் பின் வரும் புதிய fund entries மட்டும் காட்டும்
-            const fundHistBody = document.getElementById('fundHistoryBody');
-            fundHistBody.innerHTML = '';
+  document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
+  document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+  document.getElementById('balanceDisplay').innerText = `₹${balance.toLocaleString('en-IN')}`;
 
-            if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
-                fundHistBody.innerHTML += `
-                    <tr>
-                        <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
-                        <td class="p-3 font-medium">${currentUser}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Settled Balance</span></td>
-                        <td class="p-3 font-semibold text-slate-900">₹${engCarryBalance.toLocaleString('en-IN')}</td>
-                    </tr>
-                `;
-            }
+  const carryNoteEl = document.getElementById('carryForwardNote');
+  const carryNote1 = document.getElementById('carryNote1');
 
-            const visibleHistory = fundHistory.filter(fh => {
-                const matchEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-                if (!matchEng) return false;
-                if (!isAdmin && hasEngSettled) {
-                    return Number(fh.ts || 0) > engCutoffTs;
-                }
-                return true;
-            });
+  if (hasEngSettled) {
+    if (carryNoteEl) carryNoteEl.classList.remove('hidden');
+    if (carryNoteEl) carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+    if (carryNote1) carryNote1.classList.remove('hidden');
+    if (carryNote1) carryNote1.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+  } else {
+    if (carryNoteEl) carryNoteEl.classList.add('hidden');
+    if (carryNote1) carryNote1.classList.add('hidden');
+  }
 
-            if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
-                fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400">No fund entries available yet.</td></tr>`;
-            } else {
-                visibleHistory.slice().reverse().forEach(fh => {
-                    fundHistBody.innerHTML += `
-                        <tr>
-                            <td class="p-3">${formatDateVal(fh.date)}</td>
-                            <td class="p-3 font-medium">${fh.engineer}</td>
-                            <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span></td>
-                            <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount).toLocaleString('en-IN')}</td>
-                        </tr>
-                    `;
-                });
-            }
+  const fundHistBody = document.getElementById('fundHistoryBody');
+  fundHistBody.innerHTML = '';
 
-            const expBody = document.getElementById('expenseTableBody');
-            expBody.innerHTML = '';
-            scopedExpenses.slice().reverse().forEach(({ ex, realIdx }) => {
-                const qtyVal = Number(ex.Qty || ex.qty || 0);
-                const unitVal = ex.Unit || ex.unit || ex.Units || ex.units || '-';
-                const amtVal = Number(ex.Amount || ex.amount || 0);
-                const rawRate = ex.Rate || ex.rate;
-                const rateVal = (rawRate !== undefined && rawRate !== null && rawRate !== '')
-                    ? Number(rawRate)
-                    : (qtyVal > 0 ? Math.round((amtVal / qtyVal) * 100) / 100 : 0);
+  if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
+    fundHistBody.innerHTML += `
+      <tr>
+        <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
+        <td class="p-3 font-medium">${currentuser}</td>
+        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Carry Forward Balance</span></td>
+        <td class="p-3 font-semibold text-slate-900">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+      </tr>`;
+  }
 
-                const remarksVal = ex.Remarks || ex.remarks || ex.Remark || ex.remark || '-';
-                const statusVal = ex.Status || ex.status || 'Paid';
-                const statusBadge = (statusVal.toLowerCase() === 'paid')
-                    ? `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Paid</span>`
-                    : `<span class="px-2.5 py-1 text-xs font-bold rounded-full bg-rose-50 text-rose-700 border border-rose-200">Unpaid</span>`;
+  const visibleHistory = fundHistory.filter(fh => {
+    const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
+    if (!matchingEng) return false;
+    if (!isAdmin && hasEngSettled) {
+      return Number(fh.ts || 0) > engCutoffTs && (!cutoffDateStr || String(fh.date || '') >= cutoffDateStr);
+    }
+    return true;
+  });
 
-                const actionCell = isAdmin ? `
-                    <td class="p-3 space-x-2 whitespace-nowrap">
-                        <button type="button" onclick="openAdminEditExpense(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">Edit</button>
-                        <button type="button" onclick="deleteExpense(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">Delete</button>
-                    </td>
-                ` : '';
+  if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
+    fundHistBody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>';
+  } else {
+    visibleHistory.slice().reverse().forEach((fh, idx) => {
+      const realIdx = fundHistory.length - 1 - idx;
+      const typeBadge = fh.EntryType === ' ENGINEER_SUMMARY' || fh.EntryType === 'SETTLEMENT_LOG' 
+        ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">Settlement</span>'
+        : '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Fund Received</span>';
+      
+      fundHistBody.innerHTML += `
+        <tr>
+          <td class="p-3">${formatDateVal(fh.date)}</td>
+          <td class="p-3 font-medium">${fh.engineer || 'Admin'}</td>
+          <td class="p-3">${typeBadge}</td>
+          <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount || 0).toLocaleString('en-IN')}</td>
+        </tr>`;
+    });
+  }
 
-                expBody.innerHTML += `
-                    <tr>
-                        <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
-                        <td class="p-3 font-medium">${ex.Engineer || ex.engineer || '-'}</td>
-                        <td class="p-3 font-semibold text-emerald-700">${ex.Site || ex.site || '-'}</td>
-                        <td class="p-3">${ex.Material || ex.material || '-'}</td>
-                        <td class="p-3">${qtyVal || ''}</td>
-                        <td class="p-3">${unitVal}</td>
-                        <td class="p-3">₹${rateVal.toLocaleString('en-IN')}</td>
-                        <td class="p-3 font-semibold">₹${amtVal.toLocaleString('en-IN')}</td>
-                        <td class="p-3 italic text-slate-500">${remarksVal}</td>
-                        <td class="p-3">${statusBadge}</td>
-                        ${actionCell}
-                    </tr>
-                `;
-            });
+  const expBody = document.getElementById('expenseTableBody');
+  const expSiteSelect = document.getElementById('expSiteSelect');
+  if (expSiteSelect && expSiteSelect.options.length <= 1) {
+    expSiteSelect.innerHTML = '<option value="">-- Choose Site --</option>';
+    syncedSites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
+      expSiteSelect.innerHTML += `<option value="${s}">${s}</option>`;
+    });
+  }
 
-            const settleListEl = document.getElementById('engineerSettlementList');
-            if (settleListEl) {
-                settleListEl.innerHTML = '';
-                VALID_ENGINEERS.forEach(engName => {
-                    const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0, lastDate: "-" };
-                    const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
-                    settleListEl.innerHTML += `
-                        <div class="py-2.5 flex justify-between items-center gap-2">
-                            <div>
-                                <div class="font-semibold text-slate-800">${engName}</div>
-                                <div class="text-xs text-slate-500">
-                                    Active Bal: <span class="font-semibold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span>
-                                    ${Number(engObj.cutoffTs || 0) > 0 ? `<span class="ml-2 text-amber-700">(Settled: ${formatDateVal(engObj.lastDate)})</span>` : ''}
-                                </div>
-                            </div>
-                            <button type="button" onclick="settleEngineerPeriod('${engName}')" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg hover:bg-amber-100 font-semibold shrink-0">
-                                Settle Period
-                            </button>
-                        </div>
-                    `;
-                });
-            }
+  const filterSiteSelect = document.getElementById('filterSiteSelect');
+  if (filterSiteSelect && filterSiteSelect.options.length <= 1) {
+    filterSiteSelect.innerHTML = '<option value="ALL">ALL SITES</option>';
+    syncedSites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
+      filterSiteSelect.innerHTML += `<option value="${s}">${s}</option>`;
+    });
+  }
 
-            const setupEngList = document.getElementById('setupEngList');
-            setupEngList.innerHTML = '';
-            if (fundHistory.length === 0) {
-                setupEngList.innerHTML = `<div class="py-2.5 text-slate-400">No fund entries added yet.</div>`;
-            } else {
-                fundHistory.slice().reverse().forEach((fh, revIdx) => {
-                    const realIdx = fundHistory.length - 1 - revIdx;
-                    setupEngList.innerHTML += `
-                        <div class="py-2.5 flex justify-between items-center gap-2">
-                            <div>
-                                <span class="text-xs text-slate-500">${formatDateVal(fh.date)}</span>
-                                <span class="ml-2 font-medium text-slate-800">${fh.engineer}</span>
-                                <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode}</span>
-                                <span class="ml-2 font-bold text-emerald-700">₹${Number(fh.amount).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div class="flex items-center space-x-2 shrink-0">
-                                <button type="button" onclick="editFundEntry(${realIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
-                                    Edit
-                                </button>
-                                <button type="button" onclick="deleteFundEntry(${realIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+  expBody.innerHTML = '';
+  const finalScoped = filterSiteVal === 'ALL'
+    ? scopedExpenses
+    : scopedExpenses.filter(item => {
+        const sVal = item.ex.Site || item.ex.site || '';
+        return sVal.trim().toLowerCase() === filterSiteVal.trim().toLowerCase();
+      });
 
-            const setupSiteList = document.getElementById('setupSiteList');
-            setupSiteList.innerHTML = '';
-            if (sites.length === 0) {
-                setupSiteList.innerHTML = `<div class="py-2 text-slate-400">No sites available.</div>`;
-            } else {
-                sites.forEach((s, siteIdx) => {
-                    setupSiteList.innerHTML += `
-                        <div class="py-2 flex justify-between items-center gap-2">
-                            <span class="font-medium text-slate-800">${s}</span>
-                            <div class="flex items-center space-x-2 shrink-0">
-                                <button type="button" onclick="editSite(${siteIdx})" class="text-xs bg-blue-50 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-100 font-medium">
-                                    Edit
-                                </button>
-                                <button type="button" onclick="deleteSite(${siteIdx})" class="text-xs bg-rose-50 text-rose-600 border border-rose-200 px-2.5 py-1 rounded-lg hover:bg-rose-100 font-medium">
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-        }
+  if (finalScoped.length === 0) {
+    expBody.innerHTML = '<tr><td colspan="9" class="p-3 text-slate-400 text-center">No expenses logged.</td></tr>';
+  } else {
+    finalScoped.slice().reverse().forEach(item => {
+      const ex = item.ex;
+      const realIdx = item.realIdx;
+      const statusVal = ex.Status || ex.status || 'Paid';
+      const statusBadge = statusVal.toLowerCase() === 'paid'
+        ? '<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>'
+        : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Unpaid</span>';
+        
+      const actionCell = isAdmin ? `
+        <td class="p-3 space-x-2 whitespace-nowrap">
+          <button type="button" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200" onclick="openAdminEditExpense(${realIdx})">Edit</button>
+          <button type="button" class="px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200" onclick="deleteExpense(${realIdx})">Delete</button>
+        </td>` : '<td class="p-3 font-semibold hidden Actions"></td>';
+
+      expBody.innerHTML += `
+        <tr>
+          <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
+          <td class="p-3 font-medium">${ex.Engineer || ex.engineer || ''}</td>
+          <td class="p-3">${ex.Site || ex.site || ''}</td>
+          <td class="p-3">${ex.Material || ex.material || '-'}</td>
+          <td class="p-3">${ex.Qty || ex.qty || ''}</td>
+          <td class="p-3">${ex.Unit || ex.unit || ''}</td>
+          <td class="p-3">${Number(ex.Rate || ex.rate || 0).toLocaleString('en-IN')}</td>
+          <td class="p-3 font-semibold text-slate-900">₹${Number(ex.Amount || ex.amount || 0).toLocaleString('en-IN')}</td>
+          <td class="p-3 italic text-slate-500">${ex.Remarks || ex.remarks || ''}</td>
+          <td class="p-3">${statusBadge}</td>
+          ${actionCell}
+        </tr>`;
+    });
+  }
+
+  const setupEngineer = document.getElementById('expEngineer');
+  if (setupEngineer) {
+    setupEngineer.innerHTML = '';
+    if (isAdmin) {
+      VALID_ENGINEERS.forEach(engName => {
+        setupEngineer.innerHTML += `<option value="${engName}">${engName}</option>`;
+      });
+      refreshSiteDropdowns();
+    } else {
+      setupEngineer.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
+    }
+  }
+
+  const expUnit = document.getElementById('expUnit');
+  if (expUnit && expUnit.innerHTML === '') {
+    expUnit.innerHTML = '<option value="">-- Unit --</option>';
+    DEFAULT_UNITS.forEach(u => { expUnit.innerHTML += `<option value="${u}">${u}</option>`; });
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const expDateInput = document.getElementById('expDate');
+  if (expDateInput && !expDateInput.value) expDateInput.value = todayStr;
+  
+  const setupFundDate = document.getElementById('setupFundDate');
+  if (setupFundDate && !setupFundDate.value) setupFundDate.value = todayStr;
+
+  calculateCalculatedAmount();
+}
 
         async function addSite(e) {
             e.preventDefault();
