@@ -407,32 +407,46 @@
         // Settle ஆன பிறகு:
         // - cutoffTs-க்கு முந்தைய பழைய funds மற்றும் பழைய expenses hide ஆகும்
         // - carryBalance (செட்டில் நேரத்தில் இருந்த மீதி) + புதிய funds = Fund Received ஆகும்
-        function getEngineerCycleStats(engName, cutoffTs = 0, carryBalance = 0) {
-            const lowerName = (engName || "").trim().toLowerCase();
-            const cutoff = Number(cutoffTs || 0);
-            const hasSettled = cutoff > 0;
-            const carry = hasSettled ? Number(carryBalance || 0) : 0;
+        function getEngineerCycleStats(engName, cutoffs = 0, carryBalance = 0) {
+  const lowerName = (engName || "").trim().toLowerCase();
+  const cutoff = Number(cutoffs || 0);
+  const hasSettled = cutoff > 0;
+  const carry = hasSettled ? Number(carryBalance || 0) : 0;
 
-            const periodFunds = fundHistory.filter(fh => {
-                const matchEng = (fh.engineer || "").trim().toLowerCase() === lowerName;
-                const ts = Number(fh.ts || 0);
-                return matchEng && (!hasSettled || ts > cutoff);
-            });
+  const periodFunds = (typeof fundHistory !== 'undefined' ? fundHistory : []).filter(fh => {
+    const fhEng = (fh.engineer || fh.Engineer || "").trim().toLowerCase();
+    const matchingEng = fhEng === lowerName;
+    if (!matchingEng) return false;
+    if (!hasSettled) return true;
+    const ts = Number(fh.ts || fh._ts || 0);
+    return ts === 0 || ts > cutoff;
+  });
 
-            const periodExpenses = expenses.filter(ex => {
-                const matchEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase() === lowerName;
-                const ts = Number(ex._ts || parseRecordTs(ex) || 0);
-                return matchEng && (!hasSettled || ts > cutoff);
-            });
+  const addedFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || fh.Amount || 0), 0);
+  const totalFunds = carry + addedFunds;
 
-            const newFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
-            const totalFunds = carry + newFunds;
-            const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
-            const balance = totalFunds - totalSpent;
+  const periodExpenses = (typeof expenses !== 'undefined' ? expenses : []).filter(ex => {
+    const exEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase();
+    const matchingEng = exEng === lowerName;
+    if (!matchingEng) return false;
+    if (!hasSettled) return true;
+    const ts = Number(ex._ts || (typeof parseRecordTs === 'function' ? parseRecordTs(ex) : 0) || 0);
+    return ts === 0 || ts > cutoff;
+  });
 
-            return { totalFunds, carry, newFunds, totalSpent, balance, periodFunds, periodExpenses, hasSettled };
-        }
+  const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
+  const balance = totalFunds - totalSpent;
 
+  return {
+    totalFunds,
+    totalSpent,
+    balance,
+    carry,
+    addedFunds,
+    periodFunds,
+    periodExpenses
+  };
+}
         function refreshSiteDropdowns() {
             const expSite = document.getElementById('expSite');
             const filterSite = document.getElementById('filterSiteSelect');
