@@ -95,7 +95,7 @@
 
             <!-- 1. DASHBOARD / OVERVIEW TAB -->
             <div id="view-dashboard" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div id="totalFundsCard" onclick="handleTotalFundsCardClick()" class="bg-white p-6 rounded-2xl shadow-sm border transition">
                         <div class="flex justify-between items-center">
                             <p id="lblTotalFunds" class="text-sm text-slate-500">Total Funds Allocated</p>
@@ -103,10 +103,6 @@
                         </div>
                         <h3 id="totalFundsDisplay" class="text-2xl font-bold text-slate-900 mt-1">₹0</h3>
                         <p id="carryForwardNote" class="hidden text-[11px] text-emerald-700 mt-1 font-medium"></p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border">
-                        <p id="lblTotalExpenses" class="text-sm text-slate-500">Total Expenses Spent</p>
-                        <h3 id="totalExpensesDisplay" class="text-2xl font-bold text-rose-600 mt-1">₹0</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p id="lblBalance" class="text-sm text-slate-500">Balance Available</p>
@@ -336,6 +332,12 @@
         let units = [...DEFAULT_UNITS];
         let expenses = [];
 
+        function toNum(v) {
+            if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+            const n = Number(String(v ?? 0).replace(/[^0-9.-]/g, ''));
+            return Number.isFinite(n) ? n : 0;
+        }
+
         function makeRecordId(prefix = "REC") {
             return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
         }
@@ -344,7 +346,7 @@
             const rawId = String(row.RecordId || row.recordId || row.id || "");
             const match = rawId.match(/_(\d{10,})_/);
             if (match && match[1]) {
-                return Number(match[1]);
+                return toNum(match[1]);
             }
             const dStr = row.Date || row.date || row.lastDate;
             if (dStr) {
@@ -404,49 +406,45 @@
             return result;
         }
 
-        // Settle ஆன பிறகு:
-        // - cutoffTs-க்கு முந்தைய பழைய funds மற்றும் பழைய expenses hide ஆகும்
-        // - carryBalance (செட்டில் நேரத்தில் இருந்த மீதி) + புதிய funds = Fund Received ஆகும்
         function getEngineerCycleStats(engName, cutoffs = 0, carryBalance = 0) {
-  const lowerName = (engName || "").trim().toLowerCase();
-  const cutoff = Number(cutoffs || 0);
-  const hasSettled = cutoff > 0;
-  const carry = hasSettled ? Number(carryBalance || 0) : 0;
+            const lowerName = (engName || "").trim().toLowerCase();
+            const cutoff = toNum(cutoffs);
+            const hasSettled = cutoff > 0;
+            const carry = hasSettled ? toNum(carryBalance) : 0;
 
-  const periodFunds = (typeof fundHistory !== 'undefined' ? fundHistory : []).filter(fh => {
-    const fhEng = (fh.engineer || fh.Engineer || "").trim().toLowerCase();
-    const matchingEng = fhEng === lowerName;
-    if (!matchingEng) return false;
-    if (!hasSettled) return true;
-    const ts = Number(fh.ts || fh._ts || 0);
-    return ts === 0 || ts > cutoff;
-  });
+            const periodFunds = (typeof fundHistory !== 'undefined' ? fundHistory : []).filter(fh => {
+                const fhEng = (fh.engineer || fh.Engineer || "").trim().toLowerCase();
+                if (fhEng !== lowerName) return false;
+                if (!hasSettled) return true;
+                const ts = toNum(fh.ts || fh._ts || 0);
+                return ts === 0 || ts > cutoff;
+            });
 
-  const addedFunds = periodFunds.reduce((sum, fh) => sum + Number(fh.amount || fh.Amount || 0), 0);
-  const totalFunds = carry + addedFunds;
+            const addedFunds = periodFunds.reduce((sum, fh) => sum + toNum(fh.amount ?? fh.Amount), 0);
+            const totalFunds = carry + addedFunds;
 
-  const periodExpenses = (typeof expenses !== 'undefined' ? expenses : []).filter(ex => {
-    const exEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase();
-    const matchingEng = exEng === lowerName;
-    if (!matchingEng) return false;
-    if (!hasSettled) return true;
-    const ts = Number(ex._ts || (typeof parseRecordTs === 'function' ? parseRecordTs(ex) : 0) || 0);
-    return ts === 0 || ts > cutoff;
-  });
+            const periodExpenses = (typeof expenses !== 'undefined' ? expenses : []).filter(ex => {
+                const exEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase();
+                if (exEng !== lowerName) return false;
+                if (!hasSettled) return true;
+                const ts = toNum(ex._ts || (typeof parseRecordTs === 'function' ? parseRecordTs(ex) : 0));
+                return ts === 0 || ts > cutoff;
+            });
 
-  const totalSpent = periodExpenses.reduce((sum, ex) => sum + Number(ex.Amount || ex.amount || 0), 0);
-  const balance = totalFunds - totalSpent;
+            const totalSpent = periodExpenses.reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
+            const balance = totalFunds - totalSpent;
 
-  return {
-    totalFunds,
-    totalSpent,
-    balance,
-    carry,
-    addedFunds,
-    periodFunds,
-    periodExpenses
-  };
-}
+            return {
+                totalFunds,
+                totalSpent,
+                balance,
+                carry,
+                addedFunds,
+                periodFunds,
+                periodExpenses
+            };
+        }
+
         function refreshSiteDropdowns() {
             const expSite = document.getElementById('expSite');
             const filterSite = document.getElementById('filterSiteSelect');
@@ -662,12 +660,12 @@
 
                         const rowDate = row.Date || row.date || row.lastDate || new Date().toISOString().split('T')[0];
                         const rowMode = row.Mode || row.mode || "Cash";
-                        const rowCutoff = Number(row.CutoffTs ?? row.cutoffTs ?? row.Cutoffs ?? row.cutoffs ?? 0) || 0;
-                        const rowCarry = Number(row.CarryBalance ?? row.carryBalance ?? 0) || 0;
+                        const rowCutoff = toNum(row.CutoffTs ?? row.cutoffTs ?? row.Cutoffs ?? row.cutoffs ?? 0);
+                        const rowCarry = toNum(row.CarryBalance ?? row.carryBalance ?? 0);
 
                         if (entryType === 'FUND_HISTORY') {
-                            const amt = Number(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
-                            if (!Number.isNaN(amt) && amt !== 0) {
+                            const amt = toNum(row.Amount ?? row.amount ?? row.totalGiven ?? 0);
+                            if (amt !== 0) {
                                 historyRows.push({
                                     id: row.RecordId || row.recordId || row.id || null,
                                     date: rowDate,
@@ -677,19 +675,19 @@
                                     ts: parseRecordTs(row)
                                 });
                             }
-                      } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
+                        } else if (entryType === 'SETTLEMENT_LOG' || entryType === 'ENGINEER_SUMMARY' || entryType === '') {
                             const parsedTs = parseRecordTs(row);
                             const effectiveCutoff = rowCutoff > 0 ? rowCutoff : (entryType === 'SETTLEMENT_LOG' ? parsedTs : 0);
                             const effectiveCarry = entryType === 'SETTLEMENT_LOG'
-                                ? Number(row.CarryBalance ?? row.carryBalance ?? row.Amount ?? row.amount ?? 0)
+                                ? toNum(row.CarryBalance ?? row.carryBalance ?? row.Amount ?? row.amount ?? 0)
                                 : rowCarry;
 
-                            const givenAmt = Number(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
+                            const givenAmt = toNum(row.totalGiven ?? row.Amount ?? row.amount ?? 0);
                             const prevSum = summaryByEng[matchedName] || {};
                             const isNewerCutoff = effectiveCutoff >= (prevSum.cutoffTs || 0);
                             summaryByEng[matchedName] = {
                                 name: matchedName,
-                                totalGiven: !Number.isNaN(givenAmt) ? givenAmt : (prevSum.totalGiven || 0),
+                                totalGiven: givenAmt || (prevSum.totalGiven || 0),
                                 lastDate: isNewerCutoff ? (rowDate || prevSum.lastDate || "-") : (prevSum.lastDate || "-"),
                                 mode: rowMode || prevSum.mode || "Cash",
                                 cutoffTs: Math.max(prevSum.cutoffTs || 0, effectiveCutoff),
@@ -708,15 +706,15 @@
                     const sum = summaryByEng[name] || {};
                     const calcGiven = fundHistory
                         .filter(fh => fh.engineer.toLowerCase() === name.toLowerCase())
-                        .reduce((acc, fh) => acc + Number(fh.amount || 0), 0);
+                        .reduce((acc, fh) => acc + toNum(fh.amount), 0);
 
                     return {
                         name,
-                        totalGiven: sum.totalGiven !== undefined ? Number(sum.totalGiven) : calcGiven,
+                        totalGiven: sum.totalGiven !== undefined ? toNum(sum.totalGiven) : calcGiven,
                         lastDate: sum.lastDate || "-",
                         mode: sum.mode || "Cash",
-                        cutoffTs: Number(sum.cutoffTs || 0),
-                        carryBalance: Number(sum.carryBalance || 0)
+                        cutoffTs: toNum(sum.cutoffTs || 0),
+                        carryBalance: toNum(sum.carryBalance || 0)
                     };
                 });
 
@@ -750,38 +748,38 @@
             const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
 
             try {
-               await postToScript({
-    action: "addFundHistory",
-    target: "engineers",
-    data: {
-        RecordId: recId,
-        EntryType: "SETTLEMENT_LOG",
-        name: engName,
-        Engineer: engName,
-        Date: settledDate,
-        Mode: "Carry Forward",
-        Amount: nextCarryBalance,
-        CutoffTs: cutoffTs,
-        CarryBalance: nextCarryBalance
-    }
-});
+                await postToScript({
+                    action: "addFundHistory",
+                    target: "engineers",
+                    data: {
+                        RecordId: recId,
+                        EntryType: "SETTLEMENT_LOG",
+                        name: engName,
+                        Engineer: engName,
+                        Date: settledDate,
+                        Mode: "Carry Forward",
+                        Amount: nextCarryBalance,
+                        CutoffTs: cutoffTs,
+                        CarryBalance: nextCarryBalance
+                    }
+                });
 
-// இதைச் சேர்க்கவும்: engineers ஷீட்டில் CarryBalance & CutoffTs அப்டேட் செய்ய
-await postToScript({
-    action: "updateEngineerSummary",
-    target: "engineers",
-    name: engName,
-    data: {
-        EntryType: "ENGINEER_SUMMARY",
-        name: engName,
-        Engineer: engName,
-        Date: settledDate,
-        lastDate: settledDate,
-        CutoffTs: cutoffTs,
-        Cutoffs: cutoffTs,
-        CarryBalance: nextCarryBalance
-    }
-});
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        EntryType: "ENGINEER_SUMMARY",
+                        name: engName,
+                        Engineer: engName,
+                        Date: settledDate,
+                        lastDate: settledDate,
+                        CutoffTs: cutoffTs,
+                        Cutoffs: cutoffTs,
+                        CarryBalance: nextCarryBalance
+                    }
+                });
+
                 await syncAllData(false);
                 alert(`Period settled for ${engName}! New Fund Received: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
             } catch (err) {
@@ -789,7 +787,8 @@ await postToScript({
                 alert("Failed to settle period on Google Sheet. Please try again.");
             }
         }
-    function renderAll() {
+
+        function renderAll() {
             const isAdmin = currentUser === 'Admin';
             const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
 
@@ -797,10 +796,9 @@ await postToScript({
                 ? (engineers.find(e => e.name.trim().toLowerCase() === currentUser.trim().toLowerCase()) || { cutoffTs: 0, carryBalance: 0, lastDate: '-' })
                 : null;
 
-            const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
+            const engCutoffTs = !isAdmin ? toNum(currentEngObj.cutoffTs || 0) : 0;
             const hasEngSettled = !isAdmin && engCutoffTs > 0;
-            const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
-            const cutoffDateStr = currentEngObj ? (currentEngObj.lastDate || '') : '';
+            const engCarryBalance = hasEngSettled ? toNum(currentEngObj.carryBalance || 0) : 0;
 
             const scopedExpenses = expenses
                 .map((ex, idx) => ({ ex, realIdx: idx }))
@@ -808,8 +806,8 @@ await postToScript({
                     const matchingEng = isAdmin || (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
                     if (!matchingEng) return false;
                     if (!isAdmin && hasEngSettled) {
-                        const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
-                        return ts > engCutoffTs && (!cutoffDateStr || cutoffDateStr === '-' || String(item.ex.Date || item.ex.date || '') >= cutoffDateStr);
+                        const ts = toNum(item.ex._ts || parseRecordTs(item.ex) || 0);
+                        return ts === 0 || ts > engCutoffTs;
                     }
                     return true;
                 });
@@ -821,16 +819,14 @@ await postToScript({
                 }, 0)
                 : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
-            const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+            const totalSpent = scopedExpenses.reduce((sum, item) => sum + toNum(item.ex.Amount ?? item.ex.amount), 0);
             const balance = totalFunds - totalSpent;
 
             document.getElementById('lblTotalFunds').innerText = isAdmin ? 'Total Funds Allocated' : 'Fund Received';
-            document.getElementById('lblTotalExpenses').innerText = isAdmin ? 'Total Expenses Spent' : 'Expenses Spent';
             document.getElementById('lblBalance').innerText = isAdmin ? 'Balance Available' : 'Balance';
 
-            document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
-            document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
-            document.getElementById('balanceDisplay').innerText = `₹${balance.toLocaleString('en-IN')}`;
+            document.getElementById('totalFundsDisplay').innerText = `₹${toNum(totalFunds).toLocaleString('en-IN')}`;
+            document.getElementById('balanceDisplay').innerText = `₹${toNum(balance).toLocaleString('en-IN')}`;
 
             const carryNoteEl = document.getElementById('carryForwardNote');
             if (carryNoteEl) {
@@ -857,17 +853,18 @@ await postToScript({
             }
 
             const visibleHistory = fundHistory.filter(fh => {
-    const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
-    if (!matchingEng) return false;
-    if (!isAdmin && hasEngSettled) {
-        const fhTs = Number(fh.ts || fh.CutoffTs || (typeof parseRecordTs === 'function' ? parseRecordTs(fh) : 0) || 0);
-        if (fhTs > 0) {
-            return fhTs >= (engCutoffTs - 60000);
-        }
-        return true;
-    }
-    return true;
-});
+                const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
+                if (!matchingEng) return false;
+                if (!isAdmin && hasEngSettled) {
+                    const fhTs = toNum(fh.ts || fh.CutoffTs || (typeof parseRecordTs === 'function' ? parseRecordTs(fh) : 0));
+                    if (fhTs > 0) {
+                        return fhTs >= (engCutoffTs - 60000);
+                    }
+                    return true;
+                }
+                return true;
+            });
+
             if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
                 fundHistBody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>';
             } else {
@@ -878,7 +875,7 @@ await postToScript({
                             <td class="p-3">${formatDateVal(fh.date)}</td>
                             <td class="p-3 font-medium">${fh.engineer || 'Admin'}</td>
                             <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${modeText}</span></td>
-                            <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount || 0).toLocaleString('en-IN')}</td>
+                            <td class="p-3 font-semibold text-slate-900">₹${toNum(fh.amount).toLocaleString('en-IN')}</td>
                         </tr>`;
                 });
             }
@@ -894,7 +891,7 @@ await postToScript({
                         const dtStr = formatDateVal(fh.date || '');
                         const engStr = fh.engineer || '';
                         const modeStr = fh.mode || 'Cash';
-                        const amtNum = Number(fh.amount || 0);
+                        const amtNum = toNum(fh.amount);
                         return `
                             <div class="py-2.5 flex items-center justify-between gap-2">
                                 <div>
@@ -934,7 +931,7 @@ await postToScript({
                 settleListEl.innerHTML = VALID_ENGINEERS.map(engName => {
                     const eObj = engineers.find(e => e.name.trim().toLowerCase() === engName.trim().toLowerCase()) || { cutoffTs: 0, carryBalance: 0 };
                     const stats = getEngineerCycleStats(engName, eObj.cutoffTs, eObj.carryBalance);
-                    const balNum = Number(stats.balance || 0);
+                    const balNum = toNum(stats.balance);
                     return `
                         <div class="py-2.5 flex items-center justify-between gap-2">
                             <div>
@@ -983,8 +980,8 @@ await postToScript({
                             <td class="p-3">${ex.Material || ex.material || '-'}</td>
                             <td class="p-3">${ex.Qty || ex.qty || ''}</td>
                             <td class="p-3">${ex.Unit || ex.unit || ''}</td>
-                            <td class="p-3">${Number(ex.Rate || ex.rate || 0).toLocaleString('en-IN')}</td>
-                            <td class="p-3 font-semibold text-slate-900">₹${Number(ex.Amount || ex.amount || 0).toLocaleString('en-IN')}</td>
+                            <td class="p-3">${toNum(ex.Rate ?? ex.rate).toLocaleString('en-IN')}</td>
+                            <td class="p-3 font-semibold text-slate-900">₹${toNum(ex.Amount ?? ex.amount).toLocaleString('en-IN')}</td>
                             <td class="p-3 italic text-slate-500">${ex.Remarks || ex.remarks || ''}</td>
                             <td class="p-3">${statusBadge}</td>
                             ${actionCell}
@@ -1096,7 +1093,7 @@ await postToScript({
                 }
                 const calcTotal = fundHistory
                     .filter((fh) => fh.engineer === entry.engineer)
-                    .reduce((sum, fh) => sum + (fh.id === entry.id ? updatedAmt : Number(fh.amount || 0)), 0);
+                    .reduce((sum, fh) => sum + (fh.id === entry.id ? updatedAmt : toNum(fh.amount)), 0);
 
                 await postToScript({
                     action: "updateEngineerSummary",
@@ -1119,7 +1116,7 @@ await postToScript({
         async function deleteFundEntry(idx) {
             if (currentUser !== 'Admin') return;
             const entry = fundHistory[idx];
-            if (!confirm(`Delete ₹${Number(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
+            if (!confirm(`Delete ₹${toNum(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
 
             try {
                 if (entry.id) {
@@ -1131,7 +1128,7 @@ await postToScript({
                 }
                 const remainingTotal = fundHistory
                     .filter((_, i) => i !== idx && fundHistory[i].engineer === entry.engineer)
-                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+                    .reduce((sum, fh) => sum + toNum(fh.amount), 0);
 
                 await postToScript({
                     action: "updateEngineerSummary",
@@ -1155,7 +1152,7 @@ await postToScript({
             const newMaterial = prompt("Edit Material / Description:", item.Material || item.material || "");
             if (newMaterial === null) return;
 
-            const currentQty = Number(item.Qty || item.qty || 1);
+            const currentQty = toNum(item.Qty ?? item.qty ?? 1) || 1;
             const newQtyInput = prompt("Edit Quantity:", currentQty);
             if (newQtyInput === null || isNaN(Number(newQtyInput))) return;
 
@@ -1163,8 +1160,8 @@ await postToScript({
             const newUnitInput = prompt("Edit Units:", currentUnit);
             if (newUnitInput === null) return;
 
-            const currentAmt = Number(item.Amount || item.amount || 0);
-            const currentRate = (item.Rate || item.rate) ? Number(item.Rate || item.rate) : (currentQty > 0 ? Math.round((currentAmt / currentQty) * 100) / 100 : 0);
+            const currentAmt = toNum(item.Amount ?? item.amount);
+            const currentRate = (item.Rate || item.rate) ? toNum(item.Rate ?? item.rate) : (currentQty > 0 ? Math.round((currentAmt / currentQty) * 100) / 100 : 0);
             const newRateInput = prompt("Edit Rate (₹):", currentRate);
             if (newRateInput === null || isNaN(Number(newRateInput))) return;
 
@@ -1213,7 +1210,7 @@ await postToScript({
         async function deleteExpense(index) {
             if (currentUser !== 'Admin') return;
             const item = expenses[index];
-            if (!confirm(`Delete expense "${item.Material || item.material}" (₹${Number(item.Amount || item.amount || 0).toLocaleString('en-IN')})?`)) return;
+            if (!confirm(`Delete expense "${item.Material || item.material}" (₹${toNum(item.Amount ?? item.amount).toLocaleString('en-IN')})?`)) return;
 
             const recId = item.RecordId || item.recordId;
 
@@ -1297,7 +1294,7 @@ await postToScript({
             const dateVal = document.getElementById('setupFundDate').value;
             const engName = document.getElementById('setupEngSelect').value;
             const modeVal = document.getElementById('setupFundMode').value;
-            const amtVal = Number(document.getElementById('setupEngFund').value || 0);
+            const amtVal = toNum(document.getElementById('setupEngFund').value || 0);
 
             const recId = makeRecordId("FND");
 
@@ -1318,7 +1315,7 @@ await postToScript({
 
                 const prevTotal = fundHistory
                     .filter(fh => fh.engineer === engName)
-                    .reduce((sum, fh) => sum + Number(fh.amount || 0), 0);
+                    .reduce((sum, fh) => sum + toNum(fh.amount), 0);
 
                 await postToScript({
                     action: "updateEngineerSummary",
@@ -1354,6 +1351,3 @@ await postToScript({
     </script>
 </body>
 </html>
-
-
-
