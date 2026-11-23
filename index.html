@@ -730,88 +730,68 @@
             isSyncing = false;
         }
 
-       async function settleEngineerPeriod(engName) {
-  if (currentUser !== 'Admin') return;
-  const engObj = engineers.find(e => e.name === engName) || { name: engName, cutoffs: 0, carryBalance: 0 };
-  const stats = getEngineerCycleStats(engName, engObj.cutoffs, engObj.carryBalance);
-  const nextCarryBalance = Number(stats.balance || 0);
+        async function settleEngineerPeriod(engName) {
+            if (currentUser !== 'Admin') return;
+            const engObj = engineers.find(e => e.name === engName) || { cutoffTs: 0, carryBalance: 0 };
+            const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
+            const nextCarryBalance = stats.balance;
 
-  const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${Number(stats.totalFunds || 0).toLocaleString('en-IN')}\n• Active Expenses: ₹${Number(stats.totalSpent || 0).toLocaleString('en-IN')}\n• Carry Forward Balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`;
-  if (!confirm(confirmMsg)) return;
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Active Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
+            if (!confirm(confirmMsg)) return;
 
-  const cutoffTs = Date.now();
-  const settledDate = new Date().toISOString().split('T')[0];
-  const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
+            const cutoffTs = Date.now();
+            const settledDate = new Date().toISOString().split('T')[0];
+            const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
 
-  try {
-    await postToScript({
-      action: "updateEngineerSummary",
-      target: "engineers",
-      data: {
-        RecordId: recId,
-        EntryType: "ENGINEER_SUMMARY",
-        name: engName,
-        Engineer: engName,
-        LastDate: settledDate,
-        Date: settledDate,
-        Cutoffs: cutoffTs,
-        cutoffs: cutoffTs,
-        CarryBalance: nextCarryBalance,
-        carryBalance: nextCarryBalance
-      }
-    });
+            try {
+                await postToScript({
+                    action: "updateEngineerSummary",
+                    target: "engineers",
+                    name: engName,
+                    data: {
+                        RecordId: recId,
+                        EntryType: "ENGINEER_SUMMARY",
+                        name: engName,
+                        Engineer: engName,
+                        lastDate: settledDate,
+                        Date: settledDate,
+                        Cutoffs: cutoffTs,
+                        CutoffTs: cutoffTs,
+                        CarryBalance: nextCarryBalance
+                    }
+                });
+                await syncAllData(false);
+                alert(`Period settled for ${engName}! New Fund Received: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
+            } catch (err) {
+                console.log("Settle sync error:", err);
+                alert("Failed to settle period on Google Sheet. Please try again.");
+            }
+        }
 
-    const targetEng = engineers.find(e => e.name === engName);
-    if (targetEng) {
-      targetEng.cutoffs = cutoffTs;
-      targetEng.carryBalance = nextCarryBalance;
-      targetEng.lastDate = settledDate;
-    }
-
-    renderAll();
-    await syncAllData(false);
-    alert(`Period settled for ${engName}! Carry Forward Balance: ₹${nextCarryBalance.toLocaleString('en-IN')}`);
-  } catch (err) {
-    console.log("Settle sync error:", err);
-    alert("Failed to settle period on Google Sheet. Please try again.");
-  }
-}
-
-function renderAll() {
+      function renderAll() {
   const isAdmin = currentUser === 'Admin';
   const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
 
   const currentEngObj = !isAdmin
-    ? (engineers.find(e => (e.name || '').trim().toLowerCase() === (currentUser || '').trim().toLowerCase()) || null)
+    ? (engineers.find(e => e.name.trim().toLowerCase() === currentUser.trim().toLowerCase()) || null)
     : null;
 
-  const engCutoffTs = !isAdmin ? Number(currentEngObj?.cutoffs || 0) : 0;
+  const engCutoffTs = !isAdmin ? Number(currentEngObj.cutoffTs || 0) : 0;
   const hasEngSettled = !isAdmin && engCutoffTs > 0;
-  const engCarryBalance = hasEngSettled ? Number(currentEngObj?.carryBalance || 0) : 0;
+  const engCarryBalance = hasEngSettled ? Number(currentEngObj.carryBalance || 0) : 0;
+
   const cutoffDateStr = currentEngObj ? (currentEngObj.lastDate || '') : '';
 
-  const getItemTs = (item) => {
-    const t = Number(item._ts || item.ts || 0);
-    if (t > 0) return t;
-    if (typeof parseRecordTs === 'function') {
-      return Number(parseRecordTs(item) || 0);
-    }
-    return 0;
-  };
-
   const rawScopedExpenses = isAdmin
-    ? expenses.map((ex, realIdx) => ({ ex, realIdx }))
-    : expenses
-        .map((ex, realIdx) => ({ ex, realIdx }))
-        .filter(({ ex }) => {
-          const matchingEng = (ex.Engineer || ex.engineer || '').trim().toLowerCase() === (currentUser || '').trim().toLowerCase();
-          if (!matchingEng) return false;
-          if (!hasEngSettled) return true;
-          const ts = getItemTs(ex);
-          if (ts > 0) return ts > engCutoffTs;
-          const exDate = String(ex.Date || ex.date || '');
-          return !cutoffDateStr || exDate > cutoffDateStr;
-        });
+    ? expenses.map((ex, idx) => ({ ex, realIdx: idx }))
+    : expenses.map((ex, idx) => ({ ex, realIdx: idx }));
+
+  const scopedExpenses = rawScopedExpenses.filter(item => {
+    const matchingEng = isAdmin || (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
+    const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
+    const isAfterCutoff = ts > engCutoffTs && (!cutoffDateStr || String(item.ex.Date || item.ex.date || '') >= cutoffDateStr);
+    return matchingEng && (!hasEngSettled || isAfterCutoff);
+  });
 
   const totalFunds = isAdmin
     ? VALID_ENGINEERS.reduce((sum, engName) => {
@@ -820,90 +800,56 @@ function renderAll() {
       }, 0)
     : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
-  const totalSpent = rawScopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
+  const totalSpent = scopedExpenses.reduce((sum, item) => sum + Number(item.ex.Amount || item.ex.amount || 0), 0);
   const balance = totalFunds - totalSpent;
 
-  if (document.getElementById('lblTotalFunds')) {
-    document.getElementById('lblTotalFunds').innerText = isAdmin ? 'Total Funds Allocated' : 'Fund Received';
-  }
-  if (document.getElementById('lblTotalExpenses')) {
-    document.getElementById('lblTotalExpenses').innerText = isAdmin ? 'Total Expenses Spent' : 'Expenses Spent';
-  }
-  if (document.getElementById('lblBalance')) {
-    document.getElementById('lblBalance').innerText = isAdmin ? 'Balance Available' : 'Balance';
+  document.getElementById('lblTotalFunds').innerText = isAdmin ? `Total Funds Allocated : ${totalFunds.toLocaleString('en-IN')}` : `Fund Received : ${totalFunds.toLocaleString('en-IN')}`;
+  document.getElementById('lblTotalExpenses').innerText = isAdmin ? `Total Expenses Spent : ${totalSpent.toLocaleString('en-IN')}` : `Expenses Spent : ${totalSpent.toLocaleString('en-IN')}`;
+  document.getElementById('lblBalance').innerText = isAdmin ? `Balance Available : ${balance.toLocaleString('en-IN')}` : `Balance : ${balance.toLocaleString('en-IN')}`;
+
+  document.getElementById('totalFundsDisplay').innerText = `₹${totalFunds.toLocaleString('en-IN')}`;
+  document.getElementById('totalExpensesDisplay').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+  document.getElementById('balanceDisplay').innerText = `₹${balance.toLocaleString('en-IN')}`;
+
+  const carryNoteEl = document.getElementById('carryForwardNote');
+  const carryNote1 = document.getElementById('carryNote1');
+
+  if (hasEngSettled) {
+    if (carryNoteEl) carryNoteEl.classList.remove('hidden');
+    if (carryNoteEl) carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+    if (carryNote1) carryNote1.classList.remove('hidden');
+    if (carryNote1) carryNote1.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
+  } else {
+    if (carryNoteEl) carryNoteEl.classList.add('hidden');
+    if (carryNote1) carryNote1.classList.add('hidden');
   }
 
-  if (document.getElementById('totalFundsDisplay')) {
-    document.getElementById('totalFundsDisplay').innerText = `₹${Number(totalFunds || 0).toLocaleString('en-IN')}`;
-  }
-  if (document.getElementById('totalExpensesDisplay')) {
-    document.getElementById('totalExpensesDisplay').innerText = `₹${Number(totalSpent || 0).toLocaleString('en-IN')}`;
-  }
-  if (document.getElementById('balancedDisplay')) {
-    document.getElementById('balancedDisplay').innerText = `₹${Number(balance || 0).toLocaleString('en-IN')}`;
-  }
-
-  const carryNoteEl = document.getElementById('carryforwardnote');
-  if (carryNoteEl) {
-    if (hasEngSettled) {
-      carryNoteEl.classList.remove('hidden');
-      carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${Number(engCarryBalance || 0).toLocaleString('en-IN')}`;
-    } else {
-      carryNoteEl.classList.add('hidden');
-      carryNoteEl.innerText = '';
-    }
-  }
-
-  // Fund / Cash Received Details Table
   const fundHistBody = document.getElementById('fundHistoryBody');
-  const visibleHistory = fundHistory.filter(fh => {
-    const matchingEng = isAdmin || (fh.engineer || '').trim().toLowerCase() === (currentUser || '').trim().toLowerCase();
+  fundHistBody.innerHTML = '';
+
+  if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
+    fundHistBody.innerHTML += `
+      <tr>
+        <td class="p-3">${formatDateVal(currentEngObj.lastDate)}</td>
+        <td class="p-3 font-medium">${currentuser}</td>
+        <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Carry Forward Balance</span></td>
+        <td class="p-3 font-semibold text-slate-900">₹${engCarryBalance.toLocaleString('en-IN')}</td>
+      </tr>`;
+  }
+
+  const visibleHistory = fundHistory.filter(fh => { 
+    const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
     if (!matchingEng) return false;
     if (!isAdmin && hasEngSettled) {
-      const ts = getItemTs(fh);
-      if (ts > 0) return ts > engCutoffTs;
-      const fhDate = String(fh.date || '');
-      return !cutoffDateStr || fhDate > cutoffDateStr;
+      return Number(fh.ts || 0) > engCutoffTs && (!cutoffDateStr || String(fh.date || '') >= cutoffDateStr);
     }
     return true;
   });
 
-  if (fundHistBody) {
-    fundHistBody.innerHTML = '';
-    if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
-      fundHistBody.innerHTML += `
-        <tr class="bg-emerald-50/40">
-          <td class="p-3">${formatDateVal(currentEngObj?.lastDate || '')}</td>
-          <td class="p-3 font-medium">${currentUser}</td>
-          <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Carry Forward</span></td>
-          <td class="p-3 font-semibold text-slate-900">₹${Number(engCarryBalance || 0).toLocaleString('en-IN')}</td>
-        </tr>
-      `;
-    }
-
-    if (visibleHistory.length === 0 && (!(!isAdmin && hasEngSettled && engCarryBalance > 0))) {
-      fundHistBody.innerHTML = `<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>`;
-    } else {
-      visibleHistory.slice().reverse().forEach((fh) => {
-        const typeBadge = (fh.EntryType === 'ENGINEER_SUMMARY' || fh.EntryType === 'SETTLEMENT_LOG')
-          ? `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">Settlement</span>`
-          : `<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${fh.mode || 'Cash'}</span>`;
-
-        fundHistBody.innerHTML += `
-          <tr>
-            <td class="p-3">${formatDateVal(fh.date)}</td>
-            <td class="p-3 font-medium">${fh.engineer || 'Admin'}</td>
-            <td class="p-3">${typeBadge}</td>
-            <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount || 0).toLocaleString('en-IN')}</td>
-          </tr>
-        `;
-      });
-    }
-  }
-
-  // 1. Admin Setup -> Funds Given by Admin List (Edit / Delete)
+  if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
+    fundHistBody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>';
+  } else { // 1. Funds Given by Admin list (Edit / Delete)
   const adminFundListEl =
-    document.getElementById('setupEngList') ||
     document.getElementById('adminFundList') ||
     document.getElementById('fundsGivenList') ||
     document.getElementById('fundHistoryAdminList');
@@ -911,7 +857,7 @@ function renderAll() {
   if (adminFundListEl) {
     const list = Array.isArray(fundHistory) ? fundHistory.slice().reverse() : [];
     if (!list.length) {
-      adminFundListEl.innerHTML = `<div class="text-xs text-slate-400 py-2">No funds given yet.</div>`;
+      adminFundListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No funds given yet.</div>';
     } else {
       adminFundListEl.innerHTML = list.map((fh, revIdx) => {
         const realIdx = fundHistory.length - 1 - revIdx;
@@ -926,8 +872,8 @@ function renderAll() {
               <div class="text-sm font-semibold text-slate-800">₹${amtNum.toLocaleString('en-IN')}</div>
             </div>
             <div class="flex items-center gap-2">
-              <button type="button" onclick="editFundEntry(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
-              <button type="button" onclick="deleteFundEntry(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+              <button type="button" onclick="editFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
+              <button type="button" onclick="deleteFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
             </div>
           </div>
         `;
@@ -935,9 +881,8 @@ function renderAll() {
     }
   }
 
-  // 2. Admin Setup -> Active Sites List (Edit / Delete)
+  // 2. Active Sites list (Edit & Delete)
   const siteListEl =
-    document.getElementById('setupSiteList') ||
     document.getElementById('activeSitesList') ||
     document.getElementById('siteList') ||
     document.getElementById('sitesList');
@@ -945,7 +890,7 @@ function renderAll() {
   if (siteListEl) {
     const siteArr = Array.isArray(sites) ? sites : [];
     if (!siteArr.length) {
-      siteListEl.innerHTML = `<div class="text-xs text-slate-400 py-2">No active sites added.</div>`;
+      siteListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No active sites added.</div>';
     } else {
       siteListEl.innerHTML = siteArr.map((sName, sIdx) => {
         const label = typeof sName === 'string' ? sName : (sName.name || sName.site || '');
@@ -962,7 +907,7 @@ function renderAll() {
     }
   }
 
-  // 3. Admin Setup -> Close / Settle Engineer Period Cards
+  // 3. Close / Settle Engineer Period cards
   const settleListEl =
     document.getElementById('engineerSettlementList') ||
     document.getElementById('settleEngineerList') ||
@@ -970,11 +915,91 @@ function renderAll() {
 
   if (settleListEl && typeof VALID_ENGINEERS !== 'undefined') {
     settleListEl.innerHTML = VALID_ENGINEERS.map((engName) => {
-      const eObj = (Array.isArray(engineers)
-        ? engineers.find(e => (e.name || '').trim().toLowerCase() === engName.trim().toLowerCase())
-        : null) || { cutoffs: 0, carryBalance: 0 };
+      const eObj = (Array.isArray(engineers) ? engineers.find(e => (e.name || '').trim().toLowerCase() === engName.trim().toLowerCase()) : null) || {};
       const stats = typeof getEngineerCycleStats === 'function'
-        ? getEngineerCycleStats(engName, eObj.cutoffs, eObj.carryBalance)
+        ? getEngineerCycleStats(engName, eObj.cutoffs || eObj.cutoffTs || 0, eObj.carryBalance || 0)
+        : { balance: 0 };
+      const balNum = Number(stats.balance || 0);
+      return `
+        <div class="py-2.5 border-b border-slate-100 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-sm font-semibold text-slate-800">${engName}</div>
+            <div class="text-xs text-slate-500">Active Bal: ₹${balNum.toLocaleString('en-IN')}</div>
+          </div>
+          <button type="button" onclick="settleEngineerPeriod('${engName}')" class="px-3 py-1.5 text-xs font-medium rounded bg-slate-800 text-white hover:bg-slate-700">
+            Settle Period
+          </button>
+        </div>
+      `; // 1. Funds Given by Admin list (Edit / Delete)
+  const adminFundListEl =
+    document.getElementById('adminFundList') ||
+    document.getElementById('fundsGivenList') ||
+    document.getElementById('fundHistoryAdminList');
+
+  if (adminFundListEl) {
+    const list = Array.isArray(fundHistory) ? fundHistory.slice().reverse() : [];
+    if (!list.length) {
+      adminFundListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No funds given yet.</div>';
+    } else {
+      adminFundListEl.innerHTML = list.map((fh, revIdx) => {
+        const realIdx = fundHistory.length - 1 - revIdx;
+        const dtStr = typeof formatDateVal === 'function' ? formatDateVal(fh.date || fh.Date || '') : (fh.date || '');
+        const engStr = fh.engineer || fh.Engineer || '';
+        const modeStr = fh.mode || fh.paymentMode || fh.Mode || 'Cash';
+        const amtNum = Number(fh.amount || fh.Amount || 0);
+        return `
+          <div class="py-2.5 border-b border-slate-100 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs text-slate-500">${dtStr} • <b>${engStr}</b> • ${modeStr}</div>
+              <div class="text-sm font-semibold text-slate-800">₹${amtNum.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="editFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
+              <button type="button" onclick="deleteFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. Active Sites list (Edit & Delete)
+  const siteListEl =
+    document.getElementById('activeSitesList') ||
+    document.getElementById('siteList') ||
+    document.getElementById('sitesList');
+
+  if (siteListEl) {
+    const siteArr = Array.isArray(sites) ? sites : [];
+    if (!siteArr.length) {
+      siteListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No active sites added.</div>';
+    } else {
+      siteListEl.innerHTML = siteArr.map((sName, sIdx) => {
+        const label = typeof sName === 'string' ? sName : (sName.name || sName.site || '');
+        return `
+          <div class="py-2 border-b border-slate-100 flex items-center justify-between gap-2">
+            <span class="text-sm font-medium text-slate-800">${label}</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="editSite(${sIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
+              <button type="button" onclick="deleteSite(${sIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 3. Close / Settle Engineer Period cards
+  const settleListEl =
+    document.getElementById('engineerSettlementList') ||
+    document.getElementById('settleEngineerList') ||
+    document.getElementById('settlementList');
+
+  if (settleListEl && typeof VALID_ENGINEERS !== 'undefined') {
+    settleListEl.innerHTML = VALID_ENGINEERS.map((engName) => {
+      const eObj = (Array.isArray(engineers) ? engineers.find(e => (e.name || '').trim().toLowerCase() === engName.trim().toLowerCase()) : null) || {};
+      const stats = typeof getEngineerCycleStats === 'function'
+        ? getEngineerCycleStats(engName, eObj.cutoffs || eObj.cutoffTs || 0, eObj.carryBalance || 0)
         : { balance: 0 };
       const balNum = Number(stats.balance || 0);
       return `
@@ -990,87 +1015,82 @@ function renderAll() {
       `;
     }).join('');
   }
+    }).join('');
+  }
+    visibleHistory.slice().reverse().forEach((fh, idx) => {
+      const realIdx = fundHistory.length - 1 - idx;
+      const typeBadge = fh.EntryType === ' ENGINEER_SUMMARY' || fh.EntryType === 'SETTLEMENT_LOG' 
+        ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">Settlement</span>'
+        : '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Fund Received</span>';
 
-  // Expense Logs Table
+      fundHistBody.innerHTML += `
+        <tr>
+          <td class="p-3">${formatDateVal(fh.date)}</td>
+          <td class="p-3 font-medium">${fh.engineer || 'Admin'}</td>
+          <td class="p-3">${typeBadge}</td>
+          <td class="p-3 font-semibold text-slate-900">₹${Number(fh.amount || 0).toLocaleString('en-IN')}</td>
+        </tr>`;
+    });
+  }
+
   const expBody = document.getElementById('expenseTableBody');
   const expSiteSelect = document.getElementById('expSiteSelect');
-  const filterSiteSelect = document.getElementById('filterSiteSelect');
-
   if (expSiteSelect && expSiteSelect.options.length <= 1) {
-    expSiteSelect.innerHTML = `<option value="">-- Choose Site --</option>`;
-    sites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
+    expSiteSelect.innerHTML = '<option value="">-- Choose Site --</option>';
+    syncedSites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
       expSiteSelect.innerHTML += `<option value="${s}">${s}</option>`;
     });
   }
 
+  const filterSiteSelect = document.getElementById('filterSiteSelect');
   if (filterSiteSelect && filterSiteSelect.options.length <= 1) {
-    filterSiteSelect.innerHTML = `<option value="ALL">ALL SITES</option>`;
-    sites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
+    filterSiteSelect.innerHTML = '<option value="ALL">ALL SITES</option>';
+    syncedSites.filter(s => !deletedSites.has(s.toLowerCase())).forEach(s => {
       filterSiteSelect.innerHTML += `<option value="${s}">${s}</option>`;
     });
   }
 
+  expBody.innerHTML = '';
   const finalScoped = filterSiteVal === 'ALL'
-    ? rawScopedExpenses
-    : rawScopedExpenses.filter(item => {
+    ? scopedExpenses
+    : scopedExpenses.filter(item => {
         const sVal = item.ex.Site || item.ex.site || '';
         return sVal.trim().toLowerCase() === filterSiteVal.trim().toLowerCase();
       });
 
-  if (expBody) {
-    expBody.innerHTML = '';
-    if (finalScoped.length === 0) {
-      expBody.innerHTML = `<tr><td colspan="9" class="p-3 text-slate-400 text-center">No expenses logged.</td></tr>`;
-    } else {
-      finalScoped.slice().reverse().forEach((item) => {
-        const ex = item.ex;
-        const realIdx = item.realIdx;
-        const statusVal = ex.Status || ex.status || 'Paid';
-        const statusBadge = statusVal.toLowerCase() === 'paid'
-          ? `<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>`
-          : `<span class="px-2 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Unpaid</span>`;
+  if (finalScoped.length === 0) {
+    expBody.innerHTML = '<tr><td colspan="9" class="p-3 text-slate-400 text-center">No expenses logged.</td></tr>';
+  } else {
+    finalScoped.slice().reverse().forEach(item => {
+      const ex = item.ex;
+      const realIdx = item.realIdx;
+      const statusVal = ex.Status || ex.status || 'Paid';
+      const statusBadge = statusVal.toLowerCase() === 'paid'
+        ? '<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>'
+        : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Unpaid</span>';
 
-        const actionCell = isAdmin
-          ? `<td class="p-3 space-x-2 whitespace-nowrap">
-               <button type="button" onclick="openAdminEditExpense(${realIdx})" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200">Edit</button>
-               <button type="button" onclick="deleteExpense(${realIdx})" class="px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200">Delete</button>
-             </td>`
-          : `<td class="p-3 font-semibold hidden Actions"></td>`;
+      const actionCell = isAdmin ? `
+        <td class="p-3 space-x-2 whitespace-nowrap">
+          <button type="button" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200" onclick="openAdminEditExpense(${realIdx})">Edit</button>
+          <button type="button" class="px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200" onclick="deleteExpense(${realIdx})">Delete</button>
+        </td>` : '<td class="p-3 font-semibold hidden Actions"></td>';
 
-        expBody.innerHTML += `
-          <tr>
-            <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
-            <td class="p-3 font-medium">${ex.Engineer || ex.engineer || ''}</td>
-            <td class="p-3">${ex.Site || ex.site || ''}</td>
-            <td class="p-3">${ex.Material || ex.material || '-'}</td>
-            <td class="p-3">${ex.Qty || ex.qty || ''}</td>
-            <td class="p-3">${ex.Unit || ex.unit || ''}</td>
-            <td class="p-3">${Number(ex.Rate || ex.rate || 0).toLocaleString('en-IN')}</td>
-            <td class="p-3 font-semibold text-slate-900">₹${Number(ex.Amount || ex.amount || 0).toLocaleString('en-IN')}</td>
-            <td class="p-3 italic text-slate-500">${ex.Remarks || ex.remarks || ''}</td>
-            <td class="p-3">${statusBadge}</td>
-            ${actionCell}
-          </tr>
-        `;
-      });
-    }
-  }
-
-  const setupEngSelect = document.getElementById('setupEngSelect');
-  if (setupEngSelect && typeof VALID_ENGINEERS !== 'undefined') {
-    setupEngSelect.innerHTML = '';
-    VALID_ENGINEERS.forEach(engName => {
-      setupEngSelect.innerHTML += `<option value="${engName}">${engName}</option>`;
+      expBody.innerHTML += `
+        <tr>
+          <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
+          <td class="p-3 font-medium">${ex.Engineer || ex.engineer || ''}</td>
+          <td class="p-3">${ex.Site || ex.site || ''}</td>
+          <td class="p-3">${ex.Material || ex.material || '-'}</td>
+          <td class="p-3">${ex.Qty || ex.qty || ''}</td>
+          <td class="p-3">${ex.Unit || ex.unit || ''}</td>
+          <td class="p-3">${Number(ex.Rate || ex.rate || 0).toLocaleString('en-IN')}</td>
+          <td class="p-3 font-semibold text-slate-900">₹${Number(ex.Amount || ex.amount || 0).toLocaleString('en-IN')}</td>
+          <td class="p-3 italic text-slate-500">${ex.Remarks || ex.remarks || ''}</td>
+          <td class="p-3">${statusBadge}</td>
+          ${actionCell}
+        </tr>`;
     });
   }
-
-  if (typeof refreshSiteDropdowns === 'function') {
-    refreshSiteDropdowns();
-  }
-  if (typeof calculateCalculatedAmount === 'function') {
-    calculateCalculatedAmount();
-  }
-}
 
   const setupEngineer = document.getElementById('expEngineer');
   if (setupEngineer) {
@@ -1094,7 +1114,7 @@ function renderAll() {
   const todayStr = new Date().toISOString().split('T')[0];
   const expDateInput = document.getElementById('expDate');
   if (expDateInput && !expDateInput.value) expDateInput.value = todayStr;
-  
+
   const setupFundDate = document.getElementById('setupFundDate');
   if (setupFundDate && !setupFundDate.value) setupFundDate.value = todayStr;
 
