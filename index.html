@@ -837,7 +837,7 @@
       </tr>`;
   }
 
-  const visibleHistory = fundHistory.filter(fh => {
+  const visibleHistory = fundHistory.filter(fh => { 
     const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
     if (!matchingEng) return false;
     if (!isAdmin && hasEngSettled) {
@@ -848,7 +848,91 @@
 
   if (visibleHistory.length === 0 && (!hasEngSettled || engCarryBalance === 0)) {
     fundHistBody.innerHTML = '<tr><td colspan="4" class="p-3 text-slate-400 text-center">No fund entries available yet.</td></tr>';
-  } else {
+  } else { // 1. Funds Given by Admin list (Edit / Delete)
+  const adminFundListEl =
+    document.getElementById('adminFundList') ||
+    document.getElementById('fundsGivenList') ||
+    document.getElementById('fundHistoryAdminList');
+
+  if (adminFundListEl) {
+    const list = Array.isArray(fundHistory) ? fundHistory.slice().reverse() : [];
+    if (!list.length) {
+      adminFundListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No funds given yet.</div>';
+    } else {
+      adminFundListEl.innerHTML = list.map((fh, revIdx) => {
+        const realIdx = fundHistory.length - 1 - revIdx;
+        const dtStr = typeof formatDateVal === 'function' ? formatDateVal(fh.date || fh.Date || '') : (fh.date || '');
+        const engStr = fh.engineer || fh.Engineer || '';
+        const modeStr = fh.mode || fh.paymentMode || fh.Mode || 'Cash';
+        const amtNum = Number(fh.amount || fh.Amount || 0);
+        return `
+          <div class="py-2.5 border-b border-slate-100 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs text-slate-500">${dtStr} • <b>${engStr}</b> • ${modeStr}</div>
+              <div class="text-sm font-semibold text-slate-800">₹${amtNum.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="editFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
+              <button type="button" onclick="deleteFund(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. Active Sites list (Edit & Delete)
+  const siteListEl =
+    document.getElementById('activeSitesList') ||
+    document.getElementById('siteList') ||
+    document.getElementById('sitesList');
+
+  if (siteListEl) {
+    const siteArr = Array.isArray(sites) ? sites : [];
+    if (!siteArr.length) {
+      siteListEl.innerHTML = '<div class="text-xs text-slate-400 py-2">No active sites added.</div>';
+    } else {
+      siteListEl.innerHTML = siteArr.map((sName, sIdx) => {
+        const label = typeof sName === 'string' ? sName : (sName.name || sName.site || '');
+        return `
+          <div class="py-2 border-b border-slate-100 flex items-center justify-between gap-2">
+            <span class="text-sm font-medium text-slate-800">${label}</span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="editSite(${sIdx})" class="px-2.5 py-1 text-xs rounded border border-slate-300 text-slate-700 hover:bg-slate-50">Edit</button>
+              <button type="button" onclick="deleteSite(${sIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 3. Close / Settle Engineer Period cards
+  const settleListEl =
+    document.getElementById('engineerSettlementList') ||
+    document.getElementById('settleEngineerList') ||
+    document.getElementById('settlementList');
+
+  if (settleListEl && typeof VALID_ENGINEERS !== 'undefined') {
+    settleListEl.innerHTML = VALID_ENGINEERS.map((engName) => {
+      const eObj = (Array.isArray(engineers) ? engineers.find(e => (e.name || '').trim().toLowerCase() === engName.trim().toLowerCase()) : null) || {};
+      const stats = typeof getEngineerCycleStats === 'function'
+        ? getEngineerCycleStats(engName, eObj.cutoffs || eObj.cutoffTs || 0, eObj.carryBalance || 0)
+        : { balance: 0 };
+      const balNum = Number(stats.balance || 0);
+      return `
+        <div class="py-2.5 border-b border-slate-100 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-sm font-semibold text-slate-800">${engName}</div>
+            <div class="text-xs text-slate-500">Active Bal: ₹${balNum.toLocaleString('en-IN')}</div>
+          </div>
+          <button type="button" onclick="settleEngineerPeriod('${engName}')" class="px-3 py-1.5 text-xs font-medium rounded bg-slate-800 text-white hover:bg-slate-700">
+            Settle Period
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
     visibleHistory.slice().reverse().forEach((fh, idx) => {
       const realIdx = fundHistory.length - 1 - idx;
       const typeBadge = fh.EntryType === ' ENGINEER_SUMMARY' || fh.EntryType === 'SETTLEMENT_LOG' 
