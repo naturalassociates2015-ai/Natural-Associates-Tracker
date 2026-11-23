@@ -772,9 +772,7 @@
                     .filter(item => {
                         const matchEng = (item.ex.Engineer || item.ex.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
                         const ts = Number(item.ex._ts || parseRecordTs(item.ex) || 0);
-const cutoffDateStr = currentEngObj ? (currentEngObj.lastDate || '') : '';
-const isAfterCutoff = ts > engCutoffTs && (!cutoffDateStr || String(item.ex.Date || item.ex.date || '') >= cutoffDateStr);
-return matchingEng && (!hasEngSettled || isAfterCutoff);
+                        return matchEng && (!hasEngSettled || ts > engCutoffTs);
                     });
 
             const scopedExpenses = (filterSiteVal !== 'ALL')
@@ -824,14 +822,10 @@ return matchingEng && (!hasEngSettled || isAfterCutoff);
             }
 
             const visibleHistory = fundHistory.filter(fh => {
-  const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
-  if (!matchingEng) return false;
-  if (!isAdmin && hasEngSettled) {
-    const cutoffDateStr = currentEngObj ? (currentEngObj.lastDate || '') : '';
-    return Number(fh.ts || 0) > engCutoffTs && (!cutoffDateStr || String(fh.date || '') >= cutoffDateStr);
-  }
-  return true;
-});
+                const matchEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.toLowerCase();
+                if (!matchEng) return false;
+                if (!isAdmin && hasEngSettled) {
+                    return Number(fh.ts || 0) > engCutoffTs;
                 }
                 return true;
             });
