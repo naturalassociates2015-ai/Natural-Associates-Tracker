@@ -14,6 +14,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+        @media print {
+            body { background-color: #ffffff !important; }
+            #loginScreen, header, nav, #recordExpenseCard, .no-print { display: none !important; }
+            #mainApp, #view-expenses, main { display: block !important; padding: 0 !important; margin: 0 !important; }
+            .print-header { display: block !important; margin-bottom: 16px; }
+        }
+        .print-header { display: none; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800">
@@ -265,7 +272,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
-                            <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
+                            <select id="expSite" onchange="rememberFastDefaults()" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
                         </div>
                         <div id="expCategoryWrapper" class="hidden">
                             <label class="block text-xs font-medium text-slate-700 mb-1">Category</label>
@@ -291,7 +298,7 @@
                             <label class="block text-xs font-medium text-slate-700 mb-1">Quantity & Units</label>
                             <div class="flex space-x-2">
                                 <input type="number" step="any" id="expQty" oninput="updateCalculatedAmount()" placeholder="Quantity" class="w-1/2 p-2.5 border rounded-xl text-sm" required>
-                                <select id="expUnit" class="w-1/2 p-2.5 border rounded-xl text-sm"></select>
+                                <select id="expUnit" onchange="rememberFastDefaults()" class="w-1/2 p-2.5 border rounded-xl text-sm"></select>
                             </div>
                         </div>
                         <div>
@@ -321,12 +328,77 @@
 
                 <!-- Expense Logs Table -->
                 <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <div class="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
-                        <div class="flex flex-wrap items-center gap-3">
+                    <div class="p-6 border-b space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
+                                <p id="expenseFilterSummary" class="text-xs text-slate-500 mt-0.5"></p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 no-print">
+                                <button type="button" onclick="resetExpenseFilters()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition">
+                                    Clear Filters
+                                </button>
+                                <button type="button" onclick="printFilteredExpenses()" class="flex items-center space-x-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                    <span>Print Report</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Admin Filters: Engineer, Site, Category, Description + From/To Date -->
+                        <div id="adminExpenseFilterPanel" class="hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 pt-2 border-t no-print">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">Engineer</label>
+                                <select id="filterEngineerSelect" onchange="renderAll()" class="w-full text-xs p-2 border rounded-lg font-medium outline-none bg-white">
+                                    <option value="ALL">ALL ENGINEERS</option>
+                                    <option value="Sivashankar">Sivashankar</option>
+                                    <option value="Yogesh">Yogesh</option>
+                                    <option value="Senthil">Senthil</option>
+                                    <option value="MANIGANDAN">MANIGANDAN</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">Site</label>
+                                <select id="filterSiteSelect" onchange="renderAll()" class="w-full text-xs p-2 border rounded-lg font-medium outline-none bg-white">
+                                    <option value="ALL">ALL SITES</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">Category</label>
+                                <select id="filterCategorySelect" onchange="renderAll()" class="w-full text-xs p-2 border rounded-lg font-medium outline-none bg-white">
+                                    <option value="ALL">ALL CATEGORIES</option>
+                                    <option value="Masonry">Masonry</option>
+                                    <option value="Centring">Centring</option>
+                                    <option value="Electrician">Electrician</option>
+                                    <option value="Plumber">Plumber</option>
+                                    <option value="Painter">Painter</option>
+                                    <option value="Tiles Layer">Tiles Layer</option>
+                                    <option value="Carpenter">Carpenter</option>
+                                    <option value="Fabricator">Fabricator</option>
+                                    <option value="Polish">Polish</option>
+                                    <option value="Material">Material</option>
+                                    <option value="Granite Layer">Granite Layer</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">Description</label>
+                                <input type="text" id="filterDescInput" oninput="renderAll()" placeholder="Search description..." class="w-full text-xs p-2 border rounded-lg outline-none bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">From Date</label>
+                                <input type="date" id="filterFromDate" onchange="renderAll()" class="w-full text-xs p-2 border rounded-lg outline-none bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-500 mb-1">To Date</label>
+                                <input type="date" id="filterToDate" onchange="renderAll()" class="w-full text-xs p-2 border rounded-lg outline-none bg-white">
+                            </div>
+                        </div>
+
+                        <!-- Non-Admin Filter Bar -->
+                        <div id="userExpenseFilterPanel" class="flex flex-wrap items-center gap-3 pt-2 border-t no-print">
                             <div id="filterCategoryWrapper" class="hidden flex items-center space-x-2">
                                 <span class="text-xs text-slate-500">Category:</span>
-                                <select id="filterCategorySelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                <select id="userFilterCategorySelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
                                     <option value="ALL">ALL CATEGORIES</option>
                                     <option value="Masonry">Masonry</option>
                                     <option value="Centring">Centring</option>
@@ -343,12 +415,18 @@
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs text-slate-500">Filter Site:</span>
-                                <select id="filterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                <select id="userFilterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
                                     <option value="ALL">ALL SITES</option>
                                 </select>
                             </div>
                         </div>
                     </div>
+
+                    <div id="printReportHeader" class="print-header px-6 pt-4">
+                        <h2 class="text-xl font-bold text-slate-900">Natural Associates - Site Expense Statement</h2>
+                        <p id="printReportMeta" class="text-xs text-slate-600 mt-1"></p>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
@@ -364,7 +442,7 @@
                                     <th class="p-3">Amount</th>
                                     <th class="p-3">Remarks</th>
                                     <th class="p-3">Status</th>
-                                    <th id="thExpenseAction" class="p-3 hidden">Action</th>
+                                    <th id="thExpenseAction" class="p-3 hidden no-print">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="expenseTableBody" class="divide-y divide-slate-100"></tbody>
@@ -587,6 +665,7 @@
 
         let syncTimer = null;
         let isSyncing = false;
+        let lastMutationTs = 0;
         let currentUser = null;
         let editingExpenseIndex = null;
 
@@ -623,7 +702,17 @@
             return matched || raw;
         }
 
+        function rememberFastDefaults() {
+            const sVal = document.getElementById('expSite') ? document.getElementById('expSite').value : '';
+            const cVal = document.getElementById('expCategory') ? document.getElementById('expCategory').value : '';
+            const uVal = document.getElementById('expUnit') ? document.getElementById('expUnit').value : '';
+            if (sVal) sessionStorage.setItem('na_last_site', sVal);
+            if (cVal) sessionStorage.setItem('na_last_category', cVal);
+            if (uVal) sessionStorage.setItem('na_last_unit', uVal);
+        }
+
         function updateCategoryVisibility() {
+            const isAdmin = currentUser === 'Admin';
             const selectedEng = document.getElementById('expEngineer') ? document.getElementById('expEngineer').value : currentUser;
             const u = String(currentUser || '').trim().toLowerCase();
             const engLower = String(selectedEng || '').trim().toLowerCase();
@@ -632,14 +721,31 @@
             const catWrapper = document.getElementById('expCategoryWrapper');
             const filterCatWrapper = document.getElementById('filterCategoryWrapper');
             const thCat = document.getElementById('thExpenseCategory');
+            const adminFilterPanel = document.getElementById('adminExpenseFilterPanel');
+            const userFilterPanel = document.getElementById('userExpenseFilterPanel');
 
             if (catWrapper) {
                 if (allowedForForm) catWrapper.classList.remove('hidden');
                 else catWrapper.classList.add('hidden');
             }
 
+            if (adminFilterPanel) {
+                if (isAdmin) {
+                    adminFilterPanel.classList.remove('hidden');
+                    adminFilterPanel.classList.add('grid');
+                } else {
+                    adminFilterPanel.classList.add('hidden');
+                    adminFilterPanel.classList.remove('grid');
+                }
+            }
+
+            if (userFilterPanel) {
+                if (!isAdmin) userFilterPanel.classList.remove('hidden');
+                else userFilterPanel.classList.add('hidden');
+            }
+
             if (filterCatWrapper) {
-                if (canSeeCategory()) filterCatWrapper.classList.remove('hidden');
+                if (!isAdmin && canSeeCategory()) filterCatWrapper.classList.remove('hidden');
                 else filterCatWrapper.classList.add('hidden');
             }
 
@@ -669,7 +775,34 @@
                     unitEl.value = 'Day';
                 }
             }
+            rememberFastDefaults();
             updateCalculatedAmount();
+        }
+
+        function resetExpenseFilters() {
+            const fEng = document.getElementById('filterEngineerSelect');
+            const fSite = document.getElementById('filterSiteSelect');
+            const fCat = document.getElementById('filterCategorySelect');
+            const fDesc = document.getElementById('filterDescInput');
+            const fFrom = document.getElementById('filterFromDate');
+            const fTo = document.getElementById('filterToDate');
+            const uSite = document.getElementById('userFilterSiteSelect');
+            const uCat = document.getElementById('userFilterCategorySelect');
+
+            if (fEng) fEng.value = 'ALL';
+            if (fSite) fSite.value = 'ALL';
+            if (fCat) fCat.value = 'ALL';
+            if (fDesc) fDesc.value = '';
+            if (fFrom) fFrom.value = '';
+            if (fTo) fTo.value = '';
+            if (uSite) uSite.value = 'ALL';
+            if (uCat) uCat.value = 'ALL';
+            renderAll();
+        }
+
+        function printFilteredExpenses() {
+            renderAll();
+            window.print();
         }
 
         function makeRecordId(prefix = "REC") {
@@ -829,10 +962,13 @@
         function refreshSiteDropdowns() {
             const expSite = document.getElementById('expSite');
             const filterSite = document.getElementById('filterSiteSelect');
+            const userFilterSite = document.getElementById('userFilterSiteSelect');
             const cpSite = document.getElementById('cpSite');
 
-            const currentExpVal = expSite ? expSite.value : '';
+            const savedSite = sessionStorage.getItem('na_last_site') || '';
+            const currentExpVal = expSite && expSite.value ? expSite.value : savedSite;
             const currentFilterVal = filterSite ? filterSite.value : 'ALL';
+            const currentUserFilterVal = userFilterSite ? userFilterSite.value : 'ALL';
             const currentCpVal = cpSite ? cpSite.value : '';
 
             if (expSite) {
@@ -862,6 +998,16 @@
                 });
                 if (currentFilterVal === 'ALL' || sites.includes(currentFilterVal)) {
                     filterSite.value = currentFilterVal;
+                }
+            }
+
+            if (userFilterSite) {
+                userFilterSite.innerHTML = `<option value="ALL">ALL SITES</option>`;
+                sites.forEach(site => {
+                    userFilterSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentUserFilterVal === 'ALL' || sites.includes(currentUserFilterVal)) {
+                    userFilterSite.value = currentUserFilterVal;
                 }
             }
         }
@@ -960,6 +1106,8 @@
             const expUnit = document.getElementById('expUnit');
             expUnit.innerHTML = '';
             units.forEach(u => { expUnit.innerHTML += `<option value="${u}">${u}</option>`; });
+            const savedUnit = sessionStorage.getItem('na_last_unit');
+            if (savedUnit && units.includes(savedUnit)) expUnit.value = savedUnit;
 
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('expDate').value = todayStr;
@@ -968,7 +1116,8 @@
             document.getElementById('selfExpDate').value = todayStr;
 
             const catSel = document.getElementById('expCategory');
-            if (catSel) catSel.value = 'Material';
+            const savedCat = sessionStorage.getItem('na_last_category');
+            if (catSel) catSel.value = (savedCat && CATEGORIES.includes(savedCat)) ? savedCat : 'Material';
             updateCategoryVisibility();
             onCategoryChange();
             updateCalculatedAmount();
@@ -979,7 +1128,7 @@
 
             if (syncTimer) clearInterval(syncTimer);
             syncTimer = setInterval(() => {
-                if (currentUser && document.visibilityState === 'visible' && editingExpenseIndex === null) {
+                if (currentUser && document.visibilityState === 'visible' && editingExpenseIndex === null && (Date.now() - lastMutationTs > 15000)) {
                     syncAllData(false);
                 }
             }, 60000);
@@ -1024,6 +1173,7 @@
         async function syncAllData(showAlert = false) {
             if (isSyncing) return;
             isSyncing = true;
+            const syncStartedAt = Date.now();
 
             const btnSync = document.getElementById('btnSync');
             const syncText = document.getElementById('syncText');
@@ -1043,6 +1193,11 @@
 
                 const data = await res.json();
                 if (data.status === "error") throw new Error(data.message || "Sheet read error");
+
+                if (lastMutationTs > syncStartedAt) {
+                    renderAll();
+                    return;
+                }
 
                 if (Array.isArray(data.expenses)) {
                     expenses = data.expenses
@@ -1215,6 +1370,7 @@
             const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Paid Expenses Deducted: ₹${stats.paidSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
             if (!confirm(confirmMsg)) return;
 
+            lastMutationTs = Date.now();
             const cutoffTs = Date.now();
             const settledDate = new Date().toISOString().split('T')[0];
             const recId = "SETTLE_" + cutoffTs + "_" + Math.floor(Math.random() * 10000);
@@ -1265,8 +1421,16 @@
             const showCatCols = canSeeCategory();
             updateCategoryVisibility();
 
-            const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
-            const filterCatVal = (showCatCols && document.getElementById('filterCategorySelect')) ? document.getElementById('filterCategorySelect').value : 'ALL';
+            const filterEngVal = (isAdmin && document.getElementById('filterEngineerSelect')) ? document.getElementById('filterEngineerSelect').value : 'ALL';
+            const filterSiteVal = isAdmin
+                ? (document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL')
+                : (document.getElementById('userFilterSiteSelect') ? document.getElementById('userFilterSiteSelect').value : 'ALL');
+            const filterCatVal = isAdmin
+                ? (document.getElementById('filterCategorySelect') ? document.getElementById('filterCategorySelect').value : 'ALL')
+                : ((showCatCols && document.getElementById('userFilterCategorySelect')) ? document.getElementById('userFilterCategorySelect').value : 'ALL');
+            const filterDescVal = (isAdmin && document.getElementById('filterDescInput')) ? document.getElementById('filterDescInput').value.trim().toLowerCase() : '';
+            const filterFromVal = (isAdmin && document.getElementById('filterFromDate')) ? document.getElementById('filterFromDate').value : '';
+            const filterToVal = (isAdmin && document.getElementById('filterToDate')) ? document.getElementById('filterToDate').value : '';
             const filterSelfVal = document.getElementById('filterSelfForSelect') ? document.getElementById('filterSelfForSelect').value : 'ALL';
 
             const currentEngObj = !isAdmin
@@ -1553,12 +1717,48 @@
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
             const finalScoped = scopedExpenses.filter(item => {
-                const sVal = item.ex.Site || item.ex.site || '';
-                const siteOk = filterSiteVal === 'ALL' || sVal.trim().toLowerCase() === filterSiteVal.trim().toLowerCase();
+                const engVal = String(item.ex.Engineer || item.ex.engineer || '').trim();
+                const engOk = !isAdmin || filterEngVal === 'ALL' || engVal.toLowerCase() === filterEngVal.toLowerCase();
+
+                const sVal = String(item.ex.Site || item.ex.site || '').trim();
+                const siteOk = filterSiteVal === 'ALL' || sVal.toLowerCase() === filterSiteVal.toLowerCase();
+
                 const cVal = getExpenseCategory(item.ex);
-                const catOk = !showCatCols || filterCatVal === 'ALL' || cVal.toLowerCase() === filterCatVal.toLowerCase();
-                return siteOk && catOk;
+                const catOk = filterCatVal === 'ALL' || cVal.toLowerCase() === filterCatVal.toLowerCase();
+
+                const descVal = String(item.ex.Material || item.ex.material || item.ex.Description || item.ex.description || '').trim().toLowerCase();
+                const descOk = !isAdmin || !filterDescVal || descVal.includes(filterDescVal);
+
+                const rowIsoDate = toInputDateVal(item.ex.Date || item.ex.date);
+                const fromOk = !isAdmin || !filterFromVal || rowIsoDate >= filterFromVal;
+                const toOk = !isAdmin || !filterToVal || rowIsoDate <= filterToVal;
+
+                return engOk && siteOk && catOk && descOk && fromOk && toOk;
             });
+
+            const filteredSumAmt = finalScoped.reduce((sum, item) => sum + toNum(item.ex.Amount ?? item.ex.amount), 0);
+            const summaryEl = document.getElementById('expenseFilterSummary');
+            if (summaryEl) {
+                summaryEl.innerText = `Showing ${finalScoped.length} entry(ies) • Total: ₹${filteredSumAmt.toLocaleString('en-IN')}`;
+            }
+
+            const printMetaEl = document.getElementById('printReportMeta');
+            if (printMetaEl) {
+                const parts = [];
+                if (isAdmin) {
+                    if (filterEngVal !== 'ALL') parts.push(`Engineer: ${filterEngVal}`);
+                    if (filterSiteVal !== 'ALL') parts.push(`Site: ${filterSiteVal}`);
+                    if (filterCatVal !== 'ALL') parts.push(`Category: ${filterCatVal}`);
+                    if (filterDescVal) parts.push(`Description: "${filterDescVal}"`);
+                    if (filterFromVal || filterToVal) parts.push(`Period: ${filterFromVal || 'Start'} to ${filterToVal || 'End'}`);
+                } else {
+                    if (filterSiteVal !== 'ALL') parts.push(`Site: ${filterSiteVal}`);
+                    if (filterCatVal !== 'ALL') parts.push(`Category: ${filterCatVal}`);
+                }
+                parts.push(`Entries: ${finalScoped.length}`);
+                parts.push(`Total Amount: ₹${filteredSumAmt.toLocaleString('en-IN')}`);
+                printMetaEl.innerText = parts.join(' | ');
+            }
 
             const colCount = 10 + (showCatCols ? 1 : 0) + (isAdmin ? 1 : 0);
 
@@ -1629,7 +1829,7 @@
                                         <option value="Unpaid" ${curStat === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
                                     </select>
                                 </td>
-                                <td class="p-2 space-x-1.5 whitespace-nowrap">
+                                <td class="p-2 space-x-1.5 whitespace-nowrap no-print">
                                     <button type="button" onclick="saveInlineExpense(${realIdx})" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded">Save</button>
                                     <button type="button" onclick="cancelInlineExpense()" class="px-2.5 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
                                 </td>
@@ -1653,7 +1853,7 @@
                             : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Unpaid</span>');
 
                     const actionCell = isAdmin ? `
-                        <td class="p-3 space-x-2 whitespace-nowrap">
+                        <td class="p-3 space-x-2 whitespace-nowrap no-print">
                             <button type="button" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200" onclick="startInlineEdit(${realIdx})">Edit</button>
                             <button type="button" class="px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200" onclick="deleteExpense(${realIdx})">Delete</button>
                         </td>` : '';
@@ -1683,49 +1883,40 @@
             e.preventDefault();
             if (currentUser !== 'Admin') return;
 
-            const btn = document.getElementById('btnSaveSelfExp');
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
+            lastMutationTs = Date.now();
             const dtVal = document.getElementById('selfExpDate').value;
             const forWhomVal = document.getElementById('selfExpFor').value;
             const descVal = document.getElementById('selfExpDesc').value.trim();
             const amtVal = toNum(document.getElementById('selfExpAmount').value || 0);
             const recId = makeRecordId("SELF");
 
-            try {
-                await postToScript({
-                    action: "create",
-                    target: "engineers",
-                    data: [{
-                        RecordId: recId,
-                        EntryType: "SELF_EXPENSE",
-                        Date: dtVal,
-                        ForWhom: forWhomVal,
-                        Description: descVal,
-                        Amount: amtVal
-                    }]
-                });
+            selfExpenses.push({
+                id: recId,
+                date: dtVal,
+                forWhom: forWhomVal,
+                description: descVal,
+                amount: amtVal
+            });
+            renderAll();
+            e.target.reset();
+            document.getElementById('selfExpDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('selfExpFor').value = forWhomVal;
 
-                selfExpenses.push({
-                    id: recId,
-                    date: dtVal,
-                    forWhom: forWhomVal,
-                    description: descVal,
-                    amount: amtVal
-                });
-                renderAll();
-                e.target.reset();
-                document.getElementById('selfExpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('selfExpFor').value = forWhomVal;
-                alert(`Self Expense of ₹${amtVal.toLocaleString('en-IN')} (${forWhomVal}) saved!`);
-            } catch (err) {
+            postToScript({
+                action: "create",
+                target: "engineers",
+                data: [{
+                    RecordId: recId,
+                    EntryType: "SELF_EXPENSE",
+                    Date: dtVal,
+                    ForWhom: forWhomVal,
+                    Description: descVal,
+                    Amount: amtVal
+                }]
+            }).catch(err => {
                 console.log("Self expense save error:", err);
-                alert("Failed to save Self Expense to Google Sheet.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save Self Expense";
-            }
+                alert("Failed to sync Self Expense to Google Sheet.");
+            });
         }
 
         async function deleteSelfExpenseByIndex(idx) {
@@ -1734,20 +1925,19 @@
             if (!item) return;
             if (!confirm(`Delete Self Expense of ₹${toNum(item.amount).toLocaleString('en-IN')} (${item.forWhom} - ${item.description})?`)) return;
 
-            try {
-                if (item.id) {
-                    await postToScript({
-                        action: "deleteFundHistory",
-                        target: "engineers",
-                        recordId: item.id
-                    });
-                }
-                selfExpenses.splice(idx, 1);
-                renderAll();
-                alert("Self Expense deleted!");
-            } catch (err) {
-                console.log("Self expense delete error:", err);
-                alert("Failed to delete Self Expense.");
+            lastMutationTs = Date.now();
+            selfExpenses.splice(idx, 1);
+            renderAll();
+
+            if (item.id) {
+                postToScript({
+                    action: "deleteFundHistory",
+                    target: "engineers",
+                    recordId: item.id
+                }).catch(err => {
+                    console.log("Self expense delete error:", err);
+                    alert("Failed to sync Self Expense deletion to Google Sheet.");
+                });
             }
         }
 
@@ -1778,26 +1968,22 @@
             const item = expenses[index];
             if (!item) return;
 
+            lastMutationTs = Date.now();
             const normalizedStatus = newStatus === 'Unpaid' ? 'Unpaid' : 'Paid';
-            const prevStatus = item.Status || item.status || 'Paid';
             item.Status = normalizedStatus;
             renderAll();
 
             const recId = item.RecordId || item.recordId;
-            try {
-                if (recId) {
-                    await postToScript({
-                        action: "updateExpense",
-                        target: "expenses",
-                        recordId: recId,
-                        data: { Status: normalizedStatus }
-                    });
-                }
-            } catch (err) {
-                console.log("Quick status update error:", err);
-                item.Status = prevStatus;
-                renderAll();
-                alert("Failed to update status on Google Sheet.");
+            if (recId) {
+                postToScript({
+                    action: "updateExpense",
+                    target: "expenses",
+                    recordId: recId,
+                    data: { Status: normalizedStatus }
+                }).catch(err => {
+                    console.log("Quick status update error:", err);
+                    alert("Failed to sync status to Google Sheet.");
+                });
             }
         }
 
@@ -1830,45 +2016,45 @@
             const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
             const recId = item.RecordId || item.recordId;
 
-            try {
-                if (recId) {
-                    await postToScript({
-                        action: "updateExpense",
-                        target: "expenses",
-                        recordId: recId,
-                        data: {
-                            Date: updatedDate,
-                            Engineer: updatedEngineer,
-                            Site: updatedSite,
-                            Category: updatedCategory,
-                            Material: updatedMaterial,
-                            Qty: updatedQty,
-                            Unit: updatedUnit,
-                            Rate: updatedRate,
-                            Amount: updatedAmt,
-                            Remarks: updatedRemarks,
-                            Status: updatedStatus
-                        }
-                    });
-                }
-                Object.assign(item, {
-                    Date: updatedDate,
-                    Engineer: updatedEngineer,
-                    Site: updatedSite,
-                    Category: updatedCategory,
-                    Material: updatedMaterial,
-                    Qty: updatedQty,
-                    Unit: updatedUnit,
-                    Rate: updatedRate,
-                    Amount: updatedAmt,
-                    Remarks: updatedRemarks,
-                    Status: updatedStatus
+            lastMutationTs = Date.now();
+            Object.assign(item, {
+                Date: updatedDate,
+                Engineer: updatedEngineer,
+                Site: updatedSite,
+                Category: updatedCategory,
+                Material: updatedMaterial,
+                Qty: updatedQty,
+                Unit: updatedUnit,
+                Rate: updatedRate,
+                Amount: updatedAmt,
+                Remarks: updatedRemarks,
+                Status: updatedStatus
+            });
+            editingExpenseIndex = null;
+            renderAll();
+
+            if (recId) {
+                postToScript({
+                    action: "updateExpense",
+                    target: "expenses",
+                    recordId: recId,
+                    data: {
+                        Date: updatedDate,
+                        Engineer: updatedEngineer,
+                        Site: updatedSite,
+                        Category: updatedCategory,
+                        Material: updatedMaterial,
+                        Qty: updatedQty,
+                        Unit: updatedUnit,
+                        Rate: updatedRate,
+                        Amount: updatedAmt,
+                        Remarks: updatedRemarks,
+                        Status: updatedStatus
+                    }
+                }).catch(err => {
+                    console.log("Inline expense save error:", err);
+                    alert("Failed to sync changes to Google Sheet.");
                 });
-                editingExpenseIndex = null;
-                renderAll();
-            } catch (err) {
-                console.log("Inline expense save error:", err);
-                alert("Failed to save changes to Google Sheet.");
             }
         }
 
@@ -1876,10 +2062,7 @@
             e.preventDefault();
             if (currentUser !== 'Admin') return;
 
-            const btn = document.getElementById('btnSaveClientPay');
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
+            lastMutationTs = Date.now();
             const baseAmt = toNum(document.getElementById('cpAmount').value || 0);
             const gstRate = toNum(document.getElementById('cpGstRate').value || 0);
             const gstAmt = Math.round((baseAmt * gstRate / 100) * 100) / 100;
@@ -1900,35 +2083,30 @@
                 ReceivedBy: currentUser
             };
 
-            try {
-                await postToScript({
-                    action: "addClientPayment",
-                    data: paymentObj
-                });
-                clientPayments.push({
-                    id: recId,
-                    date: paymentObj.Date,
-                    site: paymentObj.Site,
-                    mode: paymentObj.PaymentMode,
-                    receivedAmount: baseAmt,
-                    gstRate: gstRate,
-                    gstAmount: gstAmt,
-                    totalAmount: totalAmt,
-                    ref: paymentObj.ReferenceNo
-                });
-                renderAll();
-                e.target.reset();
-                document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
-                document.getElementById('cpGstRate').value = "0";
-                updateClientGstCalc();
-                alert("Client payment saved to Google Sheet!");
-            } catch (err) {
+            clientPayments.push({
+                id: recId,
+                date: paymentObj.Date,
+                site: paymentObj.Site,
+                mode: paymentObj.PaymentMode,
+                receivedAmount: baseAmt,
+                gstRate: gstRate,
+                gstAmount: gstAmt,
+                totalAmount: totalAmt,
+                ref: paymentObj.ReferenceNo
+            });
+            renderAll();
+            e.target.reset();
+            document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('cpGstRate').value = "0";
+            updateClientGstCalc();
+
+            postToScript({
+                action: "addClientPayment",
+                data: paymentObj
+            }).catch(err => {
                 console.log("Client payment save error:", err);
-                alert("Failed to save client payment.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save Client Payment";
-            }
+                alert("Failed to sync client payment to Google Sheet.");
+            });
         }
 
         async function deleteClientPaymentByIndex(idx) {
@@ -1937,19 +2115,18 @@
             if (!item) return;
             if (!confirm(`Delete client payment of ₹${toNum(item.totalAmount).toLocaleString('en-IN')} for ${item.site}?`)) return;
 
-            try {
-                if (item.id) {
-                    await postToScript({
-                        action: "deleteClientPayment",
-                        recordId: item.id
-                    });
-                }
-                clientPayments.splice(idx, 1);
-                renderAll();
-                alert("Client payment deleted!");
-            } catch (err) {
-                console.log("Client payment delete error:", err);
-                alert("Failed to delete client payment.");
+            lastMutationTs = Date.now();
+            clientPayments.splice(idx, 1);
+            renderAll();
+
+            if (item.id) {
+                postToScript({
+                    action: "deleteClientPayment",
+                    recordId: item.id
+                }).catch(err => {
+                    console.log("Client payment delete error:", err);
+                    alert("Failed to sync client payment deletion to Google Sheet.");
+                });
             }
         }
 
@@ -1960,27 +2137,26 @@
             const newSite = inputEl.value.trim();
             if (!newSite) return;
 
-            try {
-                await postToScript({
-                    action: "create",
-                    target: "engineers",
-                    data: [{
-                        RecordId: makeRecordId("SITE"),
-                        EntryType: "SITE_CONFIG",
-                        Site: newSite
-                    }]
-                });
-                if (!sites.some(s => s.toLowerCase() === newSite.toLowerCase())) {
-                    sites.push(newSite);
-                    refreshSiteDropdowns();
-                }
-                renderAll();
-                inputEl.value = "";
-                alert(`Site "${newSite}" added!`);
-            } catch (err) {
-                console.log("Add site error:", err);
-                alert("Failed to add site on Google Sheet.");
+            lastMutationTs = Date.now();
+            if (!sites.some(s => s.toLowerCase() === newSite.toLowerCase())) {
+                sites.push(newSite);
+                refreshSiteDropdowns();
             }
+            renderAll();
+            inputEl.value = "";
+
+            postToScript({
+                action: "create",
+                target: "engineers",
+                data: [{
+                    RecordId: makeRecordId("SITE"),
+                    EntryType: "SITE_CONFIG",
+                    Site: newSite
+                }]
+            }).catch(err => {
+                console.log("Add site error:", err);
+                alert("Failed to sync site to Google Sheet.");
+            });
         }
 
         async function editSite(siteIdx) {
@@ -1991,31 +2167,30 @@
             const newSite = updatedInput.trim();
             if (!newSite || newSite === oldSite) return;
 
-            try {
-                await postToScript({
-                    action: "create",
-                    target: "engineers",
-                    data: [
-                        {
-                            RecordId: makeRecordId("SITEDEL"),
-                            EntryType: "SITE_DELETED",
-                            Site: oldSite
-                        },
-                        {
-                            RecordId: makeRecordId("SITE"),
-                            EntryType: "SITE_CONFIG",
-                            Site: newSite
-                        }
-                    ]
-                });
-                sites[siteIdx] = newSite;
-                refreshSiteDropdowns();
-                renderAll();
-                alert(`Site updated to "${newSite}"!`);
-            } catch (err) {
+            lastMutationTs = Date.now();
+            sites[siteIdx] = newSite;
+            refreshSiteDropdowns();
+            renderAll();
+
+            postToScript({
+                action: "create",
+                target: "engineers",
+                data: [
+                    {
+                        RecordId: makeRecordId("SITEDEL"),
+                        EntryType: "SITE_DELETED",
+                        Site: oldSite
+                    },
+                    {
+                        RecordId: makeRecordId("SITE"),
+                        EntryType: "SITE_CONFIG",
+                        Site: newSite
+                    }
+                ]
+            }).catch(err => {
                 console.log("Site edit sync error:", err);
-                alert("Failed to update site on Google Sheet.");
-            }
+                alert("Failed to sync site update to Google Sheet.");
+            });
         }
 
         async function deleteSite(siteIdx) {
@@ -2023,24 +2198,23 @@
             const siteToDelete = sites[siteIdx];
             if (!confirm(`Delete site "${siteToDelete}" from list?`)) return;
 
-            try {
-                await postToScript({
-                    action: "create",
-                    target: "engineers",
-                    data: [{
-                        RecordId: makeRecordId("SITEDEL"),
-                        EntryType: "SITE_DELETED",
-                        Site: siteToDelete
-                    }]
-                });
-                sites.splice(siteIdx, 1);
-                refreshSiteDropdowns();
-                renderAll();
-                alert(`Site "${siteToDelete}" removed!`);
-            } catch (err) {
+            lastMutationTs = Date.now();
+            sites.splice(siteIdx, 1);
+            refreshSiteDropdowns();
+            renderAll();
+
+            postToScript({
+                action: "create",
+                target: "engineers",
+                data: [{
+                    RecordId: makeRecordId("SITEDEL"),
+                    EntryType: "SITE_DELETED",
+                    Site: siteToDelete
+                }]
+            }).catch(err => {
                 console.log("Site delete sync error:", err);
-                alert("Failed to delete site on Google Sheet.");
-            }
+                alert("Failed to sync site deletion to Google Sheet.");
+            });
         }
 
         async function editFundEntry(idx) {
@@ -2050,21 +2224,22 @@
             if (newAmt === null || isNaN(Number(newAmt))) return;
 
             const updatedAmt = Number(newAmt);
+            lastMutationTs = Date.now();
+            entry.amount = updatedAmt;
+            renderAll();
 
-            try {
-                if (entry.id) {
-                    await postToScript({
-                        action: "updateFundHistory",
-                        target: "engineers",
-                        recordId: entry.id,
-                        data: { Amount: updatedAmt }
-                    });
-                }
-                const calcTotal = fundHistory
-                    .filter((fh) => fh.engineer === entry.engineer)
-                    .reduce((sum, fh) => sum + (fh.id === entry.id ? updatedAmt : toNum(fh.amount)), 0);
+            const calcTotal = fundHistory
+                .filter((fh) => fh.engineer === entry.engineer)
+                .reduce((sum, fh) => sum + toNum(fh.amount), 0);
 
-                await postToScript({
+            Promise.all([
+                entry.id ? postToScript({
+                    action: "updateFundHistory",
+                    target: "engineers",
+                    recordId: entry.id,
+                    data: { Amount: updatedAmt }
+                }) : Promise.resolve(),
+                postToScript({
                     action: "updateEngineerSummary",
                     target: "engineers",
                     name: entry.engineer,
@@ -2073,14 +2248,11 @@
                         lastDate: entry.date,
                         mode: entry.mode
                     }
-                });
-                entry.amount = updatedAmt;
-                renderAll();
-                alert("Fund updated across all devices!");
-            } catch (err) {
+                })
+            ]).catch(err => {
                 console.log("Fund edit sync error:", err);
-                alert("Failed to update fund on Google Sheet.");
-            }
+                alert("Failed to sync fund edit to Google Sheet.");
+            });
         }
 
         async function deleteFundEntry(idx) {
@@ -2088,33 +2260,32 @@
             const entry = fundHistory[idx];
             if (!confirm(`Delete ₹${toNum(entry.amount).toLocaleString('en-IN')} fund entry for ${entry.engineer} (${formatDateVal(entry.date)} | ${entry.mode})?`)) return;
 
-            try {
-                if (entry.id) {
-                    await postToScript({
-                        action: "deleteFundHistory",
-                        target: "engineers",
-                        recordId: entry.id
-                    });
-                }
-                const remainingTotal = fundHistory
-                    .filter((_, i) => i !== idx && fundHistory[i].engineer === entry.engineer)
-                    .reduce((sum, fh) => sum + toNum(fh.amount), 0);
+            lastMutationTs = Date.now();
+            fundHistory.splice(idx, 1);
+            renderAll();
 
-                await postToScript({
+            const remainingTotal = fundHistory
+                .filter((fh) => fh.engineer === entry.engineer)
+                .reduce((sum, fh) => sum + toNum(fh.amount), 0);
+
+            Promise.all([
+                entry.id ? postToScript({
+                    action: "deleteFundHistory",
+                    target: "engineers",
+                    recordId: entry.id
+                }) : Promise.resolve(),
+                postToScript({
                     action: "updateEngineerSummary",
                     target: "engineers",
                     name: entry.engineer,
                     data: {
                         totalGiven: remainingTotal
                     }
-                });
-                fundHistory.splice(idx, 1);
-                renderAll();
-                alert("Fund entry deleted across all devices!");
-            } catch (err) {
+                })
+            ]).catch(err => {
                 console.log("Fund delete sync error:", err);
-                alert("Failed to delete fund entry on Google Sheet.");
-            }
+                alert("Failed to sync fund deletion to Google Sheet.");
+            });
         }
 
         async function deleteExpense(index) {
@@ -2123,22 +2294,20 @@
             if (!confirm(`Delete expense "${item.Material || item.material}" (₹${toNum(item.Amount ?? item.amount).toLocaleString('en-IN')})?`)) return;
 
             const recId = item.RecordId || item.recordId;
+            lastMutationTs = Date.now();
+            expenses.splice(index, 1);
+            if (editingExpenseIndex === index) editingExpenseIndex = null;
+            renderAll();
 
-            try {
-                if (recId) {
-                    await postToScript({
-                        action: "deleteExpense",
-                        target: "expenses",
-                        recordId: recId
-                    });
-                }
-                expenses.splice(index, 1);
-                if (editingExpenseIndex === index) editingExpenseIndex = null;
-                renderAll();
-                alert("Expense deleted across all devices!");
-            } catch (err) {
-                console.log("Expense delete sync error:", err);
-                alert("Failed to delete expense on Google Sheet.");
+            if (recId) {
+                postToScript({
+                    action: "deleteExpense",
+                    target: "expenses",
+                    recordId: recId
+                }).catch(err => {
+                    console.log("Expense delete sync error:", err);
+                    alert("Failed to sync expense deletion to Google Sheet.");
+                });
             }
         }
 
@@ -2146,10 +2315,7 @@
             e.preventDefault();
             if (currentUser === 'Admin') return;
 
-            const btn = document.getElementById('btnSaveExp');
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
+            lastMutationTs = Date.now();
             const engVal = document.getElementById('expEngineer').value;
             const isManigandan = String(engVal || currentUser || '').trim().toLowerCase() === 'manigandan';
             const catEl = document.getElementById('expCategory');
@@ -2162,66 +2328,80 @@
             document.getElementById('expAmount').value = calcAmt;
 
             const siteVal = document.getElementById('expSite').value;
+            const dateVal = document.getElementById('expDate').value;
+            const descVal = document.getElementById('expMaterial').value.trim();
+            const remVal = document.getElementById('expRemarks').value.trim();
+            const statVal = document.getElementById('expStatus').value;
+
+            rememberFastDefaults();
+
             const recId = makeRecordId("EXP");
             const recTs = parseRecordTs({ RecordId: recId });
 
             const newExp = {
                 RecordId: recId,
                 _ts: recTs,
-                Date: document.getElementById('expDate').value,
+                Date: dateVal,
                 Engineer: engVal,
                 Site: siteVal,
                 Category: categoryVal,
-                Material: document.getElementById('expMaterial').value.trim(),
+                Material: descVal,
                 Qty: qtyNum,
                 Unit: unitVal,
                 Rate: rateNum,
                 Amount: calcAmt,
-                Remarks: document.getElementById('expRemarks').value.trim(),
-                Status: document.getElementById('expStatus').value
+                Remarks: remVal,
+                Status: statVal
             };
 
-            try {
-                await postToScript({
-                    action: "create",
-                    target: siteVal,
-                    data: [newExp]
-                });
-                expenses.push(newExp);
-                renderAll();
-                e.target.reset();
-                document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
-                if (catEl) catEl.value = 'Material';
-                updateCategoryVisibility();
-                onCategoryChange();
-                updateCalculatedAmount();
-                alert("Expense saved to Google Sheet!");
-            } catch (err) {
+            expenses.push(newExp);
+            renderAll();
+
+            document.getElementById('expMaterial').value = '';
+            document.getElementById('expQty').value = categoryVal === 'Material' ? '' : '1';
+            document.getElementById('expRate').value = '';
+            document.getElementById('expAmount').value = '';
+            document.getElementById('expRemarks').value = '';
+            updateCalculatedAmount();
+
+            postToScript({
+                action: "create",
+                target: siteVal,
+                data: [newExp]
+            }).catch(err => {
                 console.log("Expense save error:", err);
-                alert("Failed to save expense. Please check internet connection or try again.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save Expense";
-            }
+                alert("Failed to sync expense to Google Sheet.");
+            });
         }
 
         async function addOrUpdateEngineer(e) {
             e.preventDefault();
             if (currentUser !== 'Admin') return;
 
-            const btn = document.getElementById('btnSaveFund');
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
+            lastMutationTs = Date.now();
             const dateVal = document.getElementById('setupFundDate').value;
             const engName = document.getElementById('setupEngSelect').value;
             const modeVal = document.getElementById('setupFundMode').value;
             const amtVal = toNum(document.getElementById('setupEngFund').value || 0);
 
             const recId = makeRecordId("FND");
+            fundHistory.push({
+                id: recId,
+                date: dateVal,
+                engineer: engName,
+                mode: modeVal,
+                amount: amtVal,
+                ts: parseRecordTs({ RecordId: recId })
+            });
+            document.getElementById('setupEngFund').value = "";
+            renderAll();
 
-            try {
-                await postToScript({
+            const prevTotal = fundHistory
+                .filter(fh => fh.engineer === engName)
+                .reduce((sum, fh) => sum + toNum(fh.amount), 0);
+
+            Promise.all([
+                postToScript({
                     action: "addFundHistory",
                     target: "engineers",
                     data: {
@@ -2233,41 +2413,21 @@
                         Mode: modeVal,
                         Amount: amtVal
                     }
-                });
-
-                const prevTotal = fundHistory
-                    .filter(fh => fh.engineer === engName)
-                    .reduce((sum, fh) => sum + toNum(fh.amount), 0);
-
-                await postToScript({
+                }),
+                postToScript({
                     action: "updateEngineerSummary",
                     target: "engineers",
                     name: engName,
                     data: {
-                        totalGiven: prevTotal + amtVal,
+                        totalGiven: prevTotal,
                         lastDate: dateVal,
                         mode: modeVal
                     }
-                });
-
-                fundHistory.push({
-                    id: recId,
-                    date: dateVal,
-                    engineer: engName,
-                    mode: modeVal,
-                    amount: amtVal,
-                    ts: parseRecordTs({ RecordId: recId })
-                });
-                renderAll();
-                document.getElementById('setupEngFund').value = "";
-                alert(`₹${amtVal.toLocaleString('en-IN')} added for ${engName}!`);
-            } catch (err) {
+                })
+            ]).catch(err => {
                 console.log("Fund save error:", err);
-                alert("Failed to save fund to Google Sheet.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save Fund";
-            }
+                alert("Failed to sync fund to Google Sheet.");
+            });
         }
 
         window.addEventListener('DOMContentLoaded', () => {
