@@ -95,7 +95,6 @@
 
             <!-- 1. DASHBOARD / OVERVIEW TAB -->
             <div id="view-dashboard" class="space-y-6">
-                <!-- Engineer / Overall Fund & Balance Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div id="totalFundsCard" onclick="handleTotalFundsCardClick()" class="bg-white p-6 rounded-2xl shadow-sm border transition">
                         <div class="flex justify-between items-center">
@@ -262,15 +261,31 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Engineer</label>
-                            <select id="expEngineer" class="w-full p-2.5 border rounded-xl text-sm" required></select>
+                            <select id="expEngineer" onchange="updateCategoryVisibility()" class="w-full p-2.5 border rounded-xl text-sm" required></select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
                             <select id="expSite" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
                         </div>
+                        <div id="expCategoryWrapper" class="hidden">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                            <select id="expCategory" onchange="onCategoryChange()" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-slate-800">
+                                <option value="Masonry">Masonry</option>
+                                <option value="Centring">Centring</option>
+                                <option value="Electrician">Electrician</option>
+                                <option value="Plumber">Plumber</option>
+                                <option value="Painter">Painter</option>
+                                <option value="Tiles Layer">Tiles Layer</option>
+                                <option value="Carpenter">Carpenter</option>
+                                <option value="Fabricator">Fabricator</option>
+                                <option value="Polish">Polish</option>
+                                <option value="Material" selected>Material</option>
+                                <option value="Granite Layer">Granite Layer</option>
+                            </select>
+                        </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Material / Description</label>
-                            <input type="text" id="expMaterial" placeholder="e.g., Cement, M-Sand, Labor" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <label id="lblExpDescription" class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                            <input type="text" id="expMaterial" placeholder="e.g., Cement, M-Sand, Shankar - Painter" class="w-full p-2.5 border rounded-xl text-sm" required>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Quantity & Units</label>
@@ -288,7 +303,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Remarks</label>
-                            <input type="text" id="expRemarks" placeholder="Optional notes (e.g., bill pending, morning load)" class="w-full p-2.5 border rounded-xl text-sm">
+                            <input type="text" id="expRemarks" placeholder="Optional notes (e.g., contractor name, advance)" class="w-full p-2.5 border rounded-xl text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Payment Status</label>
@@ -308,11 +323,30 @@
                 <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
                     <div class="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <h3 class="text-base font-bold text-slate-900">All Site Expenses Log</h3>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs text-slate-500">Filter Site:</span>
-                            <select id="filterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
-                                <option value="ALL">ALL SITES</option>
-                            </select>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <div id="filterCategoryWrapper" class="hidden flex items-center space-x-2">
+                                <span class="text-xs text-slate-500">Category:</span>
+                                <select id="filterCategorySelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                    <option value="ALL">ALL CATEGORIES</option>
+                                    <option value="Masonry">Masonry</option>
+                                    <option value="Centring">Centring</option>
+                                    <option value="Electrician">Electrician</option>
+                                    <option value="Plumber">Plumber</option>
+                                    <option value="Painter">Painter</option>
+                                    <option value="Tiles Layer">Tiles Layer</option>
+                                    <option value="Carpenter">Carpenter</option>
+                                    <option value="Fabricator">Fabricator</option>
+                                    <option value="Polish">Polish</option>
+                                    <option value="Material">Material</option>
+                                    <option value="Granite Layer">Granite Layer</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-500">Filter Site:</span>
+                                <select id="filterSiteSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                    <option value="ALL">ALL SITES</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -322,7 +356,8 @@
                                     <th class="p-3">Date</th>
                                     <th class="p-3">Engineer</th>
                                     <th class="p-3">Site</th>
-                                    <th class="p-3">Material</th>
+                                    <th id="thExpenseCategory" class="p-3 hidden">Category</th>
+                                    <th class="p-3">Description</th>
                                     <th class="p-3">Quantity</th>
                                     <th class="p-3">Units</th>
                                     <th class="p-3">Rate</th>
@@ -535,6 +570,19 @@
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "MANIGANDAN"];
         const DEFAULT_SITES = ["Oragadam-Thyagarajan sir", "Valasaravakkam-Maran sir", "Sithalapakkam-Nakkiran sir", "Madhuravoyal-Kannan sir"];
         const DEFAULT_UNITS = ["CFT", "Tons", "KG", "Nos", "Bundle", "Packet", "Units", "Liter", "Day", "Bags", "Transport", "WeekPayment", "Advance", "NMR"];
+        const CATEGORIES = [
+            "Masonry",
+            "Centring",
+            "Electrician",
+            "Plumber",
+            "Painter",
+            "Tiles Layer",
+            "Carpenter",
+            "Fabricator",
+            "Polish",
+            "Material",
+            "Granite Layer"
+        ];
         const SELF_EXPENSE_TARGETS = ["Senthil", "Manigandan", "Office"];
 
         let syncTimer = null;
@@ -561,6 +609,67 @@
         function isPaidExpense(ex) {
             const st = String(ex.Status || ex.status || 'Paid').trim().toLowerCase();
             return st === 'paid';
+        }
+
+        function canSeeCategory() {
+            const u = String(currentUser || '').trim().toLowerCase();
+            return u === 'admin' || u === 'manigandan';
+        }
+
+        function getExpenseCategory(ex) {
+            const raw = String(ex.Category || ex.category || ex.WorkType || ex.workType || '').trim();
+            if (!raw) return 'Material';
+            const matched = CATEGORIES.find(c => c.toLowerCase() === raw.toLowerCase());
+            return matched || raw;
+        }
+
+        function updateCategoryVisibility() {
+            const selectedEng = document.getElementById('expEngineer') ? document.getElementById('expEngineer').value : currentUser;
+            const u = String(currentUser || '').trim().toLowerCase();
+            const engLower = String(selectedEng || '').trim().toLowerCase();
+            const allowedForForm = (u === 'admin' || u === 'manigandan') && (u === 'manigandan' || engLower === 'manigandan' || u === 'admin');
+
+            const catWrapper = document.getElementById('expCategoryWrapper');
+            const filterCatWrapper = document.getElementById('filterCategoryWrapper');
+            const thCat = document.getElementById('thExpenseCategory');
+
+            if (catWrapper) {
+                if (allowedForForm) catWrapper.classList.remove('hidden');
+                else catWrapper.classList.add('hidden');
+            }
+
+            if (filterCatWrapper) {
+                if (canSeeCategory()) filterCatWrapper.classList.remove('hidden');
+                else filterCatWrapper.classList.add('hidden');
+            }
+
+            if (thCat) {
+                if (canSeeCategory()) thCat.classList.remove('hidden');
+                else thCat.classList.add('hidden');
+            }
+        }
+
+        function onCategoryChange() {
+            const catEl = document.getElementById('expCategory');
+            const descEl = document.getElementById('expMaterial');
+            const qtyEl = document.getElementById('expQty');
+            const unitEl = document.getElementById('expUnit');
+
+            const cat = catEl ? catEl.value : 'Material';
+            if (descEl) {
+                descEl.placeholder = cat === 'Material'
+                    ? 'e.g., Cement, M-Sand, ARS Steel'
+                    : `e.g., Shankar - ${cat} work / advance`;
+            }
+            if (cat !== 'Material') {
+                if (qtyEl && (!qtyEl.value || Number(qtyEl.value) === 0)) {
+                    qtyEl.value = 1;
+                }
+                if (unitEl && Array.from(unitEl.options).some(o => o.value === 'Day')) {
+                    unitEl.value = 'Day';
+                }
+            }
+            updateCalculatedAmount();
         }
 
         function makeRecordId(prefix = "REC") {
@@ -597,6 +706,21 @@
                 }
             }
             return str;
+        }
+
+        function toInputDateVal(val) {
+            if (!val) return new Date().toISOString().split('T')[0];
+            if (typeof val === 'number' || /^\d{5}$/.test(String(val).trim())) {
+                const serial = Number(val);
+                const utcDays = Math.floor(serial - 25569);
+                const d = new Date(utcDays * 86400 * 1000);
+                if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+            }
+            const str = String(val).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            const d = new Date(str);
+            if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+            return new Date().toISOString().split('T')[0];
         }
 
         function updateCalculatedAmount() {
@@ -842,6 +966,11 @@
             document.getElementById('setupFundDate').value = todayStr;
             document.getElementById('cpDate').value = todayStr;
             document.getElementById('selfExpDate').value = todayStr;
+
+            const catSel = document.getElementById('expCategory');
+            if (catSel) catSel.value = 'Material';
+            updateCategoryVisibility();
+            onCategoryChange();
             updateCalculatedAmount();
             updateClientGstCalc();
 
@@ -1133,7 +1262,11 @@
 
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
+            const showCatCols = canSeeCategory();
+            updateCategoryVisibility();
+
             const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
+            const filterCatVal = (showCatCols && document.getElementById('filterCategorySelect')) ? document.getElementById('filterCategorySelect').value : 'ALL';
             const filterSelfVal = document.getElementById('filterSelfForSelect') ? document.getElementById('filterSelfForSelect').value : 'ALL';
 
             const currentEngObj = !isAdmin
@@ -1197,7 +1330,6 @@
             }
 
             if (isAdmin) {
-                // Overall Client Received (Base, GST, Total)
                 const totalClientBase = clientPayments.reduce((sum, cp) => sum + toNum(cp.receivedAmount), 0);
                 const totalClientGst = clientPayments.reduce((sum, cp) => sum + toNum(cp.gstAmount), 0);
                 const totalClientGrand = clientPayments.reduce((sum, cp) => sum + toNum(cp.totalAmount), 0);
@@ -1206,7 +1338,6 @@
                 document.getElementById('clientGstTotalDisplay').innerText = `₹${totalClientGst.toLocaleString('en-IN')}`;
                 document.getElementById('clientGrandTotalDisplay').innerText = `₹${totalClientGrand.toLocaleString('en-IN')}`;
 
-                // Site-wise Summary Table & Total Site Balance
                 const siteSummaryBody = document.getElementById('siteSummaryBody');
                 let overallSiteBalance = 0;
 
@@ -1254,7 +1385,6 @@
                     }
                 }
 
-                // Self Expense Totals & Final Net Balance
                 const senthilSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'senthil').reduce((s, x) => s + toNum(x.amount), 0);
                 const manigandanSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'manigandan').reduce((s, x) => s + toNum(x.amount), 0);
                 const officeSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'office').reduce((s, x) => s + toNum(x.amount), 0);
@@ -1268,7 +1398,6 @@
                 finalBalEl.innerText = `₹${finalNetBal.toLocaleString('en-IN')}`;
                 finalBalEl.className = `text-xl font-bold mt-1 ${finalNetBal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
-                // Self Expense Log Table
                 const selfBody = document.getElementById('selfExpenseTableBody');
                 if (selfBody) {
                     const filteredSelf = selfExpenses
@@ -1294,7 +1423,6 @@
                     }
                 }
 
-                // Client Payments History Table
                 const cpBody = document.getElementById('clientPaymentBody');
                 if (cpBody) {
                     if (!clientPayments.length) {
@@ -1424,25 +1552,44 @@
 
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
-            const finalScoped = filterSiteVal === 'ALL'
-                ? scopedExpenses
-                : scopedExpenses.filter(item => {
-                    const sVal = item.ex.Site || item.ex.site || '';
-                    return sVal.trim().toLowerCase() === filterSiteVal.trim().toLowerCase();
-                });
+            const finalScoped = scopedExpenses.filter(item => {
+                const sVal = item.ex.Site || item.ex.site || '';
+                const siteOk = filterSiteVal === 'ALL' || sVal.trim().toLowerCase() === filterSiteVal.trim().toLowerCase();
+                const cVal = getExpenseCategory(item.ex);
+                const catOk = !showCatCols || filterCatVal === 'ALL' || cVal.toLowerCase() === filterCatVal.toLowerCase();
+                return siteOk && catOk;
+            });
+
+            const colCount = 10 + (showCatCols ? 1 : 0) + (isAdmin ? 1 : 0);
 
             if (finalScoped.length === 0) {
-                expBody.innerHTML = `<tr><td colspan="${isAdmin ? 11 : 10}" class="p-3 text-slate-400 text-center">No expenses logged.</td></tr>`;
+                expBody.innerHTML = `<tr><td colspan="${colCount}" class="p-3 text-slate-400 text-center">No expenses logged.</td></tr>`;
             } else {
                 finalScoped.slice().reverse().forEach(item => {
                     const ex = item.ex;
                     const realIdx = item.realIdx;
                     const paid = isPaidExpense(ex);
+                    const catVal = getExpenseCategory(ex);
 
                     if (isAdmin && editingExpenseIndex === realIdx) {
+                        const curDateInput = toInputDateVal(ex.Date || ex.date);
+                        const curEngRaw = String(ex.Engineer || ex.engineer || 'MANIGANDAN').trim();
+                        const matchedEng = VALID_ENGINEERS.find(n => n.toLowerCase() === curEngRaw.toLowerCase()) || curEngRaw;
+                        const engOptions = VALID_ENGINEERS.includes(matchedEng)
+                            ? VALID_ENGINEERS
+                            : [matchedEng, ...VALID_ENGINEERS];
+
+                        const curSiteRaw = String(ex.Site || ex.site || '').trim();
+                        const siteOptions = sites.some(s => s.toLowerCase() === curSiteRaw.toLowerCase())
+                            ? sites
+                            : (curSiteRaw ? [curSiteRaw, ...sites] : sites);
+
                         const curMat = String(ex.Material || ex.material || '').replace(/"/g, '&quot;');
                         const curQty = toNum(ex.Qty ?? ex.qty ?? 1) || 1;
-                        const curUnit = String(ex.Unit || ex.unit || ex.Units || ex.units || 'Units').replace(/"/g, '&quot;');
+                        const curUnitRaw = String(ex.Unit || ex.unit || ex.Units || ex.units || 'Units').trim();
+                        const matchedUnit = units.find(u => u.toLowerCase() === curUnitRaw.toLowerCase()) || curUnitRaw;
+                        const unitOptions = units.includes(matchedUnit) ? units : [matchedUnit, ...units];
+
                         const curAmt = toNum(ex.Amount ?? ex.amount);
                         const curRate = (ex.Rate || ex.rate) ? toNum(ex.Rate ?? ex.rate) : (curQty > 0 ? Math.round((curAmt / curQty) * 100) / 100 : 0);
                         const curRem = String(ex.Remarks || ex.remarks || ex.Remark || ex.remark || '').replace(/"/g, '&quot;');
@@ -1450,12 +1597,29 @@
 
                         expBody.innerHTML += `
                             <tr class="bg-emerald-50/50">
-                                <td class="p-2">${formatDateVal(ex.Date || ex.date)}</td>
-                                <td class="p-2 font-medium">${ex.Engineer || ex.engineer || ''}</td>
-                                <td class="p-2">${ex.Site || ex.site || ''}</td>
+                                <td class="p-2"><input type="date" id="editDate_${realIdx}" value="${curDateInput}" class="px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2">
+                                    <select id="editEng_${realIdx}" class="px-2 py-1 border rounded text-xs font-medium bg-white">
+                                        ${engOptions.map(e => `<option value="${e}" ${e.toLowerCase() === matchedEng.toLowerCase() ? 'selected' : ''}>${e}</option>`).join('')}
+                                    </select>
+                                </td>
+                                <td class="p-2">
+                                    <select id="editSite_${realIdx}" class="px-2 py-1 border rounded text-xs font-medium bg-white">
+                                        ${siteOptions.map(s => `<option value="${s}" ${s.toLowerCase() === curSiteRaw.toLowerCase() ? 'selected' : ''}>${s}</option>`).join('')}
+                                    </select>
+                                </td>
+                                <td class="p-2">
+                                    <select id="editCat_${realIdx}" class="px-2 py-1 border rounded text-xs font-semibold bg-white">
+                                        ${CATEGORIES.map(c => `<option value="${c}" ${catVal === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                    </select>
+                                </td>
                                 <td class="p-2"><input type="text" id="editMat_${realIdx}" value="${curMat}" class="w-32 px-2 py-1 border rounded text-xs bg-white"></td>
                                 <td class="p-2"><input type="number" step="any" id="editQty_${realIdx}" value="${curQty}" oninput="recalcInlineRow(${realIdx})" class="w-20 px-2 py-1 border rounded text-xs bg-white"></td>
-                                <td class="p-2"><input type="text" id="editUnit_${realIdx}" value="${curUnit}" class="w-20 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2">
+                                    <select id="editUnit_${realIdx}" class="px-2 py-1 border rounded text-xs font-medium bg-white">
+                                        ${unitOptions.map(u => `<option value="${u}" ${u.toLowerCase() === matchedUnit.toLowerCase() ? 'selected' : ''}>${u}</option>`).join('')}
+                                    </select>
+                                </td>
                                 <td class="p-2"><input type="number" step="any" id="editRate_${realIdx}" value="${curRate}" oninput="recalcInlineRow(${realIdx})" class="w-24 px-2 py-1 border rounded text-xs bg-white"></td>
                                 <td class="p-2 font-semibold text-emerald-700" id="editAmt_${realIdx}">₹${curAmt.toLocaleString('en-IN')}</td>
                                 <td class="p-2"><input type="text" id="editRem_${realIdx}" value="${curRem}" class="w-32 px-2 py-1 border rounded text-xs bg-white"></td>
@@ -1472,6 +1636,12 @@
                             </tr>`;
                         return;
                     }
+
+                    const catCell = showCatCols
+                        ? `<td class="p-3">${catVal === 'Material'
+                            ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-700">Material</span>'
+                            : `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">${catVal}</span>`}</td>`
+                        : '';
 
                     const statusCell = isAdmin
                         ? `<select onchange="quickToggleExpenseStatus(${realIdx}, this.value)" class="px-2 py-1 text-xs font-bold rounded-full border cursor-pointer outline-none ${paid ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}">
@@ -1493,6 +1663,7 @@
                             <td class="p-3">${formatDateVal(ex.Date || ex.date)}</td>
                             <td class="p-3 font-medium">${ex.Engineer || ex.engineer || ''}</td>
                             <td class="p-3">${ex.Site || ex.site || ''}</td>
+                            ${catCell}
                             <td class="p-3">${ex.Material || ex.material || '-'}</td>
                             <td class="p-3">${ex.Qty || ex.qty || ''}</td>
                             <td class="p-3">${ex.Unit || ex.unit || ''}</td>
@@ -1635,6 +1806,10 @@
             const item = expenses[index];
             if (!item) return;
 
+            const dtEl = document.getElementById(`editDate_${index}`);
+            const engEl = document.getElementById(`editEng_${index}`);
+            const siteEl = document.getElementById(`editSite_${index}`);
+            const catEl = document.getElementById(`editCat_${index}`);
             const matEl = document.getElementById(`editMat_${index}`);
             const qtyEl = document.getElementById(`editQty_${index}`);
             const unitEl = document.getElementById(`editUnit_${index}`);
@@ -1642,9 +1817,13 @@
             const remEl = document.getElementById(`editRem_${index}`);
             const statEl = document.getElementById(`editStatus_${index}`);
 
+            const updatedDate = (dtEl && dtEl.value) ? dtEl.value : (item.Date || item.date);
+            const updatedEngineer = (engEl && engEl.value) ? engEl.value : (item.Engineer || item.engineer || '');
+            const updatedSite = (siteEl && siteEl.value) ? siteEl.value : (item.Site || item.site || '');
+            const updatedCategory = (catEl ? catEl.value : 'Material') || 'Material';
             const updatedMaterial = (matEl ? matEl.value.trim() : '') || (item.Material || item.material || '');
             const updatedQty = parseFloat(qtyEl ? qtyEl.value : 1) || 0;
-            const updatedUnit = (unitEl ? unitEl.value.trim() : '') || (item.Unit || item.unit || 'Units');
+            const updatedUnit = (unitEl && unitEl.value) ? unitEl.value : (item.Unit || item.unit || 'Units');
             const updatedRate = parseFloat(rateEl ? rateEl.value : 0) || 0;
             const updatedRemarks = remEl ? remEl.value.trim() : '';
             const updatedStatus = (statEl && statEl.value === 'Unpaid') ? 'Unpaid' : 'Paid';
@@ -1658,6 +1837,10 @@
                         target: "expenses",
                         recordId: recId,
                         data: {
+                            Date: updatedDate,
+                            Engineer: updatedEngineer,
+                            Site: updatedSite,
+                            Category: updatedCategory,
                             Material: updatedMaterial,
                             Qty: updatedQty,
                             Unit: updatedUnit,
@@ -1669,6 +1852,10 @@
                     });
                 }
                 Object.assign(item, {
+                    Date: updatedDate,
+                    Engineer: updatedEngineer,
+                    Site: updatedSite,
+                    Category: updatedCategory,
                     Material: updatedMaterial,
                     Qty: updatedQty,
                     Unit: updatedUnit,
@@ -1963,6 +2150,11 @@
             btn.disabled = true;
             btn.innerText = "Saving...";
 
+            const engVal = document.getElementById('expEngineer').value;
+            const isManigandan = String(engVal || currentUser || '').trim().toLowerCase() === 'manigandan';
+            const catEl = document.getElementById('expCategory');
+            const categoryVal = isManigandan && catEl ? (catEl.value || 'Material') : 'Material';
+
             const qtyNum = parseFloat(document.getElementById('expQty').value) || 0;
             const unitVal = document.getElementById('expUnit').value;
             const rateNum = parseFloat(document.getElementById('expRate').value) || 0;
@@ -1977,9 +2169,10 @@
                 RecordId: recId,
                 _ts: recTs,
                 Date: document.getElementById('expDate').value,
-                Engineer: document.getElementById('expEngineer').value,
+                Engineer: engVal,
                 Site: siteVal,
-                Material: document.getElementById('expMaterial').value,
+                Category: categoryVal,
+                Material: document.getElementById('expMaterial').value.trim(),
                 Qty: qtyNum,
                 Unit: unitVal,
                 Rate: rateNum,
@@ -1998,6 +2191,9 @@
                 renderAll();
                 e.target.reset();
                 document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
+                if (catEl) catEl.value = 'Material';
+                updateCategoryVisibility();
+                onCategoryChange();
                 updateCalculatedAmount();
                 alert("Expense saved to Google Sheet!");
             } catch (err) {
