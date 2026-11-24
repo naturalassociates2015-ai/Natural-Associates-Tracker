@@ -128,11 +128,30 @@
                     </div>
                 </div>
 
+                <!-- Admin Only: Site Balance, Self Expense & Final Net Balance Cards -->
+                <div id="adminSelfBalanceCards" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                        <p class="text-xs text-slate-500 font-medium">Total Site Balance (All Sites)</p>
+                        <h3 id="totalSiteBalanceDisplay" class="text-xl font-bold text-slate-900 mt-1">₹0</h3>
+                        <p class="text-[11px] text-slate-400 mt-1">Client Total - Site Expenses</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                        <p class="text-xs text-slate-500 font-medium">Total Self Expense</p>
+                        <h3 id="totalSelfExpenseDisplay" class="text-xl font-bold text-rose-600 mt-1">₹0</h3>
+                        <p id="selfExpenseSplitNote" class="text-[11px] text-slate-500 mt-1">Senthil: ₹0 | Manigandan: ₹0 | Office: ₹0</p>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-900 bg-slate-900 text-white">
+                        <p class="text-xs text-emerald-300 font-medium">Final Net Balance (After Self Exp.)</p>
+                        <h3 id="finalNetBalanceDisplay" class="text-xl font-bold text-emerald-400 mt-1">₹0</h3>
+                        <p class="text-[11px] text-slate-300 mt-1">Site Balance - Self Expense</p>
+                    </div>
+                </div>
+
                 <!-- Admin Only: Site-wise Client Payment, Expense & Balance -->
                 <div id="adminSiteOverviewSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">Site-wise Client Payment & Expense Summary</h2>
-                        <p class="text-xs text-slate-500">ஒவ்வொரு சைட்டுக்கும் வந்த கிளையண்ட் பணம் (Base + GST), மொத்த செலவு (Paid / Unpaid), மற்றும் மீதி பேலன்ஸ்</p>
+                        <p class="text-xs text-slate-500">ஒவ்வொரு சைட்டுக்கும் வந்த கிளையண்ட் பணம் (Base + GST), மொத்த செலவு (Paid / Unpaid), மற்றும் மீதி Site Balance</p>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
@@ -149,6 +168,39 @@
                                 </tr>
                             </thead>
                             <tbody id="siteSummaryBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Only: Self Expense Log Table -->
+                <div id="adminSelfExpenseSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900">Self Expense Details (Senthil / Manigandan / Office)</h2>
+                            <p class="text-xs text-slate-500">எந்தத் தேதியில், யாருக்கு / எதுக்கு, எவ்வளவு Self Expense எடுக்கப்பட்டது என்ற விவரம்</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-500">Filter:</span>
+                            <select id="filterSelfForSelect" onchange="renderAll()" class="text-xs p-1.5 border rounded-lg font-medium outline-none">
+                                <option value="ALL">ALL</option>
+                                <option value="Senthil">Senthil</option>
+                                <option value="Manigandan">Manigandan</option>
+                                <option value="Office">Office</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">For Whom</th>
+                                    <th class="p-3">Description</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="selfExpenseTableBody" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -288,6 +340,39 @@
 
             <!-- 3. ADMIN SETUP TAB -->
             <div id="view-settings" class="hidden space-y-6">
+                <!-- Record Self Expense (Senthil / Manigandan / Office) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                        <i data-lucide="user-check" class="w-5 h-5 text-emerald-600"></i>
+                        <span>Record Self Expense (Senthil / Manigandan / Office)</span>
+                    </h3>
+                    <form onsubmit="handleAddSelfExpense(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date</label>
+                            <input type="date" id="selfExpDate" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">For Whom</label>
+                            <select id="selfExpFor" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-slate-800" required>
+                                <option value="Senthil">Senthil</option>
+                                <option value="Manigandan">Manigandan</option>
+                                <option value="Office">Office</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Description (எதுக்காக?)</label>
+                            <input type="text" id="selfExpDesc" placeholder="e.g., Personal draw, Office rent, Fuel" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Amount (₹)</label>
+                            <input type="number" step="any" id="selfExpAmount" placeholder="e.g., 10000" class="w-full p-2.5 border rounded-xl text-sm" required>
+                        </div>
+                        <div class="md:col-span-4 flex justify-end">
+                            <button type="submit" id="btnSaveSelfExp" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-slate-800 transition">Save Self Expense</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Give / Edit Engineer Fund -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
@@ -450,6 +535,7 @@
         const VALID_ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "MANIGANDAN"];
         const DEFAULT_SITES = ["Oragadam-Thyagarajan sir", "Valasaravakkam-Maran sir", "Sithalapakkam-Nakkiran sir", "Madhuravoyal-Kannan sir"];
         const DEFAULT_UNITS = ["CFT", "Tons", "KG", "Nos", "Bundle", "Packet", "Units", "Liter", "Day", "Bags", "Transport", "WeekPayment", "Advance", "NMR"];
+        const SELF_EXPENSE_TARGETS = ["Senthil", "Manigandan", "Office"];
 
         let syncTimer = null;
         let isSyncing = false;
@@ -464,6 +550,7 @@
         let units = [...DEFAULT_UNITS];
         let expenses = [];
         let clientPayments = [];
+        let selfExpenses = [];
 
         function toNum(v) {
             if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -692,18 +779,24 @@
             const isAdmin = currentUser === 'Admin';
             const adminTab = document.getElementById('tab-settings');
             const clientGstCards = document.getElementById('adminClientGstCards');
+            const selfBalanceCards = document.getElementById('adminSelfBalanceCards');
             const siteOverviewSec = document.getElementById('adminSiteOverviewSection');
+            const selfExpenseSec = document.getElementById('adminSelfExpenseSection');
             const clientPaySec = document.getElementById('adminClientPaymentsSection');
 
             if (isAdmin) {
                 adminTab.classList.remove('hidden');
                 clientGstCards.classList.remove('hidden');
+                selfBalanceCards.classList.remove('hidden');
                 siteOverviewSec.classList.remove('hidden');
+                selfExpenseSec.classList.remove('hidden');
                 clientPaySec.classList.remove('hidden');
             } else {
                 adminTab.classList.add('hidden');
                 clientGstCards.classList.add('hidden');
+                selfBalanceCards.classList.add('hidden');
                 siteOverviewSec.classList.add('hidden');
+                selfExpenseSec.classList.add('hidden');
                 clientPaySec.classList.add('hidden');
             }
 
@@ -748,6 +841,7 @@
             document.getElementById('expDate').value = todayStr;
             document.getElementById('setupFundDate').value = todayStr;
             document.getElementById('cpDate').value = todayStr;
+            document.getElementById('selfExpDate').value = todayStr;
             updateCalculatedAmount();
             updateClientGstCalc();
 
@@ -825,7 +919,7 @@
                     expenses = data.expenses
                         .filter(row =>
                             (row.Material || row.material || row.Amount || row.amount) &&
-                            !(["FUND_HISTORY", "SETTLEMENT_LOG"].includes((row.EntryType || row.entryType || "").toUpperCase()))
+                            !(["FUND_HISTORY", "SETTLEMENT_LOG", "SELF_EXPENSE"].includes((row.EntryType || row.entryType || "").toUpperCase()))
                         )
                         .map(row => Object.assign({}, row, { _ts: parseRecordTs(row) }));
                 } else {
@@ -858,6 +952,7 @@
                     : [];
 
                 const historyRows = [];
+                const selfRows = [];
                 const summaryByEng = {};
                 const syncedSites = [...DEFAULT_SITES];
                 const deletedSites = new Set();
@@ -866,6 +961,24 @@
                     data.engineers.forEach(row => {
                         const entryType = (row.EntryType || row.entryType || "").trim().toUpperCase();
                         const siteVal = (row.Site || row.site || row.Sites || "").trim();
+
+                        if (entryType === 'SELF_EXPENSE') {
+                            const forWhomRaw = String(row.ForWhom || row.forWhom || row.Engineer || row.engineer || row.name || "Office").trim();
+                            const matchedTarget = SELF_EXPENSE_TARGETS.find(t => t.toLowerCase() === forWhomRaw.toLowerCase()) || forWhomRaw;
+                            const descVal = String(row.Description || row.description || row.Remarks || row.remarks || "").trim();
+                            const amtVal = toNum(row.Amount ?? row.amount ?? 0);
+                            const dtVal = row.Date || row.date || new Date().toISOString().split('T')[0];
+                            if (amtVal !== 0 || descVal) {
+                                selfRows.push({
+                                    id: row.RecordId || row.recordId || row.id || makeRecordId("SELF"),
+                                    date: dtVal,
+                                    forWhom: matchedTarget,
+                                    description: descVal || '-',
+                                    amount: amtVal
+                                });
+                            }
+                            return;
+                        }
 
                         if (entryType === 'SITE_CONFIG' || entryType === 'SITE') {
                             if (siteVal) {
@@ -929,6 +1042,7 @@
                 refreshSiteDropdowns();
 
                 fundHistory = historyRows;
+                selfExpenses = selfRows;
 
                 engineers = VALID_ENGINEERS.map(name => {
                     const sum = summaryByEng[name] || {};
@@ -1020,6 +1134,7 @@
         function renderAll() {
             const isAdmin = currentUser === 'Admin';
             const filterSiteVal = document.getElementById('filterSiteSelect') ? document.getElementById('filterSiteSelect').value : 'ALL';
+            const filterSelfVal = document.getElementById('filterSelfForSelect') ? document.getElementById('filterSelfForSelect').value : 'ALL';
 
             const currentEngObj = !isAdmin
                 ? (engineers.find(e => e.name.trim().toLowerCase() === currentUser.trim().toLowerCase()) || { cutoffTs: 0, carryBalance: 0, lastDate: '-' })
@@ -1091,19 +1206,21 @@
                 document.getElementById('clientGstTotalDisplay').innerText = `₹${totalClientGst.toLocaleString('en-IN')}`;
                 document.getElementById('clientGrandTotalDisplay').innerText = `₹${totalClientGrand.toLocaleString('en-IN')}`;
 
-                // Site-wise Summary Table
+                // Site-wise Summary Table & Total Site Balance
                 const siteSummaryBody = document.getElementById('siteSummaryBody');
-                if (siteSummaryBody) {
-                    const allSiteNames = [...sites];
-                    expenses.forEach(ex => {
-                        const s = String(ex.Site || ex.site || '').trim();
-                        if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
-                    });
-                    clientPayments.forEach(cp => {
-                        const s = String(cp.site || '').trim();
-                        if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
-                    });
+                let overallSiteBalance = 0;
 
+                const allSiteNames = [...sites];
+                expenses.forEach(ex => {
+                    const s = String(ex.Site || ex.site || '').trim();
+                    if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
+                });
+                clientPayments.forEach(cp => {
+                    const s = String(cp.site || '').trim();
+                    if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
+                });
+
+                if (siteSummaryBody) {
                     if (!allSiteNames.length) {
                         siteSummaryBody.innerHTML = '<tr><td colspan="8" class="p-3 text-slate-400 text-center">No sites available.</td></tr>';
                     } else {
@@ -1119,6 +1236,7 @@
                             const sUnpaid = siteExps.filter(ex => !isPaidExpense(ex)).reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
                             const sTotalExp = sPaid + sUnpaid;
                             const sBal = cTotal - sTotalExp;
+                            overallSiteBalance += sBal;
 
                             return `
                                 <tr>
@@ -1130,6 +1248,46 @@
                                     <td class="p-3 text-amber-600 font-medium">₹${sUnpaid.toLocaleString('en-IN')}</td>
                                     <td class="p-3 font-semibold text-rose-600">₹${sTotalExp.toLocaleString('en-IN')}</td>
                                     <td class="p-3 font-bold ${sBal >= 0 ? 'text-emerald-700' : 'text-rose-700'}">₹${sBal.toLocaleString('en-IN')}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Self Expense Totals & Final Net Balance
+                const senthilSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'senthil').reduce((s, x) => s + toNum(x.amount), 0);
+                const manigandanSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'manigandan').reduce((s, x) => s + toNum(x.amount), 0);
+                const officeSelf = selfExpenses.filter(se => String(se.forWhom || '').toLowerCase() === 'office').reduce((s, x) => s + toNum(x.amount), 0);
+                const totalSelfExp = selfExpenses.reduce((s, x) => s + toNum(x.amount), 0);
+                const finalNetBal = overallSiteBalance - totalSelfExp;
+
+                document.getElementById('totalSiteBalanceDisplay').innerText = `₹${overallSiteBalance.toLocaleString('en-IN')}`;
+                document.getElementById('totalSelfExpenseDisplay').innerText = `₹${totalSelfExp.toLocaleString('en-IN')}`;
+                document.getElementById('selfExpenseSplitNote').innerText = `Senthil: ₹${senthilSelf.toLocaleString('en-IN')} | Manigandan: ₹${manigandanSelf.toLocaleString('en-IN')} | Office: ₹${officeSelf.toLocaleString('en-IN')}`;
+                const finalBalEl = document.getElementById('finalNetBalanceDisplay');
+                finalBalEl.innerText = `₹${finalNetBal.toLocaleString('en-IN')}`;
+                finalBalEl.className = `text-xl font-bold mt-1 ${finalNetBal >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+                // Self Expense Log Table
+                const selfBody = document.getElementById('selfExpenseTableBody');
+                if (selfBody) {
+                    const filteredSelf = selfExpenses
+                        .map((se, idx) => ({ se, realIdx: idx }))
+                        .filter(item => filterSelfVal === 'ALL' || String(item.se.forWhom || '').toLowerCase() === filterSelfVal.toLowerCase());
+
+                    if (!filteredSelf.length) {
+                        selfBody.innerHTML = '<tr><td colspan="5" class="p-3 text-slate-400 text-center">No self expenses recorded yet.</td></tr>';
+                    } else {
+                        selfBody.innerHTML = filteredSelf.slice().reverse().map(item => {
+                            const se = item.se;
+                            const realIdx = item.realIdx;
+                            return `
+                                <tr>
+                                    <td class="p-3">${formatDateVal(se.date)}</td>
+                                    <td class="p-3"><span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-800 border">${se.forWhom || 'Office'}</span></td>
+                                    <td class="p-3 text-slate-700">${se.description || '-'}</td>
+                                    <td class="p-3 font-semibold text-rose-600">₹${toNum(se.amount).toLocaleString('en-IN')}</td>
+                                    <td class="p-3"><button type="button" onclick="deleteSelfExpenseByIndex(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button></td>
                                 </tr>
                             `;
                         }).join('');
@@ -1309,7 +1467,7 @@
                                 </td>
                                 <td class="p-2 space-x-1.5 whitespace-nowrap">
                                     <button type="button" onclick="saveInlineExpense(${realIdx})" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded">Save</button>
-                                    <button type="button" onclick="cancelInlineExpense()" class="px-2 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
+                                    <button type="button" onclick="cancelInlineExpense()" class="px-2.5 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
                                 </td>
                             </tr>`;
                         return;
@@ -1348,6 +1506,78 @@
             }
 
             updateCalculatedAmount();
+        }
+
+        async function handleAddSelfExpense(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+
+            const btn = document.getElementById('btnSaveSelfExp');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const dtVal = document.getElementById('selfExpDate').value;
+            const forWhomVal = document.getElementById('selfExpFor').value;
+            const descVal = document.getElementById('selfExpDesc').value.trim();
+            const amtVal = toNum(document.getElementById('selfExpAmount').value || 0);
+            const recId = makeRecordId("SELF");
+
+            try {
+                await postToScript({
+                    action: "create",
+                    target: "engineers",
+                    data: [{
+                        RecordId: recId,
+                        EntryType: "SELF_EXPENSE",
+                        Date: dtVal,
+                        ForWhom: forWhomVal,
+                        Description: descVal,
+                        Amount: amtVal
+                    }]
+                });
+
+                selfExpenses.push({
+                    id: recId,
+                    date: dtVal,
+                    forWhom: forWhomVal,
+                    description: descVal,
+                    amount: amtVal
+                });
+                renderAll();
+                e.target.reset();
+                document.getElementById('selfExpDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('selfExpFor').value = forWhomVal;
+                alert(`Self Expense of ₹${amtVal.toLocaleString('en-IN')} (${forWhomVal}) saved!`);
+            } catch (err) {
+                console.log("Self expense save error:", err);
+                alert("Failed to save Self Expense to Google Sheet.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Self Expense";
+            }
+        }
+
+        async function deleteSelfExpenseByIndex(idx) {
+            if (currentUser !== 'Admin') return;
+            const item = selfExpenses[idx];
+            if (!item) return;
+            if (!confirm(`Delete Self Expense of ₹${toNum(item.amount).toLocaleString('en-IN')} (${item.forWhom} - ${item.description})?`)) return;
+
+            try {
+                if (item.id) {
+                    await postToScript({
+                        action: "deleteFundHistory",
+                        target: "engineers",
+                        recordId: item.id
+                    });
+                }
+                selfExpenses.splice(idx, 1);
+                renderAll();
+                alert("Self Expense deleted!");
+            } catch (err) {
+                console.log("Self expense delete error:", err);
+                alert("Failed to delete Self Expense.");
+            }
         }
 
         function startInlineEdit(index) {
