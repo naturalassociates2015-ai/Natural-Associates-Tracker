@@ -411,6 +411,7 @@
         let syncTimer = null;
         let isSyncing = false;
         let currentUser = null;
+        let editingExpenseIndex = null;
 
         let engineers = VALID_ENGINEERS.map(name => ({
             name, totalGiven: 0, lastDate: "-", mode: "Cash", cutoffTs: 0, carryBalance: 0
@@ -603,6 +604,7 @@
 
             if (passwords[user] && passwords[user] === pass) {
                 currentUser = user;
+                editingExpenseIndex = null;
                 sessionStorage.setItem('na_active_user', user);
                 document.getElementById('loginError').classList.add('hidden');
                 initApp();
@@ -613,6 +615,7 @@
 
         function handleLogout() {
             currentUser = null;
+            editingExpenseIndex = null;
             sessionStorage.removeItem('na_active_user');
             if (syncTimer) {
                 clearInterval(syncTimer);
@@ -691,10 +694,10 @@
 
             if (syncTimer) clearInterval(syncTimer);
             syncTimer = setInterval(() => {
-                if (currentUser && document.visibilityState === 'visible') {
+                if (currentUser && document.visibilityState === 'visible' && editingExpenseIndex === null) {
                     syncAllData(false);
                 }
-            }, 15000);
+            }, 60000);
         }
 
         function switchTab(tabName) {
@@ -1184,13 +1187,53 @@
                     const ex = item.ex;
                     const realIdx = item.realIdx;
                     const paid = isPaidExpense(ex);
-                    const statusBadge = paid
-                        ? '<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>'
-                        : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Unpaid</span>';
+
+                    if (isAdmin && editingExpenseIndex === realIdx) {
+                        const curMat = String(ex.Material || ex.material || '').replace(/"/g, '&quot;');
+                        const curQty = toNum(ex.Qty ?? ex.qty ?? 1) || 1;
+                        const curUnit = String(ex.Unit || ex.unit || ex.Units || ex.units || 'Units').replace(/"/g, '&quot;');
+                        const curAmt = toNum(ex.Amount ?? ex.amount);
+                        const curRate = (ex.Rate || ex.rate) ? toNum(ex.Rate ?? ex.rate) : (curQty > 0 ? Math.round((curAmt / curQty) * 100) / 100 : 0);
+                        const curRem = String(ex.Remarks || ex.remarks || ex.Remark || ex.remark || '').replace(/"/g, '&quot;');
+                        const curStat = paid ? 'Paid' : 'Unpaid';
+
+                        expBody.innerHTML += `
+                            <tr class="bg-emerald-50/50">
+                                <td class="p-2">${formatDateVal(ex.Date || ex.date)}</td>
+                                <td class="p-2 font-medium">${ex.Engineer || ex.engineer || ''}</td>
+                                <td class="p-2">${ex.Site || ex.site || ''}</td>
+                                <td class="p-2"><input type="text" id="editMat_${realIdx}" value="${curMat}" class="w-32 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2"><input type="number" step="any" id="editQty_${realIdx}" value="${curQty}" oninput="recalcInlineRow(${realIdx})" class="w-20 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2"><input type="text" id="editUnit_${realIdx}" value="${curUnit}" class="w-20 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2"><input type="number" step="any" id="editRate_${realIdx}" value="${curRate}" oninput="recalcInlineRow(${realIdx})" class="w-24 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2 font-semibold text-emerald-700" id="editAmt_${realIdx}">₹${curAmt.toLocaleString('en-IN')}</td>
+                                <td class="p-2"><input type="text" id="editRem_${realIdx}" value="${curRem}" class="w-32 px-2 py-1 border rounded text-xs bg-white"></td>
+                                <td class="p-2">
+                                    <select id="editStatus_${realIdx}" class="px-2 py-1 border rounded text-xs font-semibold bg-white">
+                                        <option value="Paid" ${curStat === 'Paid' ? 'selected' : ''}>Paid</option>
+                                        <option value="Unpaid" ${curStat === 'Unpaid' ? 'selected' : ''}>Unpaid</option>
+                                    </select>
+                                </td>
+                                <td class="p-2 space-x-1.5 whitespace-nowrap">
+                                    <button type="button" onclick="saveInlineExpense(${realIdx})" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded">Save</button>
+                                    <button type="button" onclick="cancelInlineExpense()" class="px-2.5 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
+                                </td>
+                            </tr>`;
+                        return;
+                    }
+
+                    const statusCell = isAdmin
+                        ? `<select onchange="quickToggleExpenseStatus(${realIdx}, this.value)" class="px-2 py-1 text-xs font-bold rounded-full border cursor-pointer outline-none ${paid ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}">
+                               <option value="Paid" ${paid ? 'selected' : ''}>Paid</option>
+                               <option value="Unpaid" ${!paid ? 'selected' : ''}>Unpaid</option>
+                           </select>`
+                        : (paid
+                            ? '<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>'
+                            : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Unpaid</span>');
 
                     const actionCell = isAdmin ? `
                         <td class="p-3 space-x-2 whitespace-nowrap">
-                            <button type="button" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200" onclick="openAdminEditExpense(${realIdx})">Edit</button>
+                            <button type="button" class="px-2.5 py-1 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded border border-amber-200" onclick="startInlineEdit(${realIdx})">Edit</button>
                             <button type="button" class="px-2.5 py-1 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200" onclick="deleteExpense(${realIdx})">Delete</button>
                         </td>` : '';
 
@@ -1205,13 +1248,118 @@
                             <td class="p-3">${toNum(ex.Rate ?? ex.rate).toLocaleString('en-IN')}</td>
                             <td class="p-3 font-semibold text-slate-900">₹${toNum(ex.Amount ?? ex.amount).toLocaleString('en-IN')}</td>
                             <td class="p-3 italic text-slate-500">${ex.Remarks || ex.remarks || ''}</td>
-                            <td class="p-3">${statusBadge}</td>
+                            <td class="p-3">${statusCell}</td>
                             ${actionCell}
                         </tr>`;
                 });
             }
 
             updateCalculatedAmount();
+        }
+
+        function startInlineEdit(index) {
+            if (currentUser !== 'Admin') return;
+            editingExpenseIndex = index;
+            renderAll();
+        }
+
+        function cancelInlineExpense() {
+            editingExpenseIndex = null;
+            renderAll();
+        }
+
+        function recalcInlineRow(index) {
+            const qEl = document.getElementById(`editQty_${index}`);
+            const rEl = document.getElementById(`editRate_${index}`);
+            const aEl = document.getElementById(`editAmt_${index}`);
+            if (!qEl || !rEl || !aEl) return;
+            const q = parseFloat(qEl.value) || 0;
+            const r = parseFloat(rEl.value) || 0;
+            const amt = Math.round(q * r * 100) / 100;
+            aEl.innerText = `₹${amt.toLocaleString('en-IN')}`;
+        }
+
+        async function quickToggleExpenseStatus(index, newStatus) {
+            if (currentUser !== 'Admin') return;
+            const item = expenses[index];
+            if (!item) return;
+
+            const normalizedStatus = newStatus === 'Unpaid' ? 'Unpaid' : 'Paid';
+            const prevStatus = item.Status || item.status || 'Paid';
+            item.Status = normalizedStatus;
+            renderAll();
+
+            const recId = item.RecordId || item.recordId;
+            try {
+                if (recId) {
+                    await postToScript({
+                        action: "updateExpense",
+                        target: "expenses",
+                        recordId: recId,
+                        data: { Status: normalizedStatus }
+                    });
+                }
+            } catch (err) {
+                console.log("Quick status update error:", err);
+                item.Status = prevStatus;
+                renderAll();
+                alert("Failed to update status on Google Sheet.");
+            }
+        }
+
+        async function saveInlineExpense(index) {
+            if (currentUser !== 'Admin') return;
+            const item = expenses[index];
+            if (!item) return;
+
+            const matEl = document.getElementById(`editMat_${index}`);
+            const qtyEl = document.getElementById(`editQty_${index}`);
+            const unitEl = document.getElementById(`editUnit_${index}`);
+            const rateEl = document.getElementById(`editRate_${index}`);
+            const remEl = document.getElementById(`editRem_${index}`);
+            const statEl = document.getElementById(`editStatus_${index}`);
+
+            const updatedMaterial = (matEl ? matEl.value.trim() : '') || (item.Material || item.material || '');
+            const updatedQty = parseFloat(qtyEl ? qtyEl.value : 1) || 0;
+            const updatedUnit = (unitEl ? unitEl.value.trim() : '') || (item.Unit || item.unit || 'Units');
+            const updatedRate = parseFloat(rateEl ? rateEl.value : 0) || 0;
+            const updatedRemarks = remEl ? remEl.value.trim() : '';
+            const updatedStatus = (statEl && statEl.value === 'Unpaid') ? 'Unpaid' : 'Paid';
+            const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
+            const recId = item.RecordId || item.recordId;
+
+            try {
+                if (recId) {
+                    await postToScript({
+                        action: "updateExpense",
+                        target: "expenses",
+                        recordId: recId,
+                        data: {
+                            Material: updatedMaterial,
+                            Qty: updatedQty,
+                            Unit: updatedUnit,
+                            Rate: updatedRate,
+                            Amount: updatedAmt,
+                            Remarks: updatedRemarks,
+                            Status: updatedStatus
+                        }
+                    });
+                }
+                Object.assign(item, {
+                    Material: updatedMaterial,
+                    Qty: updatedQty,
+                    Unit: updatedUnit,
+                    Rate: updatedRate,
+                    Amount: updatedAmt,
+                    Remarks: updatedRemarks,
+                    Status: updatedStatus
+                });
+                editingExpenseIndex = null;
+                renderAll();
+            } catch (err) {
+                console.log("Inline expense save error:", err);
+                alert("Failed to save changes to Google Sheet.");
+            }
         }
 
         async function handleAddClientPayment(e) {
@@ -1253,7 +1401,6 @@
                 e.target.reset();
                 document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
                 alert("Client payment saved to Google Sheet!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Client payment save error:", err);
                 alert("Failed to save client payment.");
@@ -1279,7 +1426,6 @@
                 clientPayments.splice(idx, 1);
                 renderAll();
                 alert("Client payment deleted!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Client payment delete error:", err);
                 alert("Failed to delete client payment.");
@@ -1310,7 +1456,6 @@
                 renderAll();
                 inputEl.value = "";
                 alert(`Site "${newSite}" added!`);
-                syncAllData(false);
             } catch (err) {
                 console.log("Add site error:", err);
                 alert("Failed to add site on Google Sheet.");
@@ -1346,7 +1491,6 @@
                 refreshSiteDropdowns();
                 renderAll();
                 alert(`Site updated to "${newSite}"!`);
-                syncAllData(false);
             } catch (err) {
                 console.log("Site edit sync error:", err);
                 alert("Failed to update site on Google Sheet.");
@@ -1372,7 +1516,6 @@
                 refreshSiteDropdowns();
                 renderAll();
                 alert(`Site "${siteToDelete}" removed!`);
-                syncAllData(false);
             } catch (err) {
                 console.log("Site delete sync error:", err);
                 alert("Failed to delete site on Google Sheet.");
@@ -1413,7 +1556,6 @@
                 entry.amount = updatedAmt;
                 renderAll();
                 alert("Fund updated across all devices!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Fund edit sync error:", err);
                 alert("Failed to update fund on Google Sheet.");
@@ -1448,81 +1590,9 @@
                 fundHistory.splice(idx, 1);
                 renderAll();
                 alert("Fund entry deleted across all devices!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Fund delete sync error:", err);
                 alert("Failed to delete fund entry on Google Sheet.");
-            }
-        }
-
-        async function openAdminEditExpense(index) {
-            if (currentUser !== 'Admin') return;
-            const item = expenses[index];
-            const newMaterial = prompt("Edit Material / Description:", item.Material || item.material || "");
-            if (newMaterial === null) return;
-
-            const currentQty = toNum(item.Qty ?? item.qty ?? 1) || 1;
-            const newQtyInput = prompt("Edit Quantity:", currentQty);
-            if (newQtyInput === null || isNaN(Number(newQtyInput))) return;
-
-            const currentUnit = item.Unit || item.unit || item.Units || item.units || "Units";
-            const newUnitInput = prompt("Edit Units:", currentUnit);
-            if (newUnitInput === null) return;
-
-            const currentAmt = toNum(item.Amount ?? item.amount);
-            const currentRate = (item.Rate || item.rate) ? toNum(item.Rate ?? item.rate) : (currentQty > 0 ? Math.round((currentAmt / currentQty) * 100) / 100 : 0);
-            const newRateInput = prompt("Edit Rate (₹):", currentRate);
-            if (newRateInput === null || isNaN(Number(newRateInput))) return;
-
-            const currentRemarks = item.Remarks || item.remarks || item.Remark || item.remark || "";
-            const newRemarksInput = prompt("Edit Remarks:", currentRemarks);
-            if (newRemarksInput === null) return;
-
-            const currentStatus = item.Status || item.status || "Paid";
-            const newStatusInput = prompt('Edit Status ("Paid" or "Unpaid"):', currentStatus);
-            if (newStatusInput === null) return;
-
-            const updatedMaterial = newMaterial.trim() || (item.Material || item.material);
-            const updatedQty = Number(newQtyInput);
-            const updatedUnit = newUnitInput.trim() || currentUnit;
-            const updatedRate = Number(newRateInput);
-            const updatedRemarks = newRemarksInput.trim();
-            const updatedStatus = newStatusInput.trim() || "Paid";
-            const updatedAmt = Math.round(updatedQty * updatedRate * 100) / 100;
-            const recId = item.RecordId || item.recordId;
-
-            try {
-                if (recId) {
-                    await postToScript({
-                        action: "updateExpense",
-                        target: "expenses",
-                        recordId: recId,
-                        data: {
-                            Material: updatedMaterial,
-                            Qty: updatedQty,
-                            Unit: updatedUnit,
-                            Rate: updatedRate,
-                            Amount: updatedAmt,
-                            Remarks: updatedRemarks,
-                            Status: updatedStatus
-                        }
-                    });
-                }
-                Object.assign(item, {
-                    Material: updatedMaterial,
-                    Qty: updatedQty,
-                    Unit: updatedUnit,
-                    Rate: updatedRate,
-                    Amount: updatedAmt,
-                    Remarks: updatedRemarks,
-                    Status: updatedStatus
-                });
-                renderAll();
-                alert("Expense updated across all devices!");
-                syncAllData(false);
-            } catch (err) {
-                console.log("Expense edit sync error:", err);
-                alert("Failed to update expense on Google Sheet.");
             }
         }
 
@@ -1542,9 +1612,9 @@
                     });
                 }
                 expenses.splice(index, 1);
+                if (editingExpenseIndex === index) editingExpenseIndex = null;
                 renderAll();
                 alert("Expense deleted across all devices!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Expense delete sync error:", err);
                 alert("Failed to delete expense on Google Sheet.");
@@ -1596,7 +1666,6 @@
                 document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
                 updateCalculatedAmount();
                 alert("Expense saved to Google Sheet!");
-                syncAllData(false);
             } catch (err) {
                 console.log("Expense save error:", err);
                 alert("Failed to save expense. Please check internet connection or try again.");
@@ -1662,7 +1731,6 @@
                 renderAll();
                 document.getElementById('setupEngFund').value = "";
                 alert(`₹${amtVal.toLocaleString('en-IN')} added for ${engName}!`);
-                syncAllData(false);
             } catch (err) {
                 console.log("Fund save error:", err);
                 alert("Failed to save fund to Google Sheet.");
