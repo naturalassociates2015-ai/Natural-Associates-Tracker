@@ -331,6 +331,7 @@
         let sites = [...DEFAULT_SITES];
         let units = [...DEFAULT_UNITS];
         let expenses = [];
+        let clientPayments = [];
 
         function toNum(v) {
             if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -628,7 +629,7 @@
                 } else {
                     expenses = [];
                 }
-                clientPayments = data.clientPayments || [];
+                clientPayments = Array.isArray(data.clientPayments) ? data.clientPayments : [];
 
                 const historyRows = [];
                 const summaryByEng = {};
@@ -839,10 +840,8 @@
                 }
             }
 
-            // Fund / Cash Received Details Table
             const fundHistBody = document.getElementById('fundHistoryBody');
             fundHistBody.innerHTML = '';
-
             if (!isAdmin && hasEngSettled && engCarryBalance > 0) {
                 fundHistBody.innerHTML += `
                     <tr>
@@ -881,7 +880,6 @@
                 });
             }
 
-            // Admin Setup: 1. Funds Given by Admin list
             const adminFundListEl = document.getElementById('setupEngList');
             if (adminFundListEl) {
                 if (!fundHistory.length) {
@@ -908,7 +906,6 @@
                 }
             }
 
-            // Admin Setup: 2. Active Sites list
             const siteListEl = document.getElementById('setupSiteList');
             if (siteListEl) {
                 if (!sites.length) {
@@ -926,7 +923,6 @@
                 }
             }
 
-            // Admin Setup: 3. Close / Settle Engineer Period cards
             const settleListEl = document.getElementById('engineerSettlementList');
             if (settleListEl) {
                 settleListEl.innerHTML = VALID_ENGINEERS.map(engName => {
@@ -946,7 +942,6 @@
                 }).join('');
             }
 
-            // Site Expenses Table
             const expBody = document.getElementById('expenseTableBody');
             expBody.innerHTML = '';
             const finalScoped = filterSiteVal === 'ALL'
@@ -1342,38 +1337,41 @@
         }
 
         async function saveClientPayment(paymentObj) {
-  // UI-ல் உடனே தெரிய
-  clientPayments.push(paymentObj);
-  renderAll(); // உங்கள் UI-ஐ அப்டேட் செய்யும் ஃபங்ஷன் பெயரை இங்கே வைக்கவும்
+            clientPayments.push(paymentObj);
+            renderAll();
 
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "addClientPayment",
-        data: paymentObj
-      })
-    });
-  } catch (err) {
-    alert("Server sync error: " + err);
-  }
-}
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: "addClientPayment",
+                        data: paymentObj
+                    })
+                });
+            } catch (err) {
+                alert("Server sync error: " + err);
+            }
+        }
+
         async function deleteClientPayment(recordId) {
-  clientPayments = clientPayments.filter(p => p.id !== recordId);
-  renderAll();
+            clientPayments = clientPayments.filter(p => p.id !== recordId);
+            renderAll();
 
-  try {
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "deleteClientPayment",
-        recordId: recordId
-      })
-    });
-  } catch (err) {
-    alert("Delete sync error: " + err);
-  }
-}
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({
+                        action: "deleteClientPayment",
+                        recordId: recordId
+                    })
+                });
+            } catch (err) {
+                alert("Delete sync error: " + err);
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
             const savedUser = sessionStorage.getItem('na_active_user');
