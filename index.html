@@ -107,6 +107,53 @@
                     <div class="bg-white p-6 rounded-2xl shadow-sm border">
                         <p id="lblBalance" class="text-sm text-slate-500">Balance Available</p>
                         <h3 id="balanceDisplay" class="text-2xl font-bold text-emerald-600 mt-1">₹0</h3>
+                        <p id="unpaidPendingNote" class="text-[11px] text-amber-600 mt-1 font-medium"></p>
+                    </div>
+                </div>
+
+                <!-- Admin Only: Site-wise Client Payment, Expense & Balance -->
+                <div id="adminSiteOverviewSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Site-wise Client Payment & Expense Summary</h2>
+                        <p class="text-xs text-slate-500">ஒவ்வொரு சைட்டுக்கும் வந்த கிளையண்ட் பணம், மொத்த செலவு (Paid / Unpaid), மற்றும் மீதி பேலன்ஸ்</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Site</th>
+                                    <th class="p-3">Client Received</th>
+                                    <th class="p-3">Paid Expenses</th>
+                                    <th class="p-3">Unpaid (Pending)</th>
+                                    <th class="p-3">Total Expenses</th>
+                                    <th class="p-3">Site Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="siteSummaryBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Admin Only: Client Payments History -->
+                <div id="adminClientPaymentsSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Client Payments Received</h2>
+                        <p class="text-xs text-slate-500">எந்த சைட்டுக்கு, எந்தத் தேதியில், எவ்வளவு கிளையண்ட் பேமெண்ட் வந்துள்ளது என்ற விவரம்</p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Site</th>
+                                    <th class="p-3">Payment Mode</th>
+                                    <th class="p-3">Amount</th>
+                                    <th class="p-3">Reference / Notes</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientPaymentBody" class="divide-y divide-slate-100"></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -220,6 +267,7 @@
             <!-- 3. ADMIN SETUP TAB -->
             <div id="view-settings" class="hidden space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Give / Edit Engineer Fund -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
                             <i data-lucide="wallet" class="w-5 h-5 text-emerald-600"></i>
@@ -260,32 +308,70 @@
                         </div>
                     </div>
 
-                    <div class="space-y-6">
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                                <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
-                                <span>Close / Settle Engineer Period</span>
-                            </h3>
-                            <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை புதிய Fund Received / Carry Balance ஆகச் சேரும்.</p>
-                            <div id="engineerSettlementList" class="divide-y text-sm"></div>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-                            <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                                <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
-                                <span>Manage Construction Sites</span>
-                            </h3>
-                            <form onsubmit="addSite(event)" class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
-                                    <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
-                                </div>
-                                <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
-                            </form>
-                            <div class="pt-3 border-t">
-                                <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites (Edit & Delete):</p>
-                                <div id="setupSiteList" class="divide-y text-sm"></div>
+                    <!-- Record Client Payment -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="landmark" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Record Client Payment</span>
+                        </h3>
+                        <form onsubmit="handleAddClientPayment(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Date</label>
+                                <input type="date" id="cpDate" class="w-full p-2.5 border rounded-xl text-sm" required>
                             </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Site</label>
+                                <select id="cpSite" class="w-full p-2.5 border rounded-xl text-sm font-semibold text-emerald-700" required></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Payment Mode</label>
+                                <select id="cpMode" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                    <option value="Online">Online</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="GPay">GPay</option>
+                                    <option value="Cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Amount Received (₹)</label>
+                                <input type="number" step="any" id="cpAmount" placeholder="Enter amount (e.g., 200000)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Reference / Remarks</label>
+                                <input type="text" id="cpRef" placeholder="e.g., Stage 1 advance, UTR no" class="w-full p-2.5 border rounded-xl text-sm">
+                            </div>
+                            <button type="submit" id="btnSaveClientPay" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition">Save Client Payment</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Close / Settle Engineer Period -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="calendar-check" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Close / Settle Engineer Period</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">கணக்கை முடிக்கும்போது பழைய லிஸ்ட் இன்ஜினியருக்கு மறையும்; மீதித் தொகை புதிய Fund Received / Carry Balance ஆகச் சேரும்.</p>
+                        <div id="engineerSettlementList" class="divide-y text-sm"></div>
+                    </div>
+
+                    <!-- Manage Construction Sites -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+                            <span>Manage Construction Sites</span>
+                        </h3>
+                        <form onsubmit="addSite(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">New Site Name</label>
+                                <input type="text" id="setupSiteName" placeholder="e.g., Oragadam-Thyagarajan sir" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition">Add Site</button>
+                        </form>
+                        <div class="pt-3 border-t">
+                            <p class="text-xs font-semibold text-slate-500 mb-2">Active Sites (Edit & Delete):</p>
+                            <div id="setupSiteList" class="divide-y text-sm"></div>
                         </div>
                     </div>
                 </div>
@@ -337,6 +423,11 @@
             if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
             const n = Number(String(v ?? 0).replace(/[^0-9.-]/g, ''));
             return Number.isFinite(n) ? n : 0;
+        }
+
+        function isPaidExpense(ex) {
+            const st = String(ex.Status || ex.status || 'Paid').trim().toLowerCase();
+            return st === 'paid';
         }
 
         function makeRecordId(prefix = "REC") {
@@ -413,7 +504,7 @@
             const hasSettled = cutoff > 0;
             const carry = hasSettled ? toNum(carryBalance) : 0;
 
-            const periodFunds = (typeof fundHistory !== 'undefined' ? fundHistory : []).filter(fh => {
+            const periodFunds = fundHistory.filter(fh => {
                 const fhEng = (fh.engineer || fh.Engineer || "").trim().toLowerCase();
                 if (fhEng !== lowerName) return false;
                 if (!hasSettled) return true;
@@ -424,20 +515,30 @@
             const addedFunds = periodFunds.reduce((sum, fh) => sum + toNum(fh.amount ?? fh.Amount), 0);
             const totalFunds = carry + addedFunds;
 
-            const periodExpenses = (typeof expenses !== 'undefined' ? expenses : []).filter(ex => {
+            const periodExpenses = expenses.filter(ex => {
                 const exEng = (ex.Engineer || ex.engineer || "").trim().toLowerCase();
                 if (exEng !== lowerName) return false;
                 if (!hasSettled) return true;
-                const ts = toNum(ex._ts || (typeof parseRecordTs === 'function' ? parseRecordTs(ex) : 0));
+                const ts = toNum(ex._ts || parseRecordTs(ex) || 0);
                 return ts === 0 || ts > cutoff;
             });
 
-            const totalSpent = periodExpenses.reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
-            const balance = totalFunds - totalSpent;
+            const paidSpent = periodExpenses
+                .filter(ex => isPaidExpense(ex))
+                .reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
+
+            const unpaidSpent = periodExpenses
+                .filter(ex => !isPaidExpense(ex))
+                .reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
+
+            const totalSpent = paidSpent;
+            const balance = totalFunds - paidSpent;
 
             return {
                 totalFunds,
                 totalSpent,
+                paidSpent,
+                unpaidSpent,
                 balance,
                 carry,
                 addedFunds,
@@ -449,9 +550,11 @@
         function refreshSiteDropdowns() {
             const expSite = document.getElementById('expSite');
             const filterSite = document.getElementById('filterSiteSelect');
+            const cpSite = document.getElementById('cpSite');
 
             const currentExpVal = expSite ? expSite.value : '';
             const currentFilterVal = filterSite ? filterSite.value : 'ALL';
+            const currentCpVal = cpSite ? cpSite.value : '';
 
             if (expSite) {
                 expSite.innerHTML = '';
@@ -460,6 +563,16 @@
                 });
                 if (currentExpVal && sites.includes(currentExpVal)) {
                     expSite.value = currentExpVal;
+                }
+            }
+
+            if (cpSite) {
+                cpSite.innerHTML = '';
+                sites.forEach(site => {
+                    cpSite.innerHTML += `<option value="${site}">${site}</option>`;
+                });
+                if (currentCpVal && sites.includes(currentCpVal)) {
+                    cpSite.value = currentCpVal;
                 }
             }
 
@@ -508,10 +621,17 @@
 
             const isAdmin = currentUser === 'Admin';
             const adminTab = document.getElementById('tab-settings');
+            const siteOverviewSec = document.getElementById('adminSiteOverviewSection');
+            const clientPaySec = document.getElementById('adminClientPaymentsSection');
+
             if (isAdmin) {
                 adminTab.classList.remove('hidden');
+                siteOverviewSec.classList.remove('hidden');
+                clientPaySec.classList.remove('hidden');
             } else {
                 adminTab.classList.add('hidden');
+                siteOverviewSec.classList.add('hidden');
+                clientPaySec.classList.add('hidden');
             }
 
             const totalFundsCard = document.getElementById('totalFundsCard');
@@ -554,6 +674,7 @@
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('expDate').value = todayStr;
             document.getElementById('setupFundDate').value = todayStr;
+            document.getElementById('cpDate').value = todayStr;
             updateCalculatedAmount();
 
             renderAll();
@@ -594,7 +715,8 @@
                     <div class="p-3.5 rounded-xl border bg-slate-50 space-y-1">
                         <div class="font-bold text-slate-900">${engName}</div>
                         <div class="text-xs text-slate-600 flex justify-between"><span>Fund Received (Active):</span><span class="font-semibold text-slate-900">₹${stats.totalFunds.toLocaleString('en-IN')}</span></div>
-                        <div class="text-xs text-slate-600 flex justify-between"><span>Active Expenses:</span><span class="font-semibold text-rose-600">₹${stats.totalSpent.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Paid Expenses (Deducted):</span><span class="font-semibold text-rose-600">₹${stats.paidSpent.toLocaleString('en-IN')}</span></div>
+                        <div class="text-xs text-slate-600 flex justify-between"><span>Unpaid (Pending):</span><span class="font-semibold text-amber-600">₹${stats.unpaidSpent.toLocaleString('en-IN')}</span></div>
                         <div class="text-xs text-slate-600 flex justify-between border-t pt-1"><span>Balance:</span><span class="font-bold text-emerald-700">₹${stats.balance.toLocaleString('en-IN')}</span></div>
                     </div>
                 `;
@@ -629,7 +751,17 @@
                 } else {
                     expenses = [];
                 }
-                clientPayments = Array.isArray(data.clientPayments) ? data.clientPayments : [];
+
+                clientPayments = Array.isArray(data.clientPayments)
+                    ? data.clientPayments.map(cp => ({
+                        id: cp.RecordId || cp.recordId || cp.id || makeRecordId("CP"),
+                        date: cp.Date || cp.date || new Date().toISOString().split('T')[0],
+                        site: cp.Site || cp.site || '',
+                        mode: cp.PaymentMode || cp.Mode || cp.mode || 'Online',
+                        amount: toNum(cp.TotalAmount ?? cp.ReceivedAmount ?? cp.Amount ?? cp.amount ?? 0),
+                        ref: cp.ReferenceNo || cp.Remarks || cp.remarks || cp.ReceivedBy || ''
+                    }))
+                    : [];
 
                 const historyRows = [];
                 const summaryByEng = {};
@@ -742,7 +874,7 @@
             const stats = getEngineerCycleStats(engName, engObj.cutoffTs, engObj.carryBalance);
             const nextCarryBalance = stats.balance;
 
-            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Active Expenses: ₹${stats.totalSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
+            const confirmMsg = `Close & Settle period for ${engName}?\n\n• Active Fund Received: ₹${stats.totalFunds.toLocaleString('en-IN')}\n• Paid Expenses Deducted: ₹${stats.paidSpent.toLocaleString('en-IN')}\n• New Fund Received (Carry Balance): ₹${nextCarryBalance.toLocaleString('en-IN')}\n\nOld entries will be hidden for ${engName}, and ₹${nextCarryBalance.toLocaleString('en-IN')} will show as Fund Received.`;
             if (!confirm(confirmMsg)) return;
 
             const cutoffTs = Date.now();
@@ -821,14 +953,28 @@
                 }, 0)
                 : getEngineerCycleStats(currentUser, engCutoffTs, engCarryBalance).totalFunds;
 
-            const totalSpent = scopedExpenses.reduce((sum, item) => sum + toNum(item.ex.Amount ?? item.ex.amount), 0);
-            const balance = totalFunds - totalSpent;
+            const paidSpent = scopedExpenses
+                .filter(item => isPaidExpense(item.ex))
+                .reduce((sum, item) => sum + toNum(item.ex.Amount ?? item.ex.amount), 0);
+
+            const unpaidSpent = scopedExpenses
+                .filter(item => !isPaidExpense(item.ex))
+                .reduce((sum, item) => sum + toNum(item.ex.Amount ?? item.ex.amount), 0);
+
+            const balance = totalFunds - paidSpent;
 
             document.getElementById('lblTotalFunds').innerText = isAdmin ? 'Total Funds Allocated' : 'Fund Received';
             document.getElementById('lblBalance').innerText = isAdmin ? 'Balance Available' : 'Balance';
 
             document.getElementById('totalFundsDisplay').innerText = `₹${toNum(totalFunds).toLocaleString('en-IN')}`;
             document.getElementById('balanceDisplay').innerText = `₹${toNum(balance).toLocaleString('en-IN')}`;
+
+            const unpaidNoteEl = document.getElementById('unpaidPendingNote');
+            if (unpaidNoteEl) {
+                unpaidNoteEl.innerText = unpaidSpent > 0
+                    ? `Unpaid (Not deducted yet): ₹${unpaidSpent.toLocaleString('en-IN')}`
+                    : 'All logged expenses are Paid';
+            }
 
             const carryNoteEl = document.getElementById('carryForwardNote');
             if (carryNoteEl) {
@@ -837,6 +983,72 @@
                     carryNoteEl.innerText = `Settled Carry-Forward Fund: ₹${engCarryBalance.toLocaleString('en-IN')}`;
                 } else {
                     carryNoteEl.classList.add('hidden');
+                }
+            }
+
+            // Admin Site-wise Overview Table
+            if (isAdmin) {
+                const siteSummaryBody = document.getElementById('siteSummaryBody');
+                if (siteSummaryBody) {
+                    const allSiteNames = [...sites];
+                    expenses.forEach(ex => {
+                        const s = String(ex.Site || ex.site || '').trim();
+                        if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
+                    });
+                    clientPayments.forEach(cp => {
+                        const s = String(cp.site || '').trim();
+                        if (s && !allSiteNames.some(x => x.toLowerCase() === s.toLowerCase())) allSiteNames.push(s);
+                    });
+
+                    if (!allSiteNames.length) {
+                        siteSummaryBody.innerHTML = '<tr><td colspan="6" class="p-3 text-slate-400 text-center">No sites available.</td></tr>';
+                    } else {
+                        siteSummaryBody.innerHTML = allSiteNames.map(sName => {
+                            const lowerS = sName.toLowerCase();
+                            const clientRec = clientPayments
+                                .filter(cp => String(cp.site || '').trim().toLowerCase() === lowerS)
+                                .reduce((sum, cp) => sum + toNum(cp.amount), 0);
+
+                            const siteExps = expenses.filter(ex => String(ex.Site || ex.site || '').trim().toLowerCase() === lowerS);
+                            const sPaid = siteExps.filter(ex => isPaidExpense(ex)).reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
+                            const sUnpaid = siteExps.filter(ex => !isPaidExpense(ex)).reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
+                            const sTotalExp = sPaid + sUnpaid;
+                            const sBal = clientRec - sTotalExp;
+
+                            return `
+                                <tr>
+                                    <td class="p-3 font-semibold text-slate-900">${sName}</td>
+                                    <td class="p-3 font-semibold text-emerald-700">₹${clientRec.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-slate-700">₹${sPaid.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-amber-600 font-medium">₹${sUnpaid.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 font-semibold text-rose-600">₹${sTotalExp.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 font-bold ${sBal >= 0 ? 'text-emerald-700' : 'text-rose-700'}">₹${sBal.toLocaleString('en-IN')}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+
+                // Admin Client Payments Table
+                const cpBody = document.getElementById('clientPaymentBody');
+                if (cpBody) {
+                    if (!clientPayments.length) {
+                        cpBody.innerHTML = '<tr><td colspan="6" class="p-3 text-slate-400 text-center">No client payments recorded yet.</td></tr>';
+                    } else {
+                        cpBody.innerHTML = clientPayments.slice().reverse().map((cp, revIdx) => {
+                            const realIdx = clientPayments.length - 1 - revIdx;
+                            return `
+                                <tr>
+                                    <td class="p-3">${formatDateVal(cp.date)}</td>
+                                    <td class="p-3 font-medium">${cp.site || '-'}</td>
+                                    <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${cp.mode || 'Online'}</span></td>
+                                    <td class="p-3 font-semibold text-emerald-700">₹${toNum(cp.amount).toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-slate-500 italic">${cp.ref || '-'}</td>
+                                    <td class="p-3"><button type="button" onclick="deleteClientPaymentByIndex(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
                 }
             }
 
@@ -856,7 +1068,7 @@
                 const matchingEng = isAdmin || (fh.engineer || "").trim().toLowerCase() === currentUser.trim().toLowerCase();
                 if (!matchingEng) return false;
                 if (!isAdmin && hasEngSettled) {
-                    const fhTs = toNum(fh.ts || fh.CutoffTs || (typeof parseRecordTs === 'function' ? parseRecordTs(fh) : 0));
+                    const fhTs = toNum(fh.ts || fh.CutoffTs || parseRecordTs(fh));
                     if (fhTs > 0) {
                         return fhTs >= (engCutoffTs - 60000);
                     }
@@ -957,10 +1169,10 @@
                 finalScoped.slice().reverse().forEach(item => {
                     const ex = item.ex;
                     const realIdx = item.realIdx;
-                    const statusVal = ex.Status || ex.status || 'Paid';
-                    const statusBadge = statusVal.toLowerCase() === 'paid'
+                    const paid = isPaidExpense(ex);
+                    const statusBadge = paid
                         ? '<span class="px-2 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800">Paid</span>'
-                        : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-rose-100 text-rose-800">Unpaid</span>';
+                        : '<span class="px-2 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800">Unpaid</span>';
 
                     const actionCell = isAdmin ? `
                         <td class="p-3 space-x-2 whitespace-nowrap">
@@ -986,6 +1198,66 @@
             }
 
             updateCalculatedAmount();
+        }
+
+        async function handleAddClientPayment(e) {
+            e.preventDefault();
+            if (currentUser !== 'Admin') return;
+
+            const btn = document.getElementById('btnSaveClientPay');
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
+            const amt = toNum(document.getElementById('cpAmount').value || 0);
+            const paymentObj = {
+                id: makeRecordId("CP"),
+                RecordId: makeRecordId("CP"),
+                Date: document.getElementById('cpDate').value,
+                Site: document.getElementById('cpSite').value,
+                PaymentMode: document.getElementById('cpMode').value,
+                ReceivedAmount: amt,
+                TotalAmount: amt,
+                ReferenceNo: document.getElementById('cpRef').value.trim(),
+                ReceivedBy: currentUser
+            };
+
+            try {
+                await postToScript({
+                    action: "addClientPayment",
+                    data: paymentObj
+                });
+                e.target.reset();
+                document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
+                await syncAllData(false);
+                alert("Client payment saved to Google Sheet!");
+            } catch (err) {
+                console.log("Client payment save error:", err);
+                alert("Failed to save client payment.");
+            }
+
+            btn.disabled = false;
+            btn.innerText = "Save Client Payment";
+        }
+
+        async function deleteClientPaymentByIndex(idx) {
+            if (currentUser !== 'Admin') return;
+            const item = clientPayments[idx];
+            if (!item) return;
+            if (!confirm(`Delete client payment of ₹${toNum(item.amount).toLocaleString('en-IN')} for ${item.site}?`)) return;
+
+            try {
+                if (item.id) {
+                    await postToScript({
+                        action: "deleteClientPayment",
+                        recordId: item.id
+                    });
+                }
+                await syncAllData(false);
+                alert("Client payment deleted!");
+            } catch (err) {
+                console.log("Client payment delete error:", err);
+                alert("Failed to delete client payment.");
+            }
         }
 
         async function addSite(e) {
@@ -1334,42 +1606,6 @@
 
             btn.disabled = false;
             btn.innerText = "Save Fund";
-        }
-
-        async function saveClientPayment(paymentObj) {
-            clientPayments.push(paymentObj);
-            renderAll();
-
-            try {
-                await fetch(APPS_SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({
-                        action: "addClientPayment",
-                        data: paymentObj
-                    })
-                });
-            } catch (err) {
-                alert("Server sync error: " + err);
-            }
-        }
-
-        async function deleteClientPayment(recordId) {
-            clientPayments = clientPayments.filter(p => p.id !== recordId);
-            renderAll();
-
-            try {
-                await fetch(APPS_SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({
-                        action: "deleteClientPayment",
-                        recordId: recordId
-                    })
-                });
-            } catch (err) {
-                alert("Delete sync error: " + err);
-            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
