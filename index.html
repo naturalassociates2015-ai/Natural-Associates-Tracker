@@ -95,6 +95,7 @@
 
             <!-- 1. DASHBOARD / OVERVIEW TAB -->
             <div id="view-dashboard" class="space-y-6">
+                <!-- Engineer / Overall Fund & Balance Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div id="totalFundsCard" onclick="handleTotalFundsCardClick()" class="bg-white p-6 rounded-2xl shadow-sm border transition">
                         <div class="flex justify-between items-center">
@@ -111,21 +112,39 @@
                     </div>
                 </div>
 
+                <!-- Admin Only: Client Payment GST Breakdown Cards -->
+                <div id="adminClientGstCards" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                        <p class="text-xs text-slate-500 font-medium">Client Received (Base)</p>
+                        <h3 id="clientBaseTotalDisplay" class="text-xl font-bold text-slate-900 mt-1">₹0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border">
+                        <p class="text-xs text-slate-500 font-medium">Client GST Amount</p>
+                        <h3 id="clientGstTotalDisplay" class="text-xl font-bold text-amber-600 mt-1">₹0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-200 bg-emerald-50/30">
+                        <p class="text-xs text-emerald-800 font-medium">Total Client Received (Base + GST)</p>
+                        <h3 id="clientGrandTotalDisplay" class="text-xl font-bold text-emerald-700 mt-1">₹0</h3>
+                    </div>
+                </div>
+
                 <!-- Admin Only: Site-wise Client Payment, Expense & Balance -->
                 <div id="adminSiteOverviewSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">Site-wise Client Payment & Expense Summary</h2>
-                        <p class="text-xs text-slate-500">ஒவ்வொரு சைட்டுக்கும் வந்த கிளையண்ட் பணம், மொத்த செலவு (Paid / Unpaid), மற்றும் மீதி பேலன்ஸ்</p>
+                        <p class="text-xs text-slate-500">ஒவ்வொரு சைட்டுக்கும் வந்த கிளையண்ட் பணம் (Base + GST), மொத்த செலவு (Paid / Unpaid), மற்றும் மீதி பேலன்ஸ்</p>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
                                 <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
                                     <th class="p-3">Site</th>
-                                    <th class="p-3">Client Received</th>
-                                    <th class="p-3">Paid Expenses</th>
-                                    <th class="p-3">Unpaid (Pending)</th>
-                                    <th class="p-3">Total Expenses</th>
+                                    <th class="p-3">Client Base</th>
+                                    <th class="p-3">GST</th>
+                                    <th class="p-3">Total Client Rec.</th>
+                                    <th class="p-3">Paid Exp.</th>
+                                    <th class="p-3">Unpaid</th>
+                                    <th class="p-3">Total Exp.</th>
                                     <th class="p-3">Site Balance</th>
                                 </tr>
                             </thead>
@@ -138,7 +157,7 @@
                 <div id="adminClientPaymentsSection" class="hidden bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900">Client Payments Received</h2>
-                        <p class="text-xs text-slate-500">எந்த சைட்டுக்கு, எந்தத் தேதியில், எவ்வளவு கிளையண்ட் பேமெண்ட் வந்துள்ளது என்ற விவரம்</p>
+                        <p class="text-xs text-slate-500">எந்த சைட்டுக்கு, எந்தத் தேதியில், எவ்வளவு கிளையண்ட் பேமெண்ட் (Base + GST) வந்துள்ளது என்ற விவரம்</p>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
@@ -146,9 +165,12 @@
                                 <tr class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
                                     <th class="p-3">Date</th>
                                     <th class="p-3">Site</th>
-                                    <th class="p-3">Payment Mode</th>
-                                    <th class="p-3">Amount</th>
-                                    <th class="p-3">Reference / Notes</th>
+                                    <th class="p-3">Mode</th>
+                                    <th class="p-3">Base Amt</th>
+                                    <th class="p-3">GST %</th>
+                                    <th class="p-3">GST Amt</th>
+                                    <th class="p-3">Total Rec.</th>
+                                    <th class="p-3">Reference</th>
                                     <th class="p-3">Action</th>
                                 </tr>
                             </thead>
@@ -309,7 +331,7 @@
                         </div>
                     </div>
 
-                    <!-- Record Client Payment -->
+                    <!-- Record Client Payment (with GST 0%, 5%, 12%, 18%) -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
                         <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
                             <i data-lucide="landmark" class="w-5 h-5 text-emerald-600"></i>
@@ -334,9 +356,30 @@
                                     <option value="Cheque">Cheque</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Amount Received (₹)</label>
-                                <input type="number" step="any" id="cpAmount" placeholder="Enter amount (e.g., 200000)" class="w-full p-2.5 border rounded-xl text-sm" required>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Received Amount (₹)</label>
+                                    <input type="number" step="any" id="cpAmount" oninput="updateClientGstCalc()" placeholder="e.g., 200000" class="w-full p-2.5 border rounded-xl text-sm" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">GST Rate (%)</label>
+                                    <select id="cpGstRate" onchange="updateClientGstCalc()" class="w-full p-2.5 border rounded-xl text-sm font-semibold">
+                                        <option value="0" selected>0% (No GST)</option>
+                                        <option value="5">5%</option>
+                                        <option value="12">12%</option>
+                                        <option value="18">18%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">GST Amount (₹)</label>
+                                    <input type="number" step="any" id="cpGstAmount" value="0" class="w-full p-2.5 border rounded-xl text-sm bg-slate-50 text-amber-700 font-medium" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Total Amount (₹)</label>
+                                    <input type="number" step="any" id="cpTotalAmount" value="0" class="w-full p-2.5 border rounded-xl text-sm bg-emerald-50 text-emerald-800 font-bold" readonly>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Reference / Remarks</label>
@@ -487,6 +530,21 @@
             }
         }
 
+        function updateClientGstCalc() {
+            const baseEl = document.getElementById('cpAmount');
+            const rateEl = document.getElementById('cpGstRate');
+            const gstAmtEl = document.getElementById('cpGstAmount');
+            const totalAmtEl = document.getElementById('cpTotalAmount');
+
+            const baseAmt = parseFloat(baseEl ? baseEl.value : 0) || 0;
+            const gstRate = parseFloat(rateEl ? rateEl.value : 0) || 0;
+            const gstAmt = Math.round((baseAmt * gstRate / 100) * 100) / 100;
+            const totalAmt = Math.round((baseAmt + gstAmt) * 100) / 100;
+
+            if (gstAmtEl) gstAmtEl.value = gstAmt;
+            if (totalAmtEl) totalAmtEl.value = totalAmt;
+        }
+
         async function postToScript(payload) {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -633,15 +691,18 @@
 
             const isAdmin = currentUser === 'Admin';
             const adminTab = document.getElementById('tab-settings');
+            const clientGstCards = document.getElementById('adminClientGstCards');
             const siteOverviewSec = document.getElementById('adminSiteOverviewSection');
             const clientPaySec = document.getElementById('adminClientPaymentsSection');
 
             if (isAdmin) {
                 adminTab.classList.remove('hidden');
+                clientGstCards.classList.remove('hidden');
                 siteOverviewSec.classList.remove('hidden');
                 clientPaySec.classList.remove('hidden');
             } else {
                 adminTab.classList.add('hidden');
+                clientGstCards.classList.add('hidden');
                 siteOverviewSec.classList.add('hidden');
                 clientPaySec.classList.add('hidden');
             }
@@ -688,6 +749,7 @@
             document.getElementById('setupFundDate').value = todayStr;
             document.getElementById('cpDate').value = todayStr;
             updateCalculatedAmount();
+            updateClientGstCalc();
 
             renderAll();
             syncAllData(false);
@@ -771,14 +833,28 @@
                 }
 
                 clientPayments = Array.isArray(data.clientPayments)
-                    ? data.clientPayments.map(cp => ({
-                        id: cp.RecordId || cp.recordId || cp.id || makeRecordId("CP"),
-                        date: cp.Date || cp.date || new Date().toISOString().split('T')[0],
-                        site: cp.Site || cp.site || '',
-                        mode: cp.PaymentMode || cp.Mode || cp.mode || 'Online',
-                        amount: toNum(cp.TotalAmount ?? cp.ReceivedAmount ?? cp.Amount ?? cp.amount ?? 0),
-                        ref: cp.ReferenceNo || cp.Remarks || cp.remarks || cp.ReceivedBy || ''
-                    }))
+                    ? data.clientPayments.map(cp => {
+                        const baseAmt = toNum(cp.ReceivedAmount ?? cp.receivedAmount ?? cp.Amount ?? cp.amount ?? 0);
+                        const gstRate = toNum(cp.GstRate ?? cp.gstRate ?? 0);
+                        const gstAmt = cp.GstAmount !== undefined && cp.GstAmount !== ""
+                            ? toNum(cp.GstAmount)
+                            : Math.round((baseAmt * gstRate / 100) * 100) / 100;
+                        const totAmt = cp.TotalAmount !== undefined && cp.TotalAmount !== ""
+                            ? toNum(cp.TotalAmount)
+                            : Math.round((baseAmt + gstAmt) * 100) / 100;
+
+                        return {
+                            id: cp.RecordId || cp.recordId || cp.id || makeRecordId("CP"),
+                            date: cp.Date || cp.date || new Date().toISOString().split('T')[0],
+                            site: cp.Site || cp.site || '',
+                            mode: cp.PaymentMode || cp.Mode || cp.mode || 'Online',
+                            receivedAmount: baseAmt,
+                            gstRate: gstRate,
+                            gstAmount: gstAmt,
+                            totalAmount: totAmt,
+                            ref: cp.ReferenceNo || cp.Remarks || cp.remarks || ''
+                        };
+                    })
                     : [];
 
                 const historyRows = [];
@@ -1006,6 +1082,16 @@
             }
 
             if (isAdmin) {
+                // Overall Client Received (Base, GST, Total)
+                const totalClientBase = clientPayments.reduce((sum, cp) => sum + toNum(cp.receivedAmount), 0);
+                const totalClientGst = clientPayments.reduce((sum, cp) => sum + toNum(cp.gstAmount), 0);
+                const totalClientGrand = clientPayments.reduce((sum, cp) => sum + toNum(cp.totalAmount), 0);
+
+                document.getElementById('clientBaseTotalDisplay').innerText = `₹${totalClientBase.toLocaleString('en-IN')}`;
+                document.getElementById('clientGstTotalDisplay').innerText = `₹${totalClientGst.toLocaleString('en-IN')}`;
+                document.getElementById('clientGrandTotalDisplay').innerText = `₹${totalClientGrand.toLocaleString('en-IN')}`;
+
+                // Site-wise Summary Table
                 const siteSummaryBody = document.getElementById('siteSummaryBody');
                 if (siteSummaryBody) {
                     const allSiteNames = [...sites];
@@ -1019,24 +1105,27 @@
                     });
 
                     if (!allSiteNames.length) {
-                        siteSummaryBody.innerHTML = '<tr><td colspan="6" class="p-3 text-slate-400 text-center">No sites available.</td></tr>';
+                        siteSummaryBody.innerHTML = '<tr><td colspan="8" class="p-3 text-slate-400 text-center">No sites available.</td></tr>';
                     } else {
                         siteSummaryBody.innerHTML = allSiteNames.map(sName => {
                             const lowerS = sName.toLowerCase();
-                            const clientRec = clientPayments
-                                .filter(cp => String(cp.site || '').trim().toLowerCase() === lowerS)
-                                .reduce((sum, cp) => sum + toNum(cp.amount), 0);
+                            const siteCps = clientPayments.filter(cp => String(cp.site || '').trim().toLowerCase() === lowerS);
+                            const cBase = siteCps.reduce((sum, cp) => sum + toNum(cp.receivedAmount), 0);
+                            const cGst = siteCps.reduce((sum, cp) => sum + toNum(cp.gstAmount), 0);
+                            const cTotal = siteCps.reduce((sum, cp) => sum + toNum(cp.totalAmount), 0);
 
                             const siteExps = expenses.filter(ex => String(ex.Site || ex.site || '').trim().toLowerCase() === lowerS);
                             const sPaid = siteExps.filter(ex => isPaidExpense(ex)).reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
                             const sUnpaid = siteExps.filter(ex => !isPaidExpense(ex)).reduce((sum, ex) => sum + toNum(ex.Amount ?? ex.amount), 0);
                             const sTotalExp = sPaid + sUnpaid;
-                            const sBal = clientRec - sTotalExp;
+                            const sBal = cTotal - sTotalExp;
 
                             return `
                                 <tr>
                                     <td class="p-3 font-semibold text-slate-900">${sName}</td>
-                                    <td class="p-3 font-semibold text-emerald-700">₹${clientRec.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-slate-700">₹${cBase.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-amber-600">₹${cGst.toLocaleString('en-IN')}</td>
+                                    <td class="p-3 font-semibold text-emerald-700">₹${cTotal.toLocaleString('en-IN')}</td>
                                     <td class="p-3 text-slate-700">₹${sPaid.toLocaleString('en-IN')}</td>
                                     <td class="p-3 text-amber-600 font-medium">₹${sUnpaid.toLocaleString('en-IN')}</td>
                                     <td class="p-3 font-semibold text-rose-600">₹${sTotalExp.toLocaleString('en-IN')}</td>
@@ -1047,10 +1136,11 @@
                     }
                 }
 
+                // Client Payments History Table
                 const cpBody = document.getElementById('clientPaymentBody');
                 if (cpBody) {
                     if (!clientPayments.length) {
-                        cpBody.innerHTML = '<tr><td colspan="6" class="p-3 text-slate-400 text-center">No client payments recorded yet.</td></tr>';
+                        cpBody.innerHTML = '<tr><td colspan="9" class="p-3 text-slate-400 text-center">No client payments recorded yet.</td></tr>';
                     } else {
                         cpBody.innerHTML = clientPayments.slice().reverse().map((cp, revIdx) => {
                             const realIdx = clientPayments.length - 1 - revIdx;
@@ -1059,7 +1149,10 @@
                                     <td class="p-3">${formatDateVal(cp.date)}</td>
                                     <td class="p-3 font-medium">${cp.site || '-'}</td>
                                     <td class="p-3"><span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${cp.mode || 'Online'}</span></td>
-                                    <td class="p-3 font-semibold text-emerald-700">₹${toNum(cp.amount).toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-slate-800">₹${toNum(cp.receivedAmount).toLocaleString('en-IN')}</td>
+                                    <td class="p-3 text-xs font-semibold text-slate-600">${toNum(cp.gstRate)}%</td>
+                                    <td class="p-3 text-amber-700">₹${toNum(cp.gstAmount).toLocaleString('en-IN')}</td>
+                                    <td class="p-3 font-bold text-emerald-700">₹${toNum(cp.totalAmount).toLocaleString('en-IN')}</td>
                                     <td class="p-3 text-slate-500 italic">${cp.ref || '-'}</td>
                                     <td class="p-3"><button type="button" onclick="deleteClientPaymentByIndex(${realIdx})" class="px-2.5 py-1 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50">Delete</button></td>
                                 </tr>
@@ -1216,7 +1309,7 @@
                                 </td>
                                 <td class="p-2 space-x-1.5 whitespace-nowrap">
                                     <button type="button" onclick="saveInlineExpense(${realIdx})" class="px-2.5 py-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded">Save</button>
-                                    <button type="button" onclick="cancelInlineExpense()" class="px-2.5 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
+                                    <button type="button" onclick="cancelInlineExpense()" class="px-2 py-1 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded border">Cancel</button>
                                 </td>
                             </tr>`;
                         return;
@@ -1370,7 +1463,11 @@
             btn.disabled = true;
             btn.innerText = "Saving...";
 
-            const amt = toNum(document.getElementById('cpAmount').value || 0);
+            const baseAmt = toNum(document.getElementById('cpAmount').value || 0);
+            const gstRate = toNum(document.getElementById('cpGstRate').value || 0);
+            const gstAmt = Math.round((baseAmt * gstRate / 100) * 100) / 100;
+            const totalAmt = Math.round((baseAmt + gstAmt) * 100) / 100;
+
             const recId = makeRecordId("CP");
             const paymentObj = {
                 id: recId,
@@ -1378,8 +1475,10 @@
                 Date: document.getElementById('cpDate').value,
                 Site: document.getElementById('cpSite').value,
                 PaymentMode: document.getElementById('cpMode').value,
-                ReceivedAmount: amt,
-                TotalAmount: amt,
+                ReceivedAmount: baseAmt,
+                GstRate: gstRate,
+                GstAmount: gstAmt,
+                TotalAmount: totalAmt,
                 ReferenceNo: document.getElementById('cpRef').value.trim(),
                 ReceivedBy: currentUser
             };
@@ -1394,12 +1493,17 @@
                     date: paymentObj.Date,
                     site: paymentObj.Site,
                     mode: paymentObj.PaymentMode,
-                    amount: amt,
+                    receivedAmount: baseAmt,
+                    gstRate: gstRate,
+                    gstAmount: gstAmt,
+                    totalAmount: totalAmt,
                     ref: paymentObj.ReferenceNo
                 });
                 renderAll();
                 e.target.reset();
                 document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('cpGstRate').value = "0";
+                updateClientGstCalc();
                 alert("Client payment saved to Google Sheet!");
             } catch (err) {
                 console.log("Client payment save error:", err);
@@ -1414,7 +1518,7 @@
             if (currentUser !== 'Admin') return;
             const item = clientPayments[idx];
             if (!item) return;
-            if (!confirm(`Delete client payment of ₹${toNum(item.amount).toLocaleString('en-IN')} for ${item.site}?`)) return;
+            if (!confirm(`Delete client payment of ₹${toNum(item.totalAmount).toLocaleString('en-IN')} for ${item.site}?`)) return;
 
             try {
                 if (item.id) {
