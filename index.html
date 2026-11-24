@@ -160,7 +160,7 @@
                 <!-- Fund / Cash Received Details -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h2 class="text-lg font-bold mb-1">Fund / Cash Received Details</h2>
-                    <p class="text-xs text-slate-500 mb-4">எந்தத் தேதியில், எவ்வளவு பணம், எந்த முறையில் (Cash / Online / GPay) வந்துள்ளது என்ற விவரம்</p>
+                    <p class="text-xs text-slate-500 mb-4">எந்தத் தேதியில், எவ்வளவு பணம், எந்த முறையில் (Cash / Online / GPay / RTGS) வந்துள்ளது என்ற விவரம்</p>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead>
@@ -292,6 +292,7 @@
                                 <select id="setupFundMode" class="w-full p-2.5 border rounded-xl text-sm" required>
                                     <option value="Cash">Cash</option>
                                     <option value="Online">Online</option>
+                                    <option value="RTGS">RTGS</option>
                                     <option value="GPay">GPay</option>
                                 </select>
                             </div>
@@ -327,6 +328,7 @@
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Payment Mode</label>
                                 <select id="cpMode" class="w-full p-2.5 border rounded-xl text-sm" required>
                                     <option value="Online">Online</option>
+                                    <option value="RTGS">RTGS</option>
                                     <option value="Cash">Cash</option>
                                     <option value="GPay">GPay</option>
                                     <option value="Cheque">Cheque</option>
@@ -485,17 +487,24 @@
         }
 
         async function postToScript(payload) {
-            const res = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-            if (!res.ok) throw new Error("Apps Script POST failed");
-            const result = await res.json();
-            if (result && result.status === "error") {
-                throw new Error(result.message || "Apps Script returned error");
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error("Apps Script POST failed");
+                const result = await res.json();
+                if (result && result.status === "error") {
+                    throw new Error(result.message || "Apps Script returned error");
+                }
+                return result;
+            } finally {
+                clearTimeout(timeoutId);
             }
-            return result;
         }
 
         function getEngineerCycleStats(engName, cutoffs = 0, carryBalance = 0) {
@@ -734,8 +743,14 @@
             if (btnSync) btnSync.disabled = true;
             if (syncText) syncText.innerText = "Syncing...";
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
             try {
-                const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, { cache: 'no-store' });
+                const res = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, {
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
                 if (!res.ok) throw new Error("Network response was not ok");
 
                 const data = await res.json();
@@ -861,11 +876,12 @@
                 renderAll();
                 if (statusEl) statusEl.innerText = "Sync Retry...";
                 if (showAlert) alert("Sync failed. Please check internet connection or Apps Script deployment.");
+            } finally {
+                clearTimeout(timeoutId);
+                if (btnSync) btnSync.disabled = false;
+                if (syncText) syncText.innerText = "Sync";
+                isSyncing = false;
             }
-
-            if (btnSync) btnSync.disabled = false;
-            if (syncText) syncText.innerText = "Sync";
-            isSyncing = false;
         }
 
         async function settleEngineerPeriod(engName) {
@@ -986,7 +1002,6 @@
                 }
             }
 
-            // Admin Site-wise Overview Table
             if (isAdmin) {
                 const siteSummaryBody = document.getElementById('siteSummaryBody');
                 if (siteSummaryBody) {
@@ -1029,7 +1044,6 @@
                     }
                 }
 
-                // Admin Client Payments Table
                 const cpBody = document.getElementById('clientPaymentBody');
                 if (cpBody) {
                     if (!clientPayments.length) {
@@ -1209,9 +1223,10 @@
             btn.innerText = "Saving...";
 
             const amt = toNum(document.getElementById('cpAmount').value || 0);
+            const recId = makeRecordId("CP");
             const paymentObj = {
-                id: makeRecordId("CP"),
-                RecordId: makeRecordId("CP"),
+                id: recId,
+                RecordId: recId,
                 Date: document.getElementById('cpDate').value,
                 Site: document.getElementById('cpSite').value,
                 PaymentMode: document.getElementById('cpMode').value,
@@ -1226,17 +1241,26 @@
                     action: "addClientPayment",
                     data: paymentObj
                 });
+                clientPayments.push({
+                    id: recId,
+                    date: paymentObj.Date,
+                    site: paymentObj.Site,
+                    mode: paymentObj.PaymentMode,
+                    amount: amt,
+                    ref: paymentObj.ReferenceNo
+                });
+                renderAll();
                 e.target.reset();
                 document.getElementById('cpDate').value = new Date().toISOString().split('T')[0];
-                await syncAllData(false);
                 alert("Client payment saved to Google Sheet!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Client payment save error:", err);
                 alert("Failed to save client payment.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Client Payment";
             }
-
-            btn.disabled = false;
-            btn.innerText = "Save Client Payment";
         }
 
         async function deleteClientPaymentByIndex(idx) {
@@ -1252,8 +1276,10 @@
                         recordId: item.id
                     });
                 }
-                await syncAllData(false);
+                clientPayments.splice(idx, 1);
+                renderAll();
                 alert("Client payment deleted!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Client payment delete error:", err);
                 alert("Failed to delete client payment.");
@@ -1277,9 +1303,14 @@
                         Site: newSite
                     }]
                 });
+                if (!sites.some(s => s.toLowerCase() === newSite.toLowerCase())) {
+                    sites.push(newSite);
+                    refreshSiteDropdowns();
+                }
+                renderAll();
                 inputEl.value = "";
-                await syncAllData(false);
                 alert(`Site "${newSite}" added!`);
+                syncAllData(false);
             } catch (err) {
                 console.log("Add site error:", err);
                 alert("Failed to add site on Google Sheet.");
@@ -1311,8 +1342,11 @@
                         }
                     ]
                 });
-                await syncAllData(false);
+                sites[siteIdx] = newSite;
+                refreshSiteDropdowns();
+                renderAll();
                 alert(`Site updated to "${newSite}"!`);
+                syncAllData(false);
             } catch (err) {
                 console.log("Site edit sync error:", err);
                 alert("Failed to update site on Google Sheet.");
@@ -1334,8 +1368,11 @@
                         Site: siteToDelete
                     }]
                 });
-                await syncAllData(false);
+                sites.splice(siteIdx, 1);
+                refreshSiteDropdowns();
+                renderAll();
                 alert(`Site "${siteToDelete}" removed!`);
+                syncAllData(false);
             } catch (err) {
                 console.log("Site delete sync error:", err);
                 alert("Failed to delete site on Google Sheet.");
@@ -1373,8 +1410,10 @@
                         mode: entry.mode
                     }
                 });
-                await syncAllData(false);
+                entry.amount = updatedAmt;
+                renderAll();
                 alert("Fund updated across all devices!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Fund edit sync error:", err);
                 alert("Failed to update fund on Google Sheet.");
@@ -1406,8 +1445,10 @@
                         totalGiven: remainingTotal
                     }
                 });
-                await syncAllData(false);
+                fundHistory.splice(idx, 1);
+                renderAll();
                 alert("Fund entry deleted across all devices!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Fund delete sync error:", err);
                 alert("Failed to delete fund entry on Google Sheet.");
@@ -1467,8 +1508,18 @@
                         }
                     });
                 }
-                await syncAllData(false);
+                Object.assign(item, {
+                    Material: updatedMaterial,
+                    Qty: updatedQty,
+                    Unit: updatedUnit,
+                    Rate: updatedRate,
+                    Amount: updatedAmt,
+                    Remarks: updatedRemarks,
+                    Status: updatedStatus
+                });
+                renderAll();
                 alert("Expense updated across all devices!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Expense edit sync error:", err);
                 alert("Failed to update expense on Google Sheet.");
@@ -1490,8 +1541,10 @@
                         recordId: recId
                     });
                 }
-                await syncAllData(false);
+                expenses.splice(index, 1);
+                renderAll();
                 alert("Expense deleted across all devices!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Expense delete sync error:", err);
                 alert("Failed to delete expense on Google Sheet.");
@@ -1537,18 +1590,20 @@
                     target: siteVal,
                     data: [newExp]
                 });
-                await syncAllData(false);
+                expenses.push(newExp);
+                renderAll();
                 e.target.reset();
                 document.getElementById('expDate').value = new Date().toISOString().split('T')[0];
                 updateCalculatedAmount();
                 alert("Expense saved to Google Sheet!");
+                syncAllData(false);
             } catch (err) {
                 console.log("Expense save error:", err);
-                alert("Failed to save expense. Please check internet connection.");
+                alert("Failed to save expense. Please check internet connection or try again.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Expense";
             }
-
-            btn.disabled = false;
-            btn.innerText = "Save Expense";
         }
 
         async function addOrUpdateEngineer(e) {
@@ -1596,16 +1651,25 @@
                     }
                 });
 
+                fundHistory.push({
+                    id: recId,
+                    date: dateVal,
+                    engineer: engName,
+                    mode: modeVal,
+                    amount: amtVal,
+                    ts: parseRecordTs({ RecordId: recId })
+                });
+                renderAll();
                 document.getElementById('setupEngFund').value = "";
-                await syncAllData(false);
                 alert(`₹${amtVal.toLocaleString('en-IN')} added for ${engName}!`);
+                syncAllData(false);
             } catch (err) {
                 console.log("Fund save error:", err);
                 alert("Failed to save fund to Google Sheet.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save Fund";
             }
-
-            btn.disabled = false;
-            btn.innerText = "Save Fund";
         }
 
         window.addEventListener('DOMContentLoaded', () => {
