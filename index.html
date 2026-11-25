@@ -2,54 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Natural Associates Tracker</title>
-  <link rel="icon" type="image/png" href="icon-192.png" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Natural Associates - Site Expense Tracker</title>
   <style>
     :root {
-      --green-dark: #14452b;
-      --green-main: #1b5e3a;
-      --green-soft: #e7f3ec;
-      --expense-tab: #235d6e;
-      --fab-terracotta: #c84b31;
-      --fab-terracotta-dark: #a63922;
-      --bg-app: #f4f7f5;
-      --bg-card: #ffffff;
-      --text-main: #18221d;
-      --text-muted: #5c6d63;
-      --border: #dce5df;
-      --danger: #b91c1c;
-      --warning-bg: #fef2f2;
-      --success-bg: #dcfce7;
-      --success-text: #166534;
+      --bg: #f1f5f1;
+      --bg-pattern: radial-gradient(circle at 12% 10%, #e1ede3 0%, transparent 45%),
+                    radial-gradient(circle at 88% 85%, #e6eee4 0%, transparent 50%);
+      --card: #ffffff;
+      --ink: #17261d;
+      --muted: #586c5f;
+      --forest: #1b5e3a;
+      --forest-dark: #113f27;
+      --leaf: #2e7d52;
+      --sage-soft: #e6f1ea;
+      --sage-border: #cde0d3;
+      --terracotta: #c84b31;
+      --terracotta-dark: #a63821;
+      --terracotta-soft: #fdf0ed;
+      --amber-soft: #fbf5e6;
+      --border: #d7e2da;
+      --shadow: 0 4px 14px rgba(17, 63, 39, 0.06);
     }
 
     * {
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg-app);
-      color: var(--text-main);
-      padding-bottom: 96px;
+      background-color: var(--bg);
+      background-image: var(--bg-pattern);
+      color: var(--ink);
+      padding-bottom: 84px;
+      line-height: 1.45;
+      min-height: 100vh;
     }
 
-    /* Header */
-    .topbar {
-      background: linear-gradient(135deg, var(--green-dark), var(--green-main));
+    /* Login Gate */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: linear-gradient(155deg, #0f3822 0%, #1d5c3b 55%, #2b6e49 100%);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 390px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px 22px;
+      border: 1px solid var(--sage-border);
+      box-shadow: 0 18px 40px rgba(8, 28, 17, 0.28);
+    }
+
+    .login-emblem {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--sage-soft);
+      color: var(--forest);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      border: 1px solid var(--sage-border);
+    }
+
+    .login-brand {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--forest-dark);
+      letter-spacing: -0.2px;
+    }
+
+    .login-sub {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 2px;
+      margin-bottom: 20px;
+    }
+
+    .login-field {
+      margin-bottom: 14px;
+    }
+
+    .login-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .pw-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 8px;
+      background: transparent;
+      color: var(--muted);
+      padding: 4px 6px;
+      font-size: 12px;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--forest) 0%, var(--leaf) 100%);
       color: #fff;
-      padding: 12px 16px;
+      border-radius: 10px;
+      margin-top: 6px;
+      box-shadow: 0 4px 12px rgba(27, 94, 58, 0.25);
+    }
+
+    .login-error {
+      color: var(--terracotta);
+      background: var(--terracotta-soft);
+      border: 1px solid #f2c4ba;
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 12.5px;
+      margin-bottom: 14px;
+      display: none;
+    }
+
+    /* App Shell */
+    .app-shell {
+      display: none;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest) 100%);
+      color: #fff;
+      padding: 13px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: 0 3px 12px rgba(17, 63, 39, 0.18);
+    }
+
+    .topbar-inner {
+      max-width: 980px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      gap: 10px;
     }
 
     .brand-wrap {
@@ -58,242 +168,394 @@
       gap: 10px;
     }
 
-    .brand-logo-box {
+    .brand-leaf {
       width: 34px;
       height: 34px;
       border-radius: 10px;
-      background: #ffffff;
+      background: rgba(255, 255, 255, 0.14);
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
       flex-shrink: 0;
-      border: 1.5px solid rgba(255, 255, 255, 0.45);
-    }
-
-    .brand-logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .brand-fallback {
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--green-dark);
-      line-height: 1.05;
-      text-align: center;
-      display: none;
     }
 
     .brand-title {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.15;
+      font-size: 16.5px;
+      font-weight: 800;
+      letter-spacing: -0.1px;
     }
 
     .brand-sub {
-      font-size: 11px;
-      opacity: 0.88;
+      font-size: 11.5px;
+      color: #cde6d7;
     }
 
     .top-actions {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 7px;
     }
 
-    .btn-top {
+    select, input, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      font-size: 14px;
+      color: var(--ink);
+      background: #ffffff;
+      transition: border-color 0.15s ease;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--forest);
+    }
+
+    input[readonly] {
+      background: #f2f6f3;
+      color: #3a4f42;
+      font-weight: 700;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 14px;
+      transition: transform 0.06s ease, opacity 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .btn-ghost {
       background: rgba(255, 255, 255, 0.16);
       color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.28);
-      border-radius: 8px;
-      padding: 6px 11px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
-    .btn-top.syncing {
-      opacity: 0.65;
+    .btn-primary {
+      background: var(--forest);
+      color: #fff;
+    }
+
+    .btn-plus-expense {
+      background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%);
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 9px 15px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(200, 75, 49, 0.28);
+      white-space: nowrap;
+    }
+
+    .btn-danger {
+      background: var(--terracotta);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--sage-soft);
+      color: var(--forest-dark);
+      border: 1px solid var(--sage-border);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 12px;
     }
 
     .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 14px;
+      max-width: 980px;
+      margin: 14px auto 0;
+      padding: 0 12px;
     }
 
-    .banner-warn {
-      background: var(--warning-bg);
-      color: var(--danger);
-      border: 1px solid #fecaca;
+    .status-banner {
+      display: none;
+      padding: 9px 13px;
       border-radius: 10px;
-      padding: 10px 12px;
+      margin-bottom: 11px;
       font-size: 13px;
-      margin-bottom: 12px;
-      display: none;
+      font-weight: 600;
     }
 
-    .toast {
-      position: fixed;
-      top: 66px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #14261d;
-      color: #fff;
-      padding: 8px 16px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      z-index: 90;
-      display: none;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    .status-banner.info {
+      display: block;
+      background: var(--sage-soft);
+      color: var(--forest-dark);
+      border: 1px solid var(--sage-border);
+    }
+
+    .status-banner.warn {
+      display: block;
+      background: var(--terracotta-soft);
+      color: var(--terracotta);
+      border: 1px solid #f2c4ba;
     }
 
     .card {
-      background: var(--bg-card);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 6px rgba(20, 69, 43, 0.04);
+      padding: 15px;
+      margin-bottom: 13px;
+      box-shadow: var(--shadow);
     }
 
     .card-title {
-      font-size: 16px;
-      font-weight: 700;
-      margin: 0 0 12px;
-      color: var(--green-dark);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .stat-box {
-      background: var(--green-soft);
-      border: 1px solid #cce2d5;
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .stat-box.carry {
-      background: #fff4ef;
-      border-color: #f6c9bd;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-    }
-
-    .stat-value {
-      font-size: 19px;
+      font-size: 15px;
       font-weight: 800;
-      margin-top: 4px;
-      color: var(--text-main);
+      color: var(--forest-dark);
+      margin-bottom: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .filter-row {
+    /* Period Strip + Plus Expense Bar */
+    .eng-toolbar {
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      flex-wrap: wrap;
       margin-bottom: 12px;
     }
 
-    .pill-btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text-main);
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
+    .period-group {
+      display: inline-flex;
+      background: #ffffff;
+      border: 1px solid var(--sage-border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+      box-shadow: var(--shadow);
     }
 
-    .pill-btn.active {
-      background: var(--green-main);
-      color: #fff;
-      border-color: var(--green-main);
+    .period-btn {
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-radius: 7px;
+    }
+
+    .period-btn.active {
+      background: var(--forest);
+      color: #ffffff;
+    }
+
+    /* Left-Right Form Grid with Centered Wide Description */
+    .lr-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    .field-full textarea {
+      min-height: 76px;
+      resize: vertical;
+      font-size: 14.5px;
+      background: #fbfdfb;
+      border: 1.5px solid var(--sage-border);
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
     }
 
     .field label {
       display: block;
       font-size: 12px;
-      font-weight: 700;
-      color: var(--text-muted);
+      color: var(--muted);
       margin-bottom: 4px;
-    }
-
-    .field input,
-    .field select {
-      width: 100%;
-      padding: 9px 10px;
-      border-radius: 9px;
-      border: 1px solid #c7d4cc;
-      font-size: 14px;
-      background: #fff;
-    }
-
-    .btn-primary {
-      background: var(--green-main);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 14px;
       font-weight: 700;
-      cursor: pointer;
     }
 
-    .btn-secondary {
-      background: var(--green-soft);
-      color: var(--green-dark);
-      border: 1px solid #c7d4cc;
-      border-radius: 10px;
-      padding: 8px 12px;
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+
+    .pill-chip {
+      background: var(--sage-soft);
+      color: var(--forest-dark);
+      border: 1px solid var(--sage-border);
+      border-radius: 999px;
+      padding: 7px 14px;
       font-size: 13px;
       font-weight: 700;
-      cursor: pointer;
     }
 
-    .btn-danger-sm {
-      background: #fee2e2;
-      color: var(--danger);
-      border: 1px solid #fca5a5;
-      border-radius: 7px;
-      padding: 4px 9px;
+    .pill-chip.active {
+      background: var(--forest);
+      color: #fff;
+      border-color: var(--forest);
+    }
+
+    .date-group-header {
+      background: var(--sage-soft);
+      color: var(--forest-dark);
       font-size: 12px;
       font-weight: 700;
-      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      margin: 12px 0 7px;
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid var(--sage-border);
     }
 
-    .btn-sm {
-      background: var(--green-soft);
-      color: var(--green-dark);
-      border: 1px solid #bdd4c6;
-      border-radius: 7px;
-      padding: 4px 9px;
+    .passbook-item {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--leaf);
+      border-radius: 11px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .pb-left {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .pb-site {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--forest-dark);
+    }
+
+    .pb-desc {
+      font-size: 13.5px;
+      color: var(--ink);
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .pb-meta {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .pb-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .pb-amt-expense {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--terracotta);
+    }
+
+    .pb-bal {
       font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
       font-weight: 700;
-      cursor: pointer;
     }
 
-    .table-wrap {
-      overflow-x: auto;
+    .pb-actions {
+      margin-top: 5px;
+      display: flex;
+      gap: 5px;
+      justify-content: flex-end;
+    }
+
+    .summary-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .summary-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 9px;
+      margin-bottom: 13px;
+    }
+
+    .stat-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 10px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-box.highlight-sage {
+      background: var(--sage-soft);
+      border-color: var(--sage-border);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .stat-val {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-active {
+      background: var(--sage-soft);
+      color: var(--forest-dark);
+    }
+
+    .badge-completed {
+      background: #ecefed;
+      color: #5d6861;
     }
 
     table {
@@ -303,942 +565,1570 @@
     }
 
     th, td {
-      padding: 9px 8px;
-      border-bottom: 1px solid #e7eeea;
+      padding: 8px 7px;
+      border-bottom: 1px solid var(--border);
       text-align: left;
-      white-space: nowrap;
     }
 
     th {
-      background: #f2f7f4;
-      color: var(--green-dark);
+      color: var(--forest-dark);
+      font-size: 12px;
+      background: var(--sage-soft);
       font-weight: 700;
     }
 
-    .badge-active {
-      background: var(--success-bg);
-      color: var(--success-text);
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
+    .table-wrap {
+      overflow-x: auto;
     }
 
-    .badge-completed {
-      background: #e5e7eb;
-      color: #1f2937;
-      padding: 3px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
+    .confirm-box {
+      background: var(--amber-soft);
+      border: 1px solid #e7cf96;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
     }
 
-    /* Bottom Nav + Centered Round Terracotta FAB */
-    .bottom-dock {
+    /* Bottom Button Bar */
+    .bottom-nav {
       position: fixed;
+      bottom: 0;
       left: 0;
       right: 0;
-      bottom: 0;
-      z-index: 50;
-      pointer-events: none;
-    }
-
-    .center-fab-wrap {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      margin-bottom: -24px;
-      z-index: 52;
-      pointer-events: auto;
-    }
-
-    .fab-round {
-      width: 62px;
-      height: 62px;
-      border-radius: 50%;
-      background: var(--fab-terracotta);
-      color: #fff;
-      border: 3.5px solid #ffffff;
-      box-shadow: 0 6px 18px rgba(200, 75, 49, 0.45);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease;
-    }
-
-    .fab-round:active {
-      transform: scale(0.95);
-      background: var(--fab-terracotta-dark);
-    }
-
-    .fab-plus {
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .fab-text {
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-      margin-top: 1px;
-    }
-
-    .bottom-bar {
-      display: grid;
-      grid-template-columns: 1fr 74px 1fr;
-      align-items: stretch;
       background: #ffffff;
-      border-top: 1px solid var(--border);
-      box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.07);
-      pointer-events: auto;
+      border-top: 1px solid var(--sage-border);
+      box-shadow: 0 -4px 16px rgba(17, 63, 39, 0.08);
+      z-index: 40;
+    }
+
+    .bottom-nav-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
     }
 
     .nav-btn {
-      border: none;
-      padding: 13px 8px;
+      flex: 1;
+      border-radius: 0;
+      background: #ffffff;
+      color: var(--muted);
       font-size: 14px;
       font-weight: 800;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: opacity 0.15s ease;
+      padding: 14px 8px;
+      border-right: 1px solid var(--border);
     }
 
-    .nav-summary {
-      background: var(--green-main);
+    .nav-btn:last-child {
+      border-right: none;
+    }
+
+    .nav-btn.nav-summary {
+      color: var(--forest-dark);
+      background: #f4faf6;
+    }
+
+    .nav-btn.nav-summary.active {
+      background: var(--forest);
       color: #ffffff;
     }
 
-    .nav-spacer {
-      background: #ffffff;
+    .nav-btn.nav-expense {
+      color: var(--terracotta-dark);
+      background: var(--terracotta-soft);
     }
 
-    .nav-expense {
-      background: var(--expense-tab);
+    .nav-btn.nav-expense.active {
+      background: var(--terracotta);
       color: #ffffff;
     }
 
-    .nav-btn.inactive {
-      opacity: 0.82;
+    .nav-btn.nav-admin.active {
+      background: var(--forest-dark);
+      color: #ffffff;
     }
 
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      z-index: 80;
-    }
+    .c-green { color: var(--forest); }
+    .c-red { color: var(--terracotta); }
+    .c-ink { color: var(--ink); }
 
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .modal-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .hidden {
-      display: none !important;
+    @media print {
+      .topbar, .bottom-nav, .no-print {
+        display: none !important;
+      }
+      body {
+        background: #fff;
+        padding-bottom: 0;
+      }
+      .card {
+        box-shadow: none;
+        border: 1px solid #ccc;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="toast" class="toast"></div>
-
-  <header class="topbar">
-    <div class="brand-wrap">
-      <div class="brand-logo-box">
-        <img
-          src="icon-192.png"
-          alt="Iyarkai Logo"
-          onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
-          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-        />
-        <span class="brand-fallback">இயற்கை</span>
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-emblem">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+        </svg>
       </div>
-      <div>
-        <div class="brand-title">Natural Associates</div>
-        <div id="userSub" class="brand-sub">Field Expense &amp; Fund Tracker</div>
-      </div>
-    </div>
-    <div class="top-actions">
-      <button id="syncBtn" class="btn-top" onclick="syncFromSheet(true)">Sync</button>
-      <button class="btn-top" onclick="logoutUser()">Logout</button>
-    </div>
-  </header>
-
-  <div class="container">
-    <div id="syncWarning" class="banner-warn">
-      Check Apps Script deployment/permissions for live sheet sync.
-    </div>
-
-    <!-- Login Card -->
-    <div id="loginCard" class="card">
-      <h2 class="card-title">Login</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label>User / Engineer</label>
+      <div class="login-brand">Natural Associates</div>
+      <div class="login-sub">Construction &amp; Structural Consultants • Site Tracker</div>
+      <div id="loginError" class="login-error"></div>
+      <form onsubmit="handleLogin(event)" autocomplete="off">
+        <div class="login-field">
+          <label for="loginUserSelect">Select User</label>
           <select id="loginUserSelect">
-            <option value="Manigandan">Manigandan (Admin)</option>
-            <option value="Sivashankar">Sivashankar</option>
-            <option value="Murali">Murali</option>
-            <option value="Senthil">Senthil</option>
+            <option value="Manigandan">Manigandan</option>
             <option value="Yogesh">Yogesh</option>
+            <option value="Sivashankar">Sivashankar</option>
+            <option value="Senthil">Senthil</option>
+            <option value="Admin">Admin</option>
           </select>
         </div>
-        <div class="field">
-          <label>PIN</label>
-          <input id="loginPinInput" type="password" placeholder="Enter PIN" />
+        <div class="login-field">
+          <label for="loginPasswordInput">Password</label>
+          <div class="pw-wrap">
+            <input type="password" id="loginPasswordInput" autocomplete="new-password" placeholder="Enter password" required />
+            <button type="button" class="pw-toggle" onclick="togglePasswordVisibility()">Show</button>
+          </div>
         </div>
-      </div>
-      <div style="margin-top: 12px;">
-        <button class="btn-primary" onclick="handleLogin()">Login</button>
-      </div>
+        <button type="submit" class="btn-login">Login</button>
+      </form>
     </div>
+  </div>
 
-    <!-- Main App -->
-    <div id="appContent" class="hidden">
-      <!-- Summary View -->
-      <section id="viewSummary">
-        <div class="card">
-          <h2 class="card-title">Summary &amp; Fund Status</h2>
-          <div class="stats-grid">
-            <div class="stat-box carry">
-              <div class="stat-label">Carry Balance</div>
-              <div id="statCarryBalance" class="stat-value">₹0</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-label">Active Fund</div>
-              <div id="statActiveFund" class="stat-value">₹0</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-label">Active Expenses</div>
-              <div id="statActiveExpense" class="stat-value">₹0</div>
-            </div>
+  <!-- MAIN APPLICATION -->
+  <div id="appShell" class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand-wrap">
+          <div class="brand-leaf">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+            </svg>
           </div>
-          <div class="filter-row">
-            <button class="pill-btn active" data-range="day" onclick="setRange('day', this)">Day</button>
-            <button class="pill-btn" data-range="week" onclick="setRange('week', this)">Week</button>
-            <button class="pill-btn" data-range="month" onclick="setRange('month', this)">Month</button>
-            <button class="pill-btn" data-range="all" onclick="setRange('all', this)">All</button>
+          <div>
+            <div class="brand-title">Natural Associates</div>
+            <div class="brand-sub" id="loggedInBadge">Logged in</div>
           </div>
         </div>
-      </section>
+        <div class="top-actions">
+          <button class="btn-ghost btn-sm" onclick="loadAllData(true)">Sync</button>
+          <button class="btn-ghost btn-sm" onclick="handleLogout()">Logout</button>
+        </div>
+      </div>
+    </header>
 
-      <!-- Expenses List View -->
-      <section id="viewExpenses" class="hidden">
+    <main class="container">
+      <div id="statusBanner" class="status-banner"></div>
+      <section id="viewContainer"></section>
+    </main>
+
+    <nav class="bottom-nav no-print">
+      <div class="bottom-nav-inner" id="bottomNavInner"></div>
+    </nav>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
+
+    const ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "Manigandan"];
+    const CATEGORIES = [
+      "Material",
+      "Masonry",
+      "Centring",
+      "Electrician",
+      "Plumber",
+      "Painter",
+      "Tiles Layer",
+      "Carpenter",
+      "Fabricator",
+      "Polish",
+      "Granite layer"
+    ];
+    const DEFAULT_SITES = [
+      "Madhuravoyal",
+      "Sithalapakam",
+      "Oragadam",
+      "Sunguvachathiram",
+      "Plot-6A"
+    ];
+    const DEFAULT_UNITS = [
+      "Nos", "Kg", "Tons", "Cft", "Ltr", "Load", "Bags", "Day", "NMR", "Bundle", "Advance", "Transport", "W-Payment"
+    ];
+
+    const FALLBACK_USERS = [
+      { user: "Admin", role: "ADMIN", password: "1234" },
+      { user: "Manigandan", role: "Manigandan", password: "1234" },
+      { user: "Yogesh", role: "ENGINEER", password: "1234" },
+      { user: "Sivashankar", role: "ENGINEER", password: "1234" },
+      { user: "Senthil", role: "ENGINEER", password: "1234" }
+    ];
+
+    const state = {
+      currentUser: null,
+      activeTab: "expenses",
+      engPeriod: "Month", // Day | Week | Month | All
+      adminSetupTab: "Client Payment",
+      cpSiteFilter: "",
+      showExpenseForm: false,
+      isSavingExpense: false,
+      editingExpenseId: null,
+      editingClientPaymentId: null,
+      editingFundId: null,
+      editingSelfExpenseId: null,
+      settlePreview: null,
+      users: [...FALLBACK_USERS],
+      expenses: [],
+      funds: [],
+      clientPayments: [],
+      selfExpenses: [],
+      sites: DEFAULT_SITES.map(s => ({ "Site Name": s, Location: "", Status: "Active" })),
+      units: [...DEFAULT_UNITS],
+      filters: {
+        engineer: "",
+        site: "",
+        category: "",
+        vendor: "",
+        description: "",
+        fromDate: "",
+        toDate: ""
+      }
+    };
+
+    function todayISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function getStartOfWeekISO() {
+      const d = new Date();
+      const dayOfWeek = d.getDay();
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      d.setDate(d.getDate() + diffToMonday);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function getStartOfMonthISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      return `${y}-${m}-01`;
+    }
+
+    function formatINR(num) {
+      const n = Number(num) || 0;
+      return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+
+    function formatDateHeading(dateStr) {
+      if (!dateStr) return "Unscheduled Date";
+      const clean = String(dateStr).slice(0, 10);
+      const dt = new Date(clean + "T00:00:00");
+      if (isNaN(dt.getTime())) return clean;
+      return dt.toLocaleDateString("en-GB", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    function isSettledFlag(val) {
+      return val === true || String(val).trim().toUpperCase() === "TRUE";
+    }
+
+    function isAdmin() {
+      return state.currentUser && state.currentUser.role === "ADMIN";
+    }
+
+    function isManigandan() {
+      return state.currentUser && state.currentUser.user === "Manigandan";
+    }
+
+    function togglePasswordVisibility() {
+      const inp = document.getElementById("loginPasswordInput");
+      const btn = document.querySelector(".pw-toggle");
+      if (!inp || !btn) return;
+      if (inp.type === "password") {
+        inp.type = "text";
+        btn.textContent = "Hide";
+      } else {
+        inp.type = "password";
+        btn.textContent = "Show";
+      }
+    }
+
+    function handleLogin(ev) {
+      ev.preventDefault();
+      const selectedUser = document.getElementById("loginUserSelect").value;
+      const enteredPw = document.getElementById("loginPasswordInput").value;
+      const errEl = document.getElementById("loginError");
+
+      const matched = state.users.find(
+        u => String(u.user).toLowerCase() === String(selectedUser).toLowerCase()
+      );
+
+      if (!matched || String(matched.password) !== String(enteredPw)) {
+        errEl.textContent = "Invalid user or password.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      errEl.style.display = "none";
+      state.currentUser = {
+        user: matched.user,
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
+      };
+      sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
+      document.getElementById("loginPasswordInput").value = "";
+      state.activeTab = "expenses";
+      state.showExpenseForm = false;
+      state.editingExpenseId = null;
+      showAppShell();
+      loadAllData(false);
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem("NA_SESSION");
+      state.currentUser = null;
+      document.getElementById("appShell").style.display = "none";
+      document.getElementById("loginScreen").style.display = "flex";
+    }
+
+    function showAppShell() {
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("appShell").style.display = "block";
+      document.getElementById("loggedInBadge").textContent =
+        `${state.currentUser.user} • ${isAdmin() ? "Admin Console" : "Site Engineer"}`;
+      render();
+    }
+
+    function setBanner(msg, type = "info") {
+      const el = document.getElementById("statusBanner");
+      if (!el) return;
+      if (!msg) {
+        el.className = "status-banner";
+        el.textContent = "";
+        return;
+      }
+      el.className = `status-banner ${type}`;
+      el.textContent = msg;
+    }
+
+    function getActiveSiteNames() {
+      const activeSites = state.sites
+        .filter(s => {
+          const st = String(s.Status || "Active").trim().toLowerCase();
+          return st !== "completed" && st !== "closed";
+        })
+        .map(s => String(s["Site Name"] || "").trim())
+        .filter(Boolean);
+      return activeSites.length ? activeSites : [...DEFAULT_SITES];
+    }
+
+    function getAllSiteNames() {
+      const all = state.sites
+        .map(s => String(s["Site Name"] || "").trim())
+        .filter(Boolean);
+      return all.length ? all : [...DEFAULT_SITES];
+    }
+
+    function normalizeExpenses(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((r, i) => {
+        const qty = Number(r.Qty ?? r.qty ?? 1) || 1;
+        const rate = Number(r.Rate ?? r.rate ?? 0) || 0;
+        const amt = Number(r.Amount ?? r.amount ?? (qty * rate)) || 0;
+        return {
+          RecordId: String(r.RecordId || r.id || `EXP_${i + 1}`),
+          Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+          Engineer: String(r.Engineer || r.engineer || "Manigandan"),
+          Site: String(r.Site || r.site || DEFAULT_SITES[0]),
+          Category: String(r.Category || r.category || "Material"),
+          "Vendor/Contractor": String(r["Vendor/Contractor"] || r.vendor || ""),
+          Description: String(r.Description || r.description || ""),
+          Qty: qty,
+          Unit: String(r.Unit || r.unit || "Nos"),
+          Rate: rate,
+          Amount: amt,
+          Settled: isSettledFlag(r.Settled ?? r.settled)
+        };
+      });
+    }
+
+    function normalizeFunds(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((r, i) => ({
+        RecordId: String(r.RecordId || r.id || `FND_${i + 1}`),
+        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        Engineer: String(r.Engineer || r.engineer || "Manigandan"),
+        Amount: Number(r.Amount ?? r.amount ?? 0) || 0,
+        Mode: String(r.Mode || r.mode || "Online"),
+        Settled: isSettledFlag(r.Settled ?? r.settled)
+      }));
+    }
+
+    function normalizeClientPayments(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((r, i) => ({
+        RecordId: String(r.RecordId || r.id || `CP_${i + 1}`),
+        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        Site: String(r.Site || r.site || DEFAULT_SITES[0]),
+        "Base Amount": Number(r["Base Amount"] ?? r.baseAmount ?? 0) || 0,
+        "Gst%": Number(r["Gst%"] ?? r.gstPct ?? 0) || 0,
+        TotalAmount: Number(r.TotalAmount ?? r["Total Amount"] ?? r.amount ?? 0) || 0,
+        PaymentMode: String(r.PaymentMode || r.paymentMode || ""),
+        ReferenceNo: String(r.ReferenceNo || r.referenceNo || ""),
+        Remarks: String(r.Remarks || r.remarks || "")
+      }));
+    }
+
+    function normalizeSelfExpenses(list) {
+      if (!Array.isArray(list)) return [];
+      return list.map((r, i) => ({
+        RecordId: String(r.RecordId || r.id || `SE_${i + 1}`),
+        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        For: String(r.For || r.for || "Office"),
+        Description: String(r.Description || r.description || ""),
+        Amount: Number(r.Amount ?? r.amount ?? 0) || 0
+      }));
+    }
+
+    async function loadAllData(showMessage = false) {
+      if (showMessage) setBanner("Syncing with Google Sheet...", "info");
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getAll`, { method: "GET" });
+        if (!res.ok) throw new Error("Network error");
+        const data = await res.json();
+
+        if (Array.isArray(data.users) && data.users.length) {
+          const mapU = new Map();
+          FALLBACK_USERS.forEach(u => mapU.set(u.user.toLowerCase(), u));
+          data.users.forEach(u => {
+            if (u.user && u.password) mapU.set(u.user.toLowerCase(), u);
+          });
+          state.users = Array.from(mapU.values());
+        }
+        if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
+        if (Array.isArray(data.funds)) state.funds = normalizeFunds(data.funds);
+        if (Array.isArray(data.clientPayments)) state.clientPayments = normalizeClientPayments(data.clientPayments);
+        if (Array.isArray(data.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(data.selfExpenses);
+
+        if (Array.isArray(data.sites) && data.sites.length) {
+          const map = new Map();
+          state.sites.forEach(s => map.set(s["Site Name"], s));
+          data.sites.forEach(s => {
+            const name = typeof s === "string" ? s.trim() : String(s["Site Name"] || "").trim();
+            if (name) {
+              map.set(name, {
+                "Site Name": name,
+                Location: typeof s === "object" ? String(s.Location || "") : "",
+                Status: typeof s === "object" ? String(s.Status || "Active") : "Active"
+              });
+            }
+          });
+          state.sites = Array.from(map.values());
+        }
+
+        if (Array.isArray(data.units) && data.units.length) {
+          const mergedUnits = new Set([...data.units, ...DEFAULT_UNITS]);
+          state.units = Array.from(mergedUnits);
+        }
+
+        if (showMessage) setBanner("Synced with Natural Associates Tracker.", "info");
+      } catch (err) {
+        if (showMessage) setBanner("Check Apps Script deployment/permissions for live sheet sync.", "warn");
+      } finally {
+        if (state.currentUser) render();
+      }
+    }
+
+    async function postAction(payload) {
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          try {
+            const json = await res.json();
+            if (json && json.status === "error") {
+              setBanner(json.message || "Error saving record.", "warn");
+              return false;
+            }
+          } catch (_) {}
+          setBanner("Saved to Google Sheet.", "info");
+          return true;
+        }
+      } catch (_) {}
+      setBanner("Saved locally; verify Apps Script Web App access if sheet did not update.", "warn");
+      return true;
+    }
+
+    function onBottomNavClick(tabId) {
+      state.activeTab = tabId;
+      state.settlePreview = null;
+      if (tabId !== "expenses") {
+        state.showExpenseForm = false;
+        state.editingExpenseId = null;
+      }
+      render();
+    }
+
+    function renderBottomNav() {
+      const navEl = document.getElementById("bottomNavInner");
+      if (isAdmin()) {
+        navEl.innerHTML = `
+          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
+          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-admin ${state.activeTab === "adminSetup" ? "active" : ""}" onclick="onBottomNavClick('adminSetup')">Admin Setup</button>
+        `;
+      } else {
+        navEl.innerHTML = `
+          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
+        `;
+      }
+    }
+
+    function getScopedExpenses() {
+      let list = [...state.expenses];
+      if (!isAdmin()) {
+        list = list.filter(e => e.Engineer === state.currentUser.user);
+        const today = todayISO();
+        if (state.engPeriod === "Day") {
+          list = list.filter(e => e.Date === today);
+        } else if (state.engPeriod === "Week") {
+          const weekStart = getStartOfWeekISO();
+          list = list.filter(e => e.Date >= weekStart && e.Date <= today);
+        } else if (state.engPeriod === "Month") {
+          const monthStart = getStartOfMonthISO();
+          list = list.filter(e => e.Date >= monthStart && e.Date <= today);
+        }
+      } else {
+        if (state.filters.engineer) list = list.filter(e => e.Engineer === state.filters.engineer);
+        if (state.filters.site) list = list.filter(e => e.Site === state.filters.site);
+        if (state.filters.category) list = list.filter(e => e.Category === state.filters.category);
+        if (state.filters.vendor.trim()) {
+          const vq = state.filters.vendor.trim().toLowerCase();
+          list = list.filter(e => String(e["Vendor/Contractor"] || "").toLowerCase().includes(vq));
+        }
+        if (state.filters.description.trim()) {
+          const dq = state.filters.description.trim().toLowerCase();
+          list = list.filter(e => String(e.Description || "").toLowerCase().includes(dq));
+        }
+        if (state.filters.fromDate) list = list.filter(e => e.Date >= state.filters.fromDate);
+        if (state.filters.toDate) list = list.filter(e => e.Date <= state.filters.toDate);
+      }
+      return list;
+    }
+
+    function openExpenseForm(recordId = null) {
+      if (!isAdmin() || recordId) {
+        state.editingExpenseId = recordId;
+        state.showExpenseForm = true;
+        state.activeTab = "expenses";
+        render();
+      }
+    }
+
+    function closeExpenseForm() {
+      state.editingExpenseId = null;
+      state.showExpenseForm = false;
+      render();
+    }
+
+    function calcExpenseAmount() {
+      const qty = Number(document.getElementById("expQty")?.value) || 0;
+      const rate = Number(document.getElementById("expRate")?.value) || 0;
+      const amtEl = document.getElementById("expAmount");
+      if (amtEl && qty > 0 && rate > 0) {
+        amtEl.value = (qty * rate).toFixed(2);
+      }
+    }
+
+    async function saveExpense(ev) {
+      ev.preventDefault();
+      if (state.isSavingExpense) return;
+
+      const editingObj = state.editingExpenseId
+        ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
+        : null;
+
+      const date = document.getElementById("expDate").value || todayISO();
+      const engineer = isAdmin()
+        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
+        : state.currentUser.user;
+      const site = document.getElementById("expSite").value;
+      const category = (isAdmin() || isManigandan())
+        ? (document.getElementById("expCategory")?.value || "Material")
+        : "Material";
+      const vendor = document.getElementById("expVendor").value.trim();
+      const description = document.getElementById("expDesc").value.trim();
+      const qty = Number(document.getElementById("expQty").value) || 1;
+      const unit = document.getElementById("expUnit").value || "Nos";
+      const rate = Number(document.getElementById("expRate").value) || 0;
+      const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
+
+      if (!description || amount <= 0) {
+        setBanner("Please enter Description and valid Amount.", "warn");
+        return;
+      }
+
+      state.isSavingExpense = true;
+      const saveBtn = document.getElementById("expSaveBtn");
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+      }
+
+      if (editingObj) {
+        const updated = {
+          ...editingObj,
+          Date: date,
+          Engineer: engineer,
+          Site: site,
+          Category: category,
+          "Vendor/Contractor": vendor,
+          Description: description,
+          Qty: qty,
+          Unit: unit,
+          Rate: rate,
+          Amount: amount
+        };
+        const idx = state.expenses.findIndex(e => e.RecordId === editingObj.RecordId);
+        if (idx > -1) state.expenses[idx] = updated;
+        await postAction({ action: "updateExpense", record: updated });
+      } else {
+        const newRec = {
+          RecordId: "EXP_" + Date.now(),
+          Date: date,
+          Engineer: engineer,
+          Site: site,
+          Category: category,
+          "Vendor/Contractor": vendor,
+          Description: description,
+          Qty: qty,
+          Unit: unit,
+          Rate: rate,
+          Amount: amount,
+          Settled: false
+        };
+        state.expenses.unshift(newRec);
+        await postAction({ action: "addExpense", record: newRec });
+      }
+
+      state.isSavingExpense = false;
+      state.editingExpenseId = null;
+      state.showExpenseForm = false;
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function deleteExpense(recordId) {
+      if (!isAdmin()) return;
+      state.expenses = state.expenses.filter(e => e.RecordId !== recordId);
+      await postAction({ action: "deleteExpense", RecordId: recordId });
+      render();
+    }
+
+    function renderExpensesView() {
+      const activeSiteNames = getActiveSiteNames();
+      const allSiteNames = getAllSiteNames();
+      const editingObj = isAdmin() && state.editingExpenseId
+        ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
+        : null;
+
+      const showForm = (!isAdmin() && state.showExpenseForm) || (isAdmin() && Boolean(editingObj));
+
+      const defaultEng = editingObj ? editingObj.Engineer : state.currentUser.user;
+      const defaultSite = editingObj ? editingObj.Site : (activeSiteNames[0] || DEFAULT_SITES[0]);
+      const defaultCat = editingObj ? editingObj.Category : "Material";
+      const defaultDate = editingObj ? editingObj.Date : todayISO();
+      const defaultVendor = editingObj ? editingObj["Vendor/Contractor"] : "";
+      const defaultDesc = editingObj ? editingObj.Description : "";
+      const defaultQty = editingObj ? editingObj.Qty : 1;
+      const defaultUnit = editingObj ? editingObj.Unit : (state.units[0] || "Nos");
+      const defaultRate = editingObj ? editingObj.Rate : "";
+      const defaultAmt = editingObj ? editingObj.Amount : "";
+
+      const useCategoryDropdown = isAdmin() || isManigandan();
+      const formSiteOptions = editingObj && !activeSiteNames.includes(editingObj.Site)
+        ? [editingObj.Site, ...activeSiteNames]
+        : activeSiteNames;
+
+      let html = "";
+
+      if (!isAdmin()) {
+        html += `
+          <div class="eng-toolbar no-print">
+            <div class="period-group">
+              ${["Day", "Week", "Month", "All"].map(p => `
+                <button type="button" class="period-btn ${state.engPeriod === p ? "active" : ""}" onclick="state.engPeriod = '${p}'; render();">${p}</button>
+              `).join("")}
+            </div>
+            <button type="button" class="btn-plus-expense" onclick="openExpenseForm()">+ Expense</button>
+          </div>
+        `;
+      }
+
+      if (showForm) {
+        html += `
+          <div class="card no-print">
+            <div class="card-title">${editingObj ? "Edit Expense Entry" : "New Expense Entry"}</div>
+            <form onsubmit="saveExpense(event)">
+              <div class="lr-form-grid">
+                <div class="field">
+                  <label>Date</label>
+                  <input type="date" id="expDate" value="${defaultDate}" required />
+                </div>
+                <div class="field">
+                  <label>Site</label>
+                  <select id="expSite">
+                    ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Category</label>
+                  ${useCategoryDropdown ? `
+                    <select id="expCategory">
+                      ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
+                    </select>
+                  ` : `
+                    <input type="text" id="expCategory" value="Material" readonly />
+                  `}
+                </div>
+                <div class="field">
+                  <label>Vendor / Contractor</label>
+                  <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
+                </div>
+
+                ${isAdmin() ? `
+                  <div class="field field-full">
+                    <label>Engineer</label>
+                    <select id="expEngineer">
+                      ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
+                    </select>
+                  </div>
+                ` : ""}
+
+                <div class="field field-full">
+                  <label>Description</label>
+                  <textarea id="expDesc" placeholder="Write complete material or work details..." required>${defaultDesc}</textarea>
+                </div>
+
+                <div class="field">
+                  <label>Qty</label>
+                  <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
+                </div>
+                <div class="field">
+                  <label>Unit</label>
+                  <select id="expUnit">
+                    ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Rate (₹)</label>
+                  <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
+                </div>
+                <div class="field">
+                  <label>Amount (₹)</label>
+                  <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
+                <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
+              </div>
+            </form>
+          </div>
+        `;
+      }
+
+      if (isAdmin()) {
+        html += `
+          <div class="card no-print">
+            <div class="card-title">
+              <span>Filters &amp; Report</span>
+              <button class="btn-secondary btn-sm" onclick="window.print()">Print Report</button>
+            </div>
+            <div class="form-grid">
+              <div class="field">
+                <label>Engineer</label>
+                <select onchange="state.filters.engineer = this.value; render();">
+                  <option value="">All Engineers</option>
+                  ${ENGINEERS.map(e => `<option value="${e}" ${state.filters.engineer === e ? "selected" : ""}>${e}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select onchange="state.filters.site = this.value; render();">
+                  <option value="">All Sites</option>
+                  ${allSiteNames.map(s => `<option value="${s}" ${state.filters.site === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Category</label>
+                <select onchange="state.filters.category = this.value; render();">
+                  <option value="">All Categories</option>
+                  ${CATEGORIES.map(c => `<option value="${c}" ${state.filters.category === c ? "selected" : ""}>${c}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Vendor / Contractor</label>
+                <input type="text" value="${state.filters.vendor}" placeholder="Search vendor..." oninput="state.filters.vendor = this.value; render();" />
+              </div>
+              <div class="field">
+                <label>Description</label>
+                <input type="text" value="${state.filters.description}" placeholder="Search description..." oninput="state.filters.description = this.value; render();" />
+              </div>
+              <div class="field">
+                <label>From Date</label>
+                <input type="date" value="${state.filters.fromDate}" onchange="state.filters.fromDate = this.value; render();" />
+              </div>
+              <div class="field">
+                <label>To Date</label>
+                <input type="date" value="${state.filters.toDate}" onchange="state.filters.toDate = this.value; render();" />
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const scoped = getScopedExpenses().sort((a, b) => {
+        if (b.Date !== a.Date) return b.Date.localeCompare(a.Date);
+        return String(b.RecordId).localeCompare(String(a.RecordId));
+      });
+
+      const totalScopedExpense = scoped.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
+
+      // Compute running balance across full unsettled ledger for accuracy
+      const allUserExpenses = (isAdmin()
+        ? [...state.expenses]
+        : state.expenses.filter(e => e.Engineer === state.currentUser.user)
+      ).sort((a, b) => {
+        if (a.Date !== b.Date) return a.Date.localeCompare(b.Date);
+        return String(a.RecordId).localeCompare(String(b.RecordId));
+      });
+
+      let runningBal = isAdmin()
+        ? (state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0) ||
+           state.funds.filter(f => !f.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0)) -
+          state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0)
+        : state.funds
+            .filter(f => f.Engineer === state.currentUser.user && !f.Settled)
+            .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+
+      const balById = {};
+      for (const row of allUserExpenses) {
+        if (!row.Settled) {
+          runningBal -= Number(row.Amount) || 0;
+        }
+        balById[row.RecordId] = runningBal;
+      }
+
+      const listHeading = isAdmin()
+        ? "Expense Entries"
+        : `Expense Entries (${state.engPeriod})`;
+
+      if (!scoped.length) {
+        html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(0)}</span></div><div class="pb-meta">No expense entries found for this selection.</div></div>`;
+        return html;
+      }
+
+      html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(totalScopedExpense)}</span></div>`;
+
+      let currentDate = "";
+      for (const item of scoped) {
+        if (item.Date !== currentDate) {
+          currentDate = item.Date;
+          const daySum = scoped
+            .filter(x => x.Date === currentDate)
+            .reduce((s, x) => s + (Number(x.Amount) || 0), 0);
+          html += `
+            <div class="date-group-header">
+              <span>${formatDateHeading(currentDate)}</span>
+              <span>${formatINR(daySum)}</span>
+            </div>
+          `;
+        }
+
+        const vendorTag = item["Vendor/Contractor"] ? ` • ${item["Vendor/Contractor"]}` : "";
+        const qtyTag = `${item.Qty} ${item.Unit} × ${formatINR(item.Rate)}`;
+
+        html += `
+          <div class="passbook-item">
+            <div class="pb-left">
+              <div class="pb-site">${item.Site}</div>
+              <div class="pb-desc">${item.Description}</div>
+              <div class="pb-meta">${item.Category}${vendorTag} • ${qtyTag} • ${item.Engineer}</div>
+            </div>
+            <div class="pb-right">
+              <div class="pb-amt-expense">${formatINR(item.Amount)}</div>
+              <div class="pb-bal">Bal ${formatINR(balById[item.RecordId])}</div>
+              ${isAdmin() ? `
+                <div class="pb-actions no-print">
+                  <button class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
+                  <button class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
+                </div>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      return html;
+    }
+
+    function renderSummaryView() {
+      if (!isAdmin()) {
+        const engName = state.currentUser.user;
+        const myFunds = state.funds.filter(f => f.Engineer === engName && !f.Settled);
+        const myExp = state.expenses.filter(e => e.Engineer === engName && !e.Settled);
+        const fSum = myFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const eSum = myExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+
+        return `
+          <div class="summary-grid-3">
+            <div class="stat-box highlight-sage">
+              <div class="stat-label">Fund In</div>
+              <div class="stat-val c-green">${formatINR(fSum)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Expense</div>
+              <div class="stat-val c-red">${formatINR(eSum)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Balance</div>
+              <div class="stat-val c-ink">${formatINR(fSum - eSum)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Fund Given Details (${engName})</div>
+            ${myFunds.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Date</th><th>Mode</th><th>Amount</th></tr></thead>
+                  <tbody>
+                    ${myFunds.map(f => `
+                      <tr>
+                        <td>${f.Date}</td>
+                        <td>${f.Mode || "Online"}</td>
+                        <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No active fund entries given yet.</div>`}
+          </div>
+        `;
+      }
+
+      // Top Overall Admin Summary: Client Received, Site Expense, Balance, Self Expense, Net Balance
+      const totalClientReceived = state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
+      const totalSiteExpense = state.expenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      const siteBalance = totalClientReceived - totalSiteExpense;
+      const totalSelfExpense = state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      const netBalance = siteBalance - totalSelfExpense;
+
+      const allSites = getAllSiteNames();
+      const siteRows = allSites.map(siteName => {
+        const paymentsForSite = state.clientPayments.filter(c => c.Site === siteName);
+        const baseAmt = paymentsForSite.reduce((s, r) => s + (Number(r["Base Amount"]) || 0), 0);
+        const totalAmt = paymentsForSite.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
+        const gstAmt = totalAmt - baseAmt;
+        const expAmt = state.expenses.filter(e => e.Site === siteName).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        return { siteName, baseAmt, gstAmt, totalAmt, expAmt, bal: totalAmt - expAmt };
+      });
+
+      const engRows = ENGINEERS.map(eng => {
+        const fAmt = state.funds.filter(f => f.Engineer === eng && !f.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const eAmt = state.expenses.filter(e => e.Engineer === eng && !e.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        return { eng, fAmt, eAmt, bal: fAmt - eAmt };
+      });
+
+      return `
+        <div class="summary-grid-5">
+          <div class="stat-box highlight-sage">
+            <div class="stat-label">Client Received</div>
+            <div class="stat-val c-green">${formatINR(totalClientReceived)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Site Expense</div>
+            <div class="stat-val c-red">${formatINR(totalSiteExpense)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Balance</div>
+            <div class="stat-val c-ink">${formatINR(siteBalance)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Self Expense</div>
+            <div class="stat-val c-red">${formatINR(totalSelfExpense)}</div>
+          </div>
+          <div class="stat-box highlight-sage">
+            <div class="stat-label">Net Balance</div>
+            <div class="stat-val c-ink">${formatINR(netBalance)}</div>
+          </div>
+        </div>
+
         <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-            <h2 class="card-title" style="margin:0;">Expenses</h2>
-            <button class="btn-primary" onclick="openExpenseModal()">+ Add Expense</button>
-          </div>
-          <div class="filter-row">
-            <button class="pill-btn active" data-range="day" onclick="setRange('day', this)">Day</button>
-            <button class="pill-btn" data-range="week" onclick="setRange('week', this)">Week</button>
-            <button class="pill-btn" data-range="month" onclick="setRange('month', this)">Month</button>
-            <button class="pill-btn" data-range="all" onclick="setRange('all', this)">All</button>
-          </div>
+          <div class="card-title">Site-wise Summary</div>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
                   <th>Site</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th>Amount</th>
+                  <th>Client Base</th>
+                  <th>GST Amount</th>
+                  <th>Client Total</th>
+                  <th>Site Expense</th>
+                  <th>Balance</th>
                 </tr>
               </thead>
-              <tbody id="expensesTableBody"></tbody>
+              <tbody>
+                ${siteRows.map(r => `
+                  <tr>
+                    <td><strong>${r.siteName}</strong></td>
+                    <td>${formatINR(r.baseAmt)}</td>
+                    <td>${formatINR(r.gstAmt)}</td>
+                    <td class="c-green"><strong>${formatINR(r.totalAmt)}</strong></td>
+                    <td class="c-red">${formatINR(r.expAmt)}</td>
+                    <td><strong>${formatINR(r.bal)}</strong></td>
+                  </tr>
+                `).join("")}
+              </tbody>
             </table>
           </div>
         </div>
-      </section>
 
-      <!-- Admin Console -->
-      <section id="viewAdmin" class="hidden">
         <div class="card">
-          <h2 class="card-title">Admin Setup</h2>
-          <div class="filter-row">
-            <button class="pill-btn active" onclick="switchAdminTab('fund', this)">Engineer Fund</button>
-            <button class="pill-btn" onclick="switchAdminTab('settle', this)">Settle Period</button>
-            <button class="pill-btn" onclick="switchAdminTab('sites', this)">Add Site</button>
-          </div>
-
-          <!-- Engineer Fund Tab -->
-          <div id="adminTabFund">
-            <div class="form-grid">
-              <div class="field">
-                <label>Date</label>
-                <input id="fundDate" type="date" />
-              </div>
-              <div class="field">
-                <label>Engineer</label>
-                <select id="fundEngineer">
-                  <option value="Sivashankar">Sivashankar</option>
-                  <option value="Murali">Murali</option>
-                  <option value="Senthil">Senthil</option>
-                  <option value="Yogesh">Yogesh</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Amount (₹)</label>
-                <input id="fundAmount" type="number" placeholder="30000" />
-              </div>
-              <div class="field">
-                <label>Mode</label>
-                <select id="fundMode">
-                  <option value="GPay / UPI">GPay / UPI</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-              </div>
-            </div>
-            <div style="margin-top:12px;">
-              <button class="btn-primary" onclick="saveEngineerFund()">Save Engineer Fund</button>
-            </div>
-
-            <h3 style="margin:18px 0 8px; font-size:14px;">Engineer Fund List</h3>
-            <div class="table-wrap">
-              <table>
-                <thead>
+          <div class="card-title">Engineer Fund Summary</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Engineer</th><th>Fund Given</th><th>Spent</th><th>Balance</th></tr></thead>
+              <tbody>
+                ${engRows.map(r => `
                   <tr>
-                    <th>Date</th>
-                    <th>Engineer</th>
-                    <th>Mode</th>
-                    <th>Amount</th>
-                    <th>Settled</th>
-                    <th>Action</th>
+                    <td><strong>${r.eng}</strong></td>
+                    <td class="c-green">${formatINR(r.fAmt)}</td>
+                    <td class="c-red">${formatINR(r.eAmt)}</td>
+                    <td><strong>${formatINR(r.bal)}</strong></td>
                   </tr>
-                </thead>
-                <tbody id="fundListBody"></tbody>
-              </table>
-            </div>
+                `).join("")}
+              </tbody>
+            </table>
           </div>
+        </div>
+      `;
+    }
 
-          <!-- Settle Period Tab -->
-          <div id="adminTabSettle" class="hidden">
-            <p style="font-size:13px; color:var(--text-muted); margin-top:0;">
-              Settling a period clears older cycle entries from the engineer's active list and moves remaining balance into Carry Balance.
-            </p>
+    const ADMIN_PILLS = [
+      "Client Payment",
+      "Add Site",
+      "Self Expense",
+      "Engineer Fund",
+      "Settle Period"
+    ];
+
+    function renderAdminSetupView() {
+      if (!isAdmin()) return "";
+      const activeSiteNames = getActiveSiteNames();
+      const allSiteNames = getAllSiteNames();
+
+      let bodyHtml = "";
+      if (state.adminSetupTab === "Client Payment") {
+        const editCp = state.editingClientPaymentId
+          ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
+          : null;
+
+        const cpSiteOptions = editCp && !activeSiteNames.includes(editCp.Site)
+          ? [editCp.Site, ...activeSiteNames]
+          : activeSiteNames;
+
+        const filteredCp = state.cpSiteFilter
+          ? state.clientPayments.filter(c => c.Site === state.cpSiteFilter)
+          : state.clientPayments;
+
+        bodyHtml = `
+          <form onsubmit="submitClientPayment(event)">
             <div class="form-grid">
+              <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? editCp.Date : todayISO()}" required /></div>
+              <div class="field"><label>Site</label><select id="cpSite">${cpSiteOptions.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+              <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
+              <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
+              <div class="field"><label>Total Amount (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
               <div class="field">
-                <label>Engineer</label>
-                <select id="settleEngineer">
-                  <option value="Sivashankar">Sivashankar</option>
-                  <option value="Murali">Murali</option>
-                  <option value="Senthil">Senthil</option>
-                  <option value="Yogesh">Yogesh</option>
+                <label>Payment Mode</label>
+                <select id="cpMode">
+                  ${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}
                 </select>
               </div>
-              <div class="field">
-                <label>Settle Date</label>
-                <input id="settleDate" type="date" />
-              </div>
+              <div class="field"><label>Reference No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" placeholder="UTR / Cheque No" /></div>
+              <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" placeholder="Stage / notes" /></div>
             </div>
-            <div style="margin-top:12px;">
-              <button class="btn-primary" onclick="settleEngineerPeriod()">Settle Period &amp; Carry Balance</button>
+            <div class="form-actions">
+              ${editCp ? `<button type="button" class="btn-secondary" onclick="state.editingClientPaymentId = null; render();">Cancel Edit</button>` : ""}
+              <button type="submit" class="btn-primary">${editCp ? "Update Payment" : "Save Client Payment"}</button>
             </div>
-          </div>
+          </form>
 
-          <!-- Add Site Tab -->
-          <div id="adminTabSites" class="hidden">
+          <div style="margin-top:16px;">
+            <div class="card-title">
+              <span>Client Payments List</span>
+              <div style="width:190px;">
+                <select onchange="state.cpSiteFilter = this.value; render();">
+                  <option value="">All Sites</option>
+                  ${allSiteNames.map(s => `<option value="${s}" ${state.cpSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+            ${filteredCp.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Site</th><th>Base</th><th>GST%</th><th>Total</th><th>Mode</th><th>Ref No</th><th>Remarks</th><th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredCp.map(c => `
+                      <tr>
+                        <td>${c.Date}</td>
+                        <td><strong>${c.Site}</strong></td>
+                        <td>${formatINR(c["Base Amount"])}</td>
+                        <td>${c["Gst%"]}%</td>
+                        <td class="c-green"><strong>${formatINR(c.TotalAmount)}</strong></td>
+                        <td>${c.PaymentMode}</td>
+                        <td>${c.ReferenceNo}</td>
+                        <td>${c.Remarks}</td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingClientPaymentId = '${c.RecordId}'; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteClientPayment('${c.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No client payment entries yet.</div>`}
+          </div>
+        `;
+      } else if (state.adminSetupTab === "Add Site") {
+        bodyHtml = `
+          <form onsubmit="submitAddSite(event)">
             <div class="form-grid">
-              <div class="field">
-                <label>Site Name</label>
-                <input id="siteNameInput" type="text" placeholder="Enter Site Name" />
-              </div>
-              <div class="field">
-                <label>Location</label>
-                <input id="siteLocationInput" type="text" placeholder="Enter Location" />
-              </div>
+              <div class="field"><label>Site / Client Name</label><input type="text" id="newSiteName" placeholder="e.g. SVS-Plot12-Thomas" required /></div>
+              <div class="field"><label>Location</label><input type="text" id="newSiteLoc" placeholder="e.g. Sithalapakkam" /></div>
               <div class="field">
                 <label>Status</label>
-                <select id="siteStatusInput">
+                <select id="newSiteStatus">
                   <option value="Active">Active</option>
                   <option value="Completed">Completed</option>
                 </select>
               </div>
             </div>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-              <button class="btn-primary" onclick="saveSiteRecord()">Save Site</button>
-              <button class="btn-secondary" onclick="resetSiteForm()">Clear</button>
-            </div>
+            <div class="form-actions"><button type="submit" class="btn-primary">Save Site</button></div>
+          </form>
 
-            <h3 style="margin:18px 0 8px; font-size:14px;">Sites List</h3>
+          <div style="margin-top:16px;">
+            <div class="card-title">Sites List (Completed sites are hidden from active dropdowns)</div>
             <div class="table-wrap">
               <table>
-                <thead>
-                  <tr>
-                    <th>Site Name</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Edit</th>
-                  </tr>
-                </thead>
-                <tbody id="sitesTableBody"></tbody>
+                <thead><tr><th>Site / Client Name</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  ${state.sites.map(s => {
+                    const name = s["Site Name"];
+                    const status = s.Status || "Active";
+                    const isComp = status.toLowerCase() === "completed";
+                    return `
+                      <tr>
+                        <td><strong>${name}</strong></td>
+                        <td>${s.Location || "-"}</td>
+                        <td><span class="badge-status ${isComp ? "badge-completed" : "badge-active"}">${status}</span></td>
+                        <td>
+                          ${isComp
+                            ? `<button type="button" class="btn-secondary btn-sm" onclick="toggleSiteStatus('${name.replace(/'/g, "\\'")}', 'Active')">Mark Active</button>`
+                            : `<button type="button" class="btn-secondary btn-sm" onclick="toggleSiteStatus('${name.replace(/'/g, "\\'")}', 'Completed')">Mark Completed</button>`
+                          }
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
               </table>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
-  </div>
+        `;
+      } else if (state.adminSetupTab === "Self Expense") {
+        const editSe = state.editingSelfExpenseId
+          ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
+          : null;
 
-  <!-- Bottom Dock with Centered Circular Terracotta + Expense FAB -->
-  <div id="bottomDock" class="bottom-dock hidden">
-    <div class="center-fab-wrap">
-      <button class="fab-round" onclick="openExpenseModal()" title="Add Expense">
-        <span class="fab-plus">+</span>
-        <span class="fab-text">EXPENSE</span>
-      </button>
-    </div>
-    <div class="bottom-bar">
-      <button id="navSummaryBtn" class="nav-btn nav-summary" onclick="switchMainView('summary')">
-        Summary
-      </button>
-      <div class="nav-spacer"></div>
-      <button id="navExpenseBtn" class="nav-btn nav-expense inactive" onclick="switchMainView('expenses')">
-        Expense
-      </button>
-    </div>
-  </div>
+        bodyHtml = `
+          <form onsubmit="submitSelfExpense(event)">
+            <div class="form-grid">
+              <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? editSe.Date : todayISO()}" required /></div>
+              <div class="field">
+                <label>For</label>
+                <select id="seFor">
+                  ${["Senthil", "Manigandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
+              <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="seAmt" value="${editSe ? editSe.Amount : ""}" required /></div>
+            </div>
+            <div class="form-actions">
+              ${editSe ? `<button type="button" class="btn-secondary" onclick="state.editingSelfExpenseId = null; render();">Cancel Edit</button>` : ""}
+              <button type="submit" class="btn-primary">${editSe ? "Update Self Expense" : "Save Self Expense"}</button>
+            </div>
+          </form>
 
-  <!-- Add Expense Modal -->
-  <div id="expenseModal" class="modal-backdrop">
-    <div class="modal-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h3 style="margin:0; color:var(--green-dark);">Add Expense</h3>
-        <button class="btn-secondary" onclick="closeExpenseModal()">Close</button>
-      </div>
-      <div class="form-grid">
-        <div class="field">
-          <label>Date</label>
-          <input id="expDate" type="date" />
-        </div>
-        <div class="field">
-          <label>Site</label>
-          <select id="expSite"></select>
-        </div>
-        <div class="field">
-          <label>Category</label>
-          <select id="expCategory">
-            <option value="Material">Material</option>
-            <option value="Masonry">Masonry</option>
-            <option value="Centring">Centring</option>
-            <option value="Electrician">Electrician</option>
-            <option value="Plumber">Plumber</option>
-            <option value="Painter">Painter</option>
-            <option value="Tiles Layer">Tiles Layer</option>
-            <option value="Carpenter">Carpenter</option>
-            <option value="Fabricator">Fabricator</option>
-            <option value="Polish">Polish</option>
-            <option value="Granite layer">Granite layer</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Description</label>
-          <input id="expDesc" type="text" placeholder="Work / item details" />
-        </div>
-        <div class="field">
-          <label>Amount (₹)</label>
-          <input id="expAmount" type="number" placeholder="0" />
-        </div>
-      </div>
-      <div style="margin-top:14px;">
-        <button class="btn-primary" style="width:100%;" onclick="submitExpense()">Save Expense</button>
-      </div>
-    </div>
-  </div>
+          <div style="margin-top:16px;">
+            <div class="card-title">Self Expenses List</div>
+            ${state.selfExpenses.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Date</th><th>For</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
+                  <tbody>
+                    ${state.selfExpenses.map(s => `
+                      <tr>
+                        <td>${s.Date}</td>
+                        <td><strong>${s.For}</strong></td>
+                        <td>${s.Description}</td>
+                        <td class="c-red"><strong>${formatINR(s.Amount)}</strong></td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingSelfExpenseId = '${s.RecordId}'; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteSelfExpense('${s.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No self expense entries yet.</div>`}
+          </div>
+        `;
+      } else if (state.adminSetupTab === "Engineer Fund") {
+        const editFnd = state.editingFundId
+          ? state.funds.find(f => f.RecordId === state.editingFundId)
+          : null;
 
-  <script>
-    // Replace with your deployed Google Apps Script Web App URL if needed
-    const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+        bodyHtml = `
+          <form onsubmit="submitEngineerFund(event)">
+            <div class="form-grid">
+              <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? editFnd.Date : todayISO()}" required /></div>
+              <div class="field"><label>Engineer</label><select id="efEng">${ENGINEERS.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+              <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
+              <div class="field">
+                <label>Mode</label>
+                <select id="efMode">
+                  ${["GPay / UPI", "Bank Transfer", "Cash"].map(m => `<option value="${m}" ${editFnd && editFnd.Mode === m ? "selected" : ""}>${m}</option>`).join("")}
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              ${editFnd ? `<button type="button" class="btn-secondary" onclick="state.editingFundId = null; render();">Cancel Edit</button>` : ""}
+              <button type="submit" class="btn-primary">${editFnd ? "Update Fund" : "Save Engineer Fund"}</button>
+            </div>
+          </form>
 
-    const STORAGE_KEY = "na_tracker_state_v2";
-    let currentUser = null;
-    let activeRange = "day";
-    let editingSiteId = null;
-
-    let state = {
-      expenses: [],
-      funds: [],
-      sites: [
-        { id: "site-1", name: "Madhuravoyal Site", location: "Madhuravoyal", status: "Active" },
-        { id: "site-2", name: "Sithalapakam Site", location: "Sithalapakam", status: "Active" },
-        { id: "site-3", name: "Oragadam Site", location: "Oragadam", status: "Active" },
-        { id: "site-4", name: "Sunguvachathiram Site", location: "Sunguvachathiram", status: "Active" }
-      ]
-    };
-
-    function getLocalISODate(dateObj = new Date()) {
-      const y = dateObj.getFullYear();
-      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-      const d = String(dateObj.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function normalizeDateStr(val) {
-      if (!val) return "";
-      const str = String(val).trim();
-      const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-      const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      if (slashMatch) {
-        return `${slashMatch[3]}-${String(slashMatch[1]).padStart(2, "0")}-${String(slashMatch[2]).padStart(2, "0")}`;
+          <div style="margin-top:16px;">
+            <div class="card-title">Engineer Fund List</div>
+            ${state.funds.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Date</th><th>Engineer</th><th>Mode</th><th>Amount</th><th>Settled</th><th>Action</th></tr></thead>
+                  <tbody>
+                    ${state.funds.map(f => `
+                      <tr>
+                        <td>${f.Date}</td>
+                        <td><strong>${f.Engineer}</strong></td>
+                        <td>${f.Mode}</td>
+                        <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
+                        <td>${f.Settled ? "Yes" : "No"}</td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteFund('${f.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No engineer fund entries yet.</div>`}
+          </div>
+        `;
+      } else if (state.adminSetupTab === "Settle Period") {
+        bodyHtml = `
+          <form onsubmit="previewSettlePeriod(event)">
+            <div class="form-grid">
+              <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${ENGINEERS.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+              <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
+            </div>
+            <div class="form-actions"><button type="submit" class="btn-secondary">Check Settlement Balance</button></div>
+          </form>
+          ${state.settlePreview ? `
+            <div class="confirm-box">
+              <div style="font-size:13px; margin-bottom:8px;">
+                <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
+                Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
+                Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
+                Carry Forward Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
+              </div>
+              <div class="form-actions" style="margin-top:6px;">
+                <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
+                <button type="button" class="btn-primary btn-sm" onclick="confirmSettlePeriod()">Confirm &amp; Settle</button>
+              </div>
+            </div>
+          ` : ""}
+        `;
       }
-      const parsed = new Date(str);
-      if (!isNaN(parsed.getTime())) return getLocalISODate(parsed);
-      return str.slice(0, 10);
+
+      return `
+        <div class="card">
+          <div class="card-title">Admin Setup</div>
+          <div class="pill-row">
+            ${ADMIN_PILLS.map(p => `
+              <button type="button" class="pill-chip ${state.adminSetupTab === p ? "active" : ""}" onclick="state.adminSetupTab = '${p}'; state.settlePreview = null; render();">${p}</button>
+            `).join("")}
+          </div>
+          ${bodyHtml}
+        </div>
+      `;
     }
 
-    function isInDateRange(dateVal, range) {
-      if (range === "all") return true;
-      const dStr = normalizeDateStr(dateVal);
-      if (!dStr) return false;
-      const todayStr = getLocalISODate();
-      if (range === "day") return dStr === todayStr;
+    function syncGst() {
+      const base = Number(document.getElementById("cpBase")?.value) || 0;
+      const pct = Number(document.getElementById("cpGstPct")?.value) || 0;
+      const totalEl = document.getElementById("cpTotal");
+      if (totalEl) totalEl.value = (base + (base * pct) / 100).toFixed(2);
+    }
 
-      const [y, m, d] = dStr.split("-").map(Number);
-      const target = new Date(y, m - 1, d);
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    async function submitClientPayment(ev) {
+      ev.preventDefault();
+      const existing = state.editingClientPaymentId
+        ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
+        : null;
 
-      if (range === "month") {
-        return target.getFullYear() === today.getFullYear() && target.getMonth() === today.getMonth();
+      const rec = {
+        RecordId: existing ? existing.RecordId : ("CP_" + Date.now()),
+        Date: document.getElementById("cpDate").value,
+        Site: document.getElementById("cpSite").value,
+        "Base Amount": Number(document.getElementById("cpBase").value) || 0,
+        "Gst%": Number(document.getElementById("cpGstPct").value) || 0,
+        TotalAmount: Number(document.getElementById("cpTotal").value) || 0,
+        PaymentMode: document.getElementById("cpMode").value,
+        ReferenceNo: document.getElementById("cpRef").value.trim(),
+        Remarks: document.getElementById("cpRemarks").value.trim()
+      };
+
+      if (existing) {
+        const idx = state.clientPayments.findIndex(c => c.RecordId === existing.RecordId);
+        if (idx > -1) state.clientPayments[idx] = rec;
+        state.editingClientPaymentId = null;
+        await postAction({ action: "updateClientPayment", record: rec });
+      } else {
+        state.clientPayments.unshift(rec);
+        await postAction({ action: "addClientPayment", record: rec });
       }
-      if (range === "week") {
-        // Week starting Monday
-        const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
-        const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - diffToMonday);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-        return target >= weekStart && target <= weekEnd;
+      render();
+    }
+
+    async function deleteClientPayment(recordId) {
+      if (!isAdmin()) return;
+      state.clientPayments = state.clientPayments.filter(c => c.RecordId !== recordId);
+      await postAction({ action: "deleteClientPayment", RecordId: recordId });
+      render();
+    }
+
+    async function submitAddSite(ev) {
+      ev.preventDefault();
+      const name = document.getElementById("newSiteName").value.trim();
+      const loc = document.getElementById("newSiteLoc").value.trim();
+      const status = document.getElementById("newSiteStatus").value;
+      if (!name) return;
+
+      const rec = { "Site Name": name, Location: loc, Status: status };
+      const idx = state.sites.findIndex(s => s["Site Name"].toLowerCase() === name.toLowerCase());
+      if (idx > -1) {
+        state.sites[idx] = rec;
+      } else {
+        state.sites.push(rec);
       }
-      return true;
+      await postAction({ action: "addSite", record: rec });
+      document.getElementById("newSiteName").value = "";
+      document.getElementById("newSiteLoc").value = "";
+      render();
     }
 
-    function showToast(msg) {
-      const el = document.getElementById("toast");
-      el.textContent = msg;
-      el.style.display = "block";
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => {
-        el.style.display = "none";
-      }, 2200);
+    async function toggleSiteStatus(siteName, newStatus) {
+      const idx = state.sites.findIndex(s => s["Site Name"] === siteName);
+      if (idx > -1) {
+        state.sites[idx].Status = newStatus;
+        await postAction({ action: "updateSiteStatus", record: state.sites[idx] });
+        render();
+      }
     }
 
-    function saveLocalState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    async function submitSelfExpense(ev) {
+      ev.preventDefault();
+      const existing = state.editingSelfExpenseId
+        ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
+        : null;
+
+      const rec = {
+        RecordId: existing ? existing.RecordId : ("SE_" + Date.now()),
+        Date: document.getElementById("seDate").value,
+        For: document.getElementById("seFor").value,
+        Description: document.getElementById("seDesc").value.trim(),
+        Amount: Number(document.getElementById("seAmt").value) || 0
+      };
+
+      if (existing) {
+        const idx = state.selfExpenses.findIndex(s => s.RecordId === existing.RecordId);
+        if (idx > -1) state.selfExpenses[idx] = rec;
+        state.editingSelfExpenseId = null;
+        await postAction({ action: "updateSelfExpense", record: rec });
+      } else {
+        state.selfExpenses.unshift(rec);
+        await postAction({ action: "addSelfExpense", record: rec });
+      }
+      render();
     }
 
-    function loadLocalState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
+    async function deleteSelfExpense(recordId) {
+      if (!isAdmin()) return;
+      state.selfExpenses = state.selfExpenses.filter(s => s.RecordId !== recordId);
+      await postAction({ action: "deleteSelfExpense", RecordId: recordId });
+      render();
+    }
+
+    async function submitEngineerFund(ev) {
+      ev.preventDefault();
+      const existing = state.editingFundId
+        ? state.funds.find(f => f.RecordId === state.editingFundId)
+        : null;
+
+      const rec = {
+        RecordId: existing ? existing.RecordId : ("FND_" + Date.now()),
+        Date: document.getElementById("efDate").value,
+        Engineer: document.getElementById("efEng").value,
+        Amount: Number(document.getElementById("efAmt").value) || 0,
+        Mode: document.getElementById("efMode").value,
+        Settled: existing ? existing.Settled : false
+      };
+
+      if (existing) {
+        const idx = state.funds.findIndex(f => f.RecordId === existing.RecordId);
+        if (idx > -1) state.funds[idx] = rec;
+        state.editingFundId = null;
+        await postAction({ action: "updateFund", record: rec });
+      } else {
+        state.funds.unshift(rec);
+        await postAction({ action: "addFund", record: rec });
+      }
+      render();
+    }
+
+    async function deleteFund(recordId) {
+      if (!isAdmin()) return;
+      state.funds = state.funds.filter(f => f.RecordId !== recordId);
+      await postAction({ action: "deleteFund", RecordId: recordId });
+      render();
+    }
+
+    function previewSettlePeriod(ev) {
+      ev.preventDefault();
+      const eng = document.getElementById("spEng").value;
+      const upTo = document.getElementById("spDate").value;
+      const fSum = state.funds
+        .filter(f => f.Engineer === eng && !f.Settled && f.Date <= upTo)
+        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      const eSum = state.expenses
+        .filter(e => e.Engineer === eng && !e.Settled && e.Date <= upTo)
+        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
+      render();
+    }
+
+    async function confirmSettlePeriod() {
+      if (!state.settlePreview) return;
+      const { eng, upTo, carry } = state.settlePreview;
+
+      state.funds.forEach(f => {
+        if (f.Engineer === eng && !f.Settled && f.Date <= upTo) f.Settled = true;
+      });
+      state.expenses.forEach(e => {
+        if (e.Engineer === eng && !e.Settled && e.Date <= upTo) e.Settled = true;
+      });
+
+      if (carry !== 0) {
+        state.funds.unshift({
+          RecordId: "CF_" + Date.now(),
+          Date: todayISO(),
+          Engineer: eng,
+          Amount: carry,
+          Mode: "Carry Forward",
+          Settled: false
+        });
+      }
+
+      state.settlePreview = null;
+      await postAction({ action: "settlePeriod", engineer: eng, upToDate: upTo, carryForward: carry });
+      render();
+    }
+
+    function render() {
+      renderBottomNav();
+      const container = document.getElementById("viewContainer");
+      if (state.activeTab === "summary") {
+        container.innerHTML = renderSummaryView();
+      } else if (state.activeTab === "adminSetup" && isAdmin()) {
+        container.innerHTML = renderAdminSetupView();
+      } else {
+        container.innerHTML = renderExpensesView();
+      }
+    }
+
+    (function initSession() {
+      const saved = sessionStorage.getItem("NA_SESSION");
+      if (saved) {
         try {
-          const parsed = JSON.parse(raw);
-          state = {
-            expenses: Array.isArray(parsed.expenses) ? parsed.expenses : [],
-            funds: Array.isArray(parsed.funds) ? parsed.funds : [],
-            sites: Array.isArray(parsed.sites) && parsed.sites.length ? parsed.sites : state.sites
-          };
-        } catch (e) {}
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.user && parsed.role) {
+            state.currentUser = parsed;
+            showAppShell();
+            loadAllData(false);
+            return;
+          }
+        } catch (_) {}
       }
-    }
-
-    function formatINR(num) {
-      return "₹" + Number(num || 0).toLocaleString("en-IN");
-    }
-
-    function handleLogin() {
-      const user = document.getElementById("loginUserSelect").value;
-      const pin = document.getElementById("loginPinInput").value.trim();
-      if (!pin) {
-        showToast("Enter PIN");
-        return;
-      }
-      currentUser = user;
-      document.getElementById("loginCard").classList.add("hidden");
-      document.getElementById("appContent").classList.remove("hidden");
-      document.getElementById("userSub").textContent = `${user} • Natural Associates`;
-
-      const today = getLocalISODate();
-      document.getElementById("expDate").value = today;
-      document.getElementById("fundDate").value = today;
-      document.getElementById("settleDate").value = today;
-
-      if (user === "Manigandan") {
-        document.getElementById("bottomDock").classList.add("hidden");
-        switchMainView("admin");
-      } else {
-        document.getElementById("bottomDock").classList.remove("hidden");
-        switchMainView("summary");
-      }
-
-      renderAll();
-      syncFromSheet(false);
-    }
-
-    function logoutUser() {
-      currentUser = null;
-      document.getElementById("loginPinInput").value = "";
-      document.getElementById("appContent").classList.add("hidden");
-      document.getElementById("bottomDock").classList.add("hidden");
-      document.getElementById("loginCard").classList.remove("hidden");
-      document.getElementById("userSub").textContent = "Field Expense & Fund Tracker";
-    }
-
-    function switchMainView(view) {
-      document.getElementById("viewSummary").classList.toggle("hidden", view !== "summary");
-      document.getElementById("viewExpenses").classList.toggle("hidden", view !== "expenses");
-      document.getElementById("viewAdmin").classList.toggle("hidden", view !== "admin");
-
-      document.getElementById("navSummaryBtn").classList.toggle("inactive", view !== "summary");
-      document.getElementById("navExpenseBtn").classList.toggle("inactive", view !== "expenses");
-    }
-
-    function switchAdminTab(tab, btn) {
-      btn.parentElement.querySelectorAll(".pill-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById("adminTabFund").classList.toggle("hidden", tab !== "fund");
-      document.getElementById("adminTabSettle").classList.toggle("hidden", tab !== "settle");
-      document.getElementById("adminTabSites").classList.toggle("hidden", tab !== "sites");
-    }
-
-    function setRange(range, btn) {
-      activeRange = range;
-      document.querySelectorAll(".pill-btn[data-range]").forEach(b => {
-        b.classList.toggle("active", b.getAttribute("data-range") === range);
-      });
-      renderAll();
-    }
-
-    function openExpenseModal() {
-      populateSiteDropdown();
-      document.getElementById("expDate").value = getLocalISODate();
-      document.getElementById("expenseModal").classList.add("open");
-    }
-
-    function closeExpenseModal() {
-      document.getElementById("expenseModal").classList.remove("open");
-    }
-
-    function populateSiteDropdown() {
-      const sel = document.getElementById("expSite");
-      const activeSites = state.sites.filter(s => s.status !== "Completed");
-      const list = activeSites.length ? activeSites : state.sites;
-      sel.innerHTML = list.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
-    }
-
-    function submitExpense() {
-      const date = normalizeDateStr(document.getElementById("expDate").value || getLocalISODate());
-      const site = document.getElementById("expSite").value;
-      const category = document.getElementById("expCategory").value;
-      const description = document.getElementById("expDesc").value.trim() || category;
-      const amount = Number(document.getElementById("expAmount").value || 0);
-
-      if (!amount || amount <= 0) {
-        showToast("Enter valid amount");
-        return;
-      }
-
-      const engineerName = currentUser && currentUser !== "Manigandan" ? currentUser : "Sivashankar";
-      const record = {
-        RecordId: "EXP-" + Date.now(),
-        Date: date,
-        Engineer: engineerName,
-        Site: site,
-        Category: category,
-        Description: description,
-        Amount: amount,
-        Settled: "No"
-      };
-
-      // Optimistic immediate update
-      state.expenses.unshift(record);
-      saveLocalState();
-      document.getElementById("expDesc").value = "";
-      document.getElementById("expAmount").value = "";
-      closeExpenseModal();
-      renderAll();
-      showToast("Expense saved");
-
-      postToSheet({ action: "addExpense", record });
-    }
-
-    function saveEngineerFund() {
-      const date = normalizeDateStr(document.getElementById("fundDate").value || getLocalISODate());
-      const engineer = document.getElementById("fundEngineer").value;
-      const amount = Number(document.getElementById("fundAmount").value || 0);
-      const mode = document.getElementById("fundMode").value;
-
-      if (!amount || amount <= 0) {
-        showToast("Enter valid fund amount");
-        return;
-      }
-
-      const record = {
-        RecordId: "FND-" + Date.now(),
-        Date: date,
-        Engineer: engineer,
-        Amount: amount,
-        Mode: mode,
-        Settled: "No"
-      };
-
-      state.funds.unshift(record);
-      saveLocalState();
-      document.getElementById("fundAmount").value = "";
-      renderAll();
-      showToast("Fund added");
-
-      postToSheet({ action: "addFund", record });
-    }
-
-    function deleteFundRecord(recordId) {
-      state.funds = state.funds.filter(f => String(f.RecordId) !== String(recordId));
-      saveLocalState();
-      renderAll();
-      showToast("Fund entry deleted");
-
-      postToSheet({ action: "deleteFund", recordId });
-    }
-
-    function settleEngineerPeriod() {
-      const engineer = document.getElementById("settleEngineer").value;
-      const settleDate = normalizeDateStr(document.getElementById("settleDate").value || getLocalISODate());
-
-      const activeFunds = state.funds.filter(f => f.Engineer === engineer && String(f.Settled || "No") !== "Yes");
-      const activeExpenses = state.expenses.filter(e => e.Engineer === engineer && String(e.Settled || "No") !== "Yes");
-
-      const totalFund = activeFunds.reduce((sum, f) => sum + Number(f.Amount || 0), 0);
-      const totalExp = activeExpenses.reduce((sum, e) => sum + Number(e.Amount || 0), 0);
-      const carryBalance = totalFund - totalExp;
-
-      // Mark old cycle records settled so they no longer appear in active list
-      state.funds = state.funds.map(f =>
-        f.Engineer === engineer && String(f.Settled || "No") !== "Yes"
-          ? { ...f, Settled: "Yes" }
-          : f
-      );
-      state.expenses = state.expenses.map(e =>
-        e.Engineer === engineer && String(e.Settled || "No") !== "Yes"
-          ? { ...e, Settled: "Yes" }
-          : e
-      );
-
-      // Carry forward balance as new active carry record for next cycle
-      const carryRecord = {
-        RecordId: "CARRY-" + Date.now(),
-        Date: settleDate,
-        Engineer: engineer,
-        Amount: carryBalance,
-        Mode: "Carry Balance",
-        Settled: "No",
-        IsCarry: true
-      };
-      state.funds.unshift(carryRecord);
-
-      saveLocalState();
-      renderAll();
-      showToast(`Settled ${engineer}. Carry: ${formatINR(carryBalance)}`);
-
-      postToSheet({
-        action: "settlePeriod",
-        engineer,
-        settleDate,
-        carryBalance,
-        carryRecord
-      });
-    }
-
-    function saveSiteRecord() {
-      const name = document.getElementById("siteNameInput").value.trim();
-      const location = document.getElementById("siteLocationInput").value.trim();
-      const status = document.getElementById("siteStatusInput").value;
-
-      if (!name) {
-        showToast("Enter site name");
-        return;
-      }
-
-      if (editingSiteId) {
-        state.sites = state.sites.map(s =>
-          s.id === editingSiteId ? { ...s, name, location, status } : s
-        );
-        showToast("Site updated");
-      } else {
-        state.sites.push({
-          id: "site-" + Date.now(),
-          name,
-          location,
-          status
-        });
-        showToast("Site added");
-      }
-
-      resetSiteForm();
-      saveLocalState();
-      renderAll();
-      postToSheet({ action: "saveSites", sites: state.sites });
-    }
-
-    function editSiteRecord(id) {
-      const site = state.sites.find(s => s.id === id);
-      if (!site) return;
-      editingSiteId = id;
-      document.getElementById("siteNameInput").value = site.name || "";
-      document.getElementById("siteLocationInput").value = site.location || "";
-      document.getElementById("siteStatusInput").value = site.status || "Active";
-    }
-
-    function resetSiteForm() {
-      editingSiteId = null;
-      document.getElementById("siteNameInput").value = "";
-      document.getElementById("siteLocationInput").value = "";
-      document.getElementById("siteStatusInput").value = "Active";
-    }
-
-    function renderAll() {
-      populateSiteDropdown();
-
-      const targetEngineer = currentUser && currentUser !== "Manigandan" ? currentUser : "Sivashankar";
-
-      const visibleExpenses = state.expenses.filter(e => {
-        const matchUser = currentUser === "Manigandan" ? true : e.Engineer === targetEngineer;
-        const notSettled = String(e.Settled || "No") !== "Yes";
-        const matchRange = isInDateRange(e.Date, activeRange);
-        return matchUser && notSettled && matchRange;
-      });
-
-      const activeEngineerFunds = state.funds.filter(f => {
-        const matchUser = currentUser === "Manigandan" ? true : f.Engineer === targetEngineer;
-        const notSettled = String(f.Settled || "No") !== "Yes";
-        return matchUser && notSettled;
-      });
-
-      const activeEngineerExpenses = state.expenses.filter(e => {
-        const matchUser = currentUser === "Manigandan" ? true : e.Engineer === targetEngineer;
-        const notSettled = String(e.Settled || "No") !== "Yes";
-        return matchUser && notSettled;
-      });
-
-      const totalFund = activeEngineerFunds.reduce((sum, f) => sum + Number(f.Amount || 0), 0);
-      const totalExp = activeEngineerExpenses.reduce((sum, e) => sum + Number(e.Amount || 0), 0);
-      const carryBalance = totalFund - totalExp;
-
-      document.getElementById("statCarryBalance").textContent = formatINR(carryBalance);
-      document.getElementById("statActiveFund").textContent = formatINR(totalFund);
-      document.getElementById("statActiveExpense").textContent = formatINR(totalExp);
-
-      const expBody = document.getElementById("expensesTableBody");
-      if (!visibleExpenses.length) {
-        expBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No entries for ${activeRange.toUpperCase()}</td></tr>`;
-      } else {
-        expBody.innerHTML = visibleExpenses
-          .map(e => `
-            <tr>
-              <td>${normalizeDateStr(e.Date)}</td>
-              <td>${e.Site || "-"}</td>
-              <td>${e.Category || "-"}</td>
-              <td>${e.Description || "-"}</td>
-              <td><strong>${formatINR(e.Amount)}</strong></td>
-            </tr>
-          `)
-          .join("");
-      }
-
-      const fundBody = document.getElementById("fundListBody");
-      fundBody.innerHTML = state.funds
-        .map(f => `
-          <tr>
-            <td>${normalizeDateStr(f.Date)}</td>
-            <td>${f.Engineer}</td>
-            <td>${f.Mode || "-"}</td>
-            <td><strong>${formatINR(f.Amount)}</strong></td>
-            <td>${f.Settled || "No"}</td>
-            <td><button class="btn-danger-sm" onclick="deleteFundRecord('${f.RecordId}')">Delete</button></td>
-          </tr>
-        `)
-        .join("");
-
-      const sitesBody = document.getElementById("sitesTableBody");
-      sitesBody.innerHTML = state.sites
-        .map(s => {
-          const isComp = s.status === "Completed";
-          return `
-            <tr>
-              <td><strong>${s.name}</strong></td>
-              <td>${s.location || "-"}</td>
-              <td><span class="${isComp ? "badge-completed" : "badge-active"}">${isComp ? "Completed" : "Active"}</span></td>
-              <td><button class="btn-sm" onclick="editSiteRecord('${s.id}')">Edit</button></td>
-            </tr>
-          `;
-        })
-        .join("");
-    }
-
-    async function postToSheet(payload) {
-      if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE")) return;
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        document.getElementById("syncWarning").style.display = "none";
-      } catch (err) {
-        document.getElementById("syncWarning").style.display = "block";
-      }
-    }
-
-    async function syncFromSheet(showFeedback = true) {
-      if (!SCRIPT_URL || SCRIPT_URL.includes("PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE")) {
-        if (showFeedback) showToast("Set SCRIPT_URL first");
-        return;
-      }
-      const btn = document.getElementById("syncBtn");
-      btn.classList.add("syncing");
-      try {
-        const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`, { cache: "no-store" });
-        const data = await res.json();
-        if (data && typeof data === "object") {
-          if (Array.isArray(data.expenses)) state.expenses = data.expenses;
-          if (Array.isArray(data.funds)) state.funds = data.funds;
-          if (Array.isArray(data.sites) && data.sites.length) state.sites = data.sites;
-          saveLocalState();
-          renderAll();
-        }
-        document.getElementById("syncWarning").style.display = "none";
-        if (showFeedback) showToast("Synced");
-      } catch (err) {
-        document.getElementById("syncWarning").style.display = "block";
-        if (showFeedback) showToast("Sync check needed");
-      } finally {
-        btn.classList.remove("syncing");
-      }
-    }
-
-    loadLocalState();
+      loadAllData(false);
+    })();
   </script>
 </body>
 </html>
