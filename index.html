@@ -668,7 +668,7 @@
         <div class="login-field">
           <select id="loginUserSelect" class="login-user-select" aria-label="User">
             <option value="Admin" selected>Admin</option>
-            <option value="Manikandan">Manikandan</option>
+            <option value="Manigandan">Manigandan</option>
             <option value="Senthil">Senthil</option>
             <option value="Sivashankar">Sivashankar</option>
             <option value="Yogesh">Yogesh</option>
@@ -737,9 +737,9 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V6";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V7";
 
-    const ENGINEERS = ["Manikandan", "Senthil", "Sivashankar", "Yogesh"];
+    const ENGINEERS = ["Manigandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -754,22 +754,27 @@
       "Granite layer"
     ];
     const DEFAULT_SITES = [
-      "Madhuravoyal",
-      "Sithalapakam",
-      "Oragadam",
-      "Sunguvachathiram",
-      "Plot-6A"
+      "Madhuravoyal-Kannan Sir",
+      "Sithalapakam-Nakkiran Sir",
+      "Oragadam-Thyagarajan",
+      "Valasaravakkam-Maran Sir",
+      "SVS-Plot6A&10",
+      "SVS-Plot11",
+       "SVS-Plot30",
+      "SVS-Plot23"
+      
     ];
+    const REMOVED_UNITS = new Set(["load", "day", "d", "nmr", "w-payment", "w payment"]);
     const DEFAULT_UNITS = [
-      "Nos", "Kg", "Tons", "Cft", "Ltr", "Load", "Bags", "Day", "NMR", "Bundle", "Advance", "Transport", "W-Payment"
+      "Nos", "Kg", "Tons", "Cft", "Ltr", "Unit", "Bundle", "Advance", "Transport"
     ];
 
     const FALLBACK_USERS = [
-      { user: "Admin", role: "ADMIN", password: "1234" },
-      { user: "Manikandan", role: "Manikandan", password: "1234" },
-      { user: "Senthil", role: "ENGINEER", password: "1234" },
+      { user: "Admin", role: "ADMIN", password: "2021" },
+      { user: "Manigandan", role: "Manigandan", password: "2962" },
+      { user: "Senthil", role: "ENGINEER", password: "1981" },
       { user: "Sivashankar", role: "ENGINEER", password: "1234" },
-      { user: "Yogesh", role: "ENGINEER", password: "1234" }
+      { user: "Yogesh", role: "ENGINEER", password: "7699" }
     ];
 
     const state = {
@@ -810,6 +815,26 @@
       }
     };
 
+    function sanitizeUnitsList(rawUnits) {
+      const cleaned = [];
+      const seen = new Set();
+      const addUnit = (u) => {
+        const val = String(u || "").trim();
+        if (!val) return;
+        const lower = val.toLowerCase();
+        if (REMOVED_UNITS.has(lower)) return;
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          cleaned.push(val);
+        }
+      };
+      if (Array.isArray(rawUnits)) {
+        rawUnits.forEach(addUnit);
+      }
+      DEFAULT_UNITS.forEach(addUnit);
+      return cleaned;
+    }
+
     function persistCache() {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -818,7 +843,7 @@
           clientPayments: state.clientPayments,
           selfExpenses: state.selfExpenses,
           sites: state.sites,
-          units: state.units,
+          units: sanitizeUnitsList(state.units),
           settledUntilByEng: state.settledUntilByEng,
           pendingOps: state.pendingOps
         }));
@@ -835,7 +860,7 @@
         if (Array.isArray(p.clientPayments)) state.clientPayments = normalizeClientPayments(p.clientPayments);
         if (Array.isArray(p.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(p.selfExpenses);
         if (Array.isArray(p.sites) && p.sites.length) state.sites = p.sites;
-        if (Array.isArray(p.units) && p.units.length) state.units = p.units;
+        state.units = sanitizeUnitsList(p.units);
         if (p.settledUntilByEng && typeof p.settledUntilByEng === "object") {
           state.settledUntilByEng = p.settledUntilByEng;
         }
@@ -845,13 +870,31 @@
 
     function toLocalDateStr(val) {
       if (!val) return "";
+      if (val instanceof Date && !isNaN(val.getTime())) {
+        const y = val.getFullYear();
+        const m = String(val.getMonth() + 1).padStart(2, "0");
+        const day = String(val.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
       const str = String(val).trim();
       const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
       if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+      // Handle DD/MM/YYYY or D/M/YYYY (common in India)
       const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (slashMatch) {
-        return `${slashMatch[3]}-${String(slashMatch[1]).padStart(2, "0")}-${String(slashMatch[2]).padStart(2, "0")}`;
+        const p1 = Number(slashMatch[1]);
+        const p2 = Number(slashMatch[2]);
+        const yr = slashMatch[3];
+        let day = p1;
+        let month = p2;
+        if (p2 > 12 && p1 <= 12) {
+          month = p1;
+          day = p2;
+        }
+        return `${yr}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       }
+
       const d = new Date(str);
       if (!isNaN(d.getTime())) {
         const y = d.getFullYear();
@@ -901,8 +944,8 @@
       return state.currentUser && state.currentUser.role === "ADMIN";
     }
 
-    function isManikandan() {
-      return state.currentUser && state.currentUser.user === "Manikandan";
+    function isManigandan() {
+      return state.currentUser && state.currentUser.user === "Manigandan";
     }
 
     function togglePasswordVisibility() {
@@ -937,7 +980,7 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manikandan" : (matched.role || "ENGINEER"))
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
@@ -1005,16 +1048,18 @@
           const amt = Number(r.Amount ?? r.amount ?? (qty * rate)) || 0;
           const desc = String(r.Description || r.description || "").trim();
           const recId = String(r.RecordId || r.id || "").trim();
+          const rawUnit = String(r.Unit || r.unit || "Nos").trim();
+          const unit = REMOVED_UNITS.has(rawUnit.toLowerCase()) ? "Unit" : rawUnit;
           return {
             RecordId: recId || `EXP_${i + 1}`,
             Date: toLocalDateStr(r.Date || r.date || todayISO()),
-            Engineer: String(r.Engineer || r.engineer || "Manikandan").trim(),
+            Engineer: String(r.Engineer || r.engineer || "Manigandan").trim(),
             Site: String(r.Site || r.site || "").trim(),
             Category: String(r.Category || r.category || "Material").trim(),
             "Vendor/Contractor": String(r["Vendor/Contractor"] || r.vendor || "").trim(),
             Description: desc,
             Qty: qty,
-            Unit: String(r.Unit || r.unit || "Nos").trim(),
+            Unit: unit,
             Rate: rate,
             Amount: amt,
             Settled: isSettledFlag(r.Settled ?? r.settled)
@@ -1070,10 +1115,27 @@
         .filter(x => x.Amount > 0 && (x.Description.length > 0 || x.For.length > 0));
     }
 
-    function isAfterOrOnSettledDate(eng, dateStr) {
+    function getLatestCarryRecForEng(eng) {
+      const carries = state.funds
+        .filter(f => f.Engineer === eng && f.Mode === "Carry Balance")
+        .sort((a, b) => String(b.RecordId).localeCompare(String(a.RecordId)) || toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
+      return carries[0] || null;
+    }
+
+    function isRecordBeforeSettlement(eng, recDate, recId = "") {
       const settledUntil = state.settledUntilByEng[eng];
+      const latestCarry = getLatestCarryRecForEng(eng);
+      if (latestCarry) {
+        if (recId === latestCarry.RecordId) return false;
+        const carryDate = toLocalDateStr(latestCarry.Date);
+        const d = toLocalDateStr(recDate);
+        if (settledUntil && d <= settledUntil) return true;
+        if (d < carryDate) return true;
+        if (d === carryDate && recId && String(recId) < String(latestCarry.RecordId)) return true;
+        return false;
+      }
       if (!settledUntil) return false;
-      return toLocalDateStr(dateStr) <= settledUntil;
+      return toLocalDateStr(recDate) <= settledUntil;
     }
 
     function applyPendingOpsToState() {
@@ -1097,6 +1159,28 @@
           }
         } else if (op.action === "deleteFund") {
           state.funds = state.funds.filter(x => x.RecordId !== op.RecordId);
+        } else if (op.action === "settlePeriod") {
+          const eng = op.engineer;
+          const upTo = toLocalDateStr(op.upToDate);
+          if (eng && upTo) {
+            state.settledUntilByEng[eng] = upTo;
+            state.funds.forEach(f => {
+              if (f.Engineer === eng && f.Mode !== "Carry Balance" && toLocalDateStr(f.Date) <= upTo) {
+                f.Settled = true;
+              }
+            });
+            state.expenses.forEach(e => {
+              if (e.Engineer === eng && toLocalDateStr(e.Date) <= upTo) {
+                e.Settled = true;
+              }
+            });
+          }
+          if (op.carryRecord) {
+            const cr = normalizeFunds([op.carryRecord])[0];
+            if (cr && !state.funds.some(f => f.RecordId === cr.RecordId)) {
+              state.funds.unshift(cr);
+            }
+          }
         } else if (op.action === "addClientPayment" || op.action === "updateClientPayment") {
           const rec = normalizeClientPayments([op.record])[0];
           if (rec) {
@@ -1141,11 +1225,14 @@
 
     let isSyncingNow = false;
 
-    function isUserTypingInField() {
+    function isUserInteractingWithFormOrDropdown() {
+      if (state.showExpenseForm || state.editingExpenseId || state.adminAddFormOpen || state.settlePreview) {
+        return true;
+      }
       const active = document.activeElement;
       if (!active) return false;
       const tag = active.tagName;
-      return tag === "TEXTAREA" || (tag === "INPUT" && active.type !== "date");
+      return tag === "SELECT" || tag === "TEXTAREA" || (tag === "INPUT" && active.type !== "date");
     }
 
     async function loadAllData(showMessage = false) {
@@ -1191,10 +1278,7 @@
           state.sites = Array.from(map.values());
         }
 
-        if (Array.isArray(data.units) && data.units.length) {
-          const mergedUnits = new Set([...data.units, ...DEFAULT_UNITS]);
-          state.units = Array.from(mergedUnits);
-        }
+        state.units = sanitizeUnitsList(data.units);
 
         applyPendingOpsToState();
         persistCache();
@@ -1203,7 +1287,7 @@
         if (showMessage) setBanner("Check Apps Script access (Anyone).", "warn");
       } finally {
         isSyncingNow = false;
-        if (state.currentUser && !isUserTypingInField()) {
+        if (state.currentUser && !isUserInteractingWithFormOrDropdown()) {
           render();
         }
       }
@@ -1275,7 +1359,7 @@
         list = list.filter(e =>
           e.Engineer === eng &&
           !isSettledFlag(e.Settled) &&
-          !isAfterOrOnSettledDate(eng, e.Date)
+          !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
         );
         const today = todayISO();
         if (state.engPeriod === "Day") {
@@ -1347,10 +1431,10 @@
 
       const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
-        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manikandan")
+        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
         : state.currentUser.user;
       const site = document.getElementById("expSite").value;
-      const category = (isAdmin() || isManikandan())
+      const category = (isAdmin() || isManigandan())
         ? (document.getElementById("expCategory")?.value || "Material")
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
@@ -1426,6 +1510,7 @@
 
     function renderEntryFormCard(editingObj) {
       const activeSiteNames = getActiveSiteNames();
+      const unitOptions = sanitizeUnitsList(state.units);
       const defaultEng = editingObj ? editingObj.Engineer : state.currentUser.user;
       const defaultSite = editingObj ? editingObj.Site : (activeSiteNames[0] || DEFAULT_SITES[0]);
       const defaultCat = editingObj ? editingObj.Category : "Material";
@@ -1433,14 +1518,20 @@
       const defaultVendor = editingObj ? editingObj["Vendor/Contractor"] : "";
       const defaultDesc = editingObj ? editingObj.Description : "";
       const defaultQty = editingObj ? editingObj.Qty : 1;
-      const defaultUnit = editingObj ? editingObj.Unit : (state.units[0] || "Nos");
+      const defaultUnit = editingObj && !REMOVED_UNITS.has(String(editingObj.Unit || "").toLowerCase())
+        ? editingObj.Unit
+        : (unitOptions[0] || "Nos");
       const defaultRate = editingObj ? editingObj.Rate : "";
       const defaultAmt = editingObj ? editingObj.Amount : "";
 
-      const useCategoryDropdown = isAdmin() || isManikandan();
+      const useCategoryDropdown = isAdmin() || isManigandan();
       const formSiteOptions = editingObj && !activeSiteNames.includes(editingObj.Site)
         ? [editingObj.Site, ...activeSiteNames]
         : activeSiteNames;
+
+      const formUnitOptions = !unitOptions.includes(defaultUnit)
+        ? [defaultUnit, ...unitOptions]
+        : unitOptions;
 
       return `
         <div class="card no-print">
@@ -1512,7 +1603,7 @@
                   <div class="field">
                     <label>Unit</label>
                     <select id="expUnit">
-                      ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                      ${formUnitOptions.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
                     </select>
                   </div>
                 </div>
@@ -1521,7 +1612,7 @@
                   <div class="field">
                     <label>Unit</label>
                     <select id="expUnit">
-                      ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                      ${formUnitOptions.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
                     </select>
                   </div>
                   <div class="field">
@@ -1885,7 +1976,7 @@
                   <div class="field">
                     <label>For</label>
                     <select id="seFor">
-                      ${["Senthil", "Manikandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
+                      ${["Senthil", "Manigandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
                     </select>
                   </div>
                   <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
@@ -2088,17 +2179,16 @@
     function renderSummaryView() {
       if (!isAdmin()) {
         const engName = state.currentUser.user;
-        const settledUntil = state.settledUntilByEng[engName] || "";
 
         const myFunds = state.funds.filter(f =>
           f.Engineer === engName &&
           !isSettledFlag(f.Settled) &&
-          (!settledUntil || toLocalDateStr(f.Date) > settledUntil || f.Mode === "Carry Balance")
+          !isRecordBeforeSettlement(engName, f.Date, f.RecordId)
         );
         const myExp = state.expenses.filter(e =>
           e.Engineer === engName &&
           !isSettledFlag(e.Settled) &&
-          !isAfterOrOnSettledDate(engName, e.Date)
+          !isRecordBeforeSettlement(engName, e.Date, e.RecordId)
         );
 
         const carryItem = myFunds.find(f => f.Mode === "Carry Balance");
@@ -2109,7 +2199,7 @@
         return `
           <div class="summary-grid-3">
             <div class="stat-box highlight-soft">
-              <div class="stat-label">${carryItem ? "Carry / Fund" : "Fund Received"}</div>
+              <div class="stat-label">${carryItem ? "Carry Balance" : "Fund Received"}</div>
               <div class="stat-val c-green">${formatINR(fSum)}</div>
             </div>
             <div class="stat-box">
@@ -2122,7 +2212,7 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-title">Fund Details (${engName})</div>
+            <div class="card-title">Balance / Fund Details (${engName})</div>
             ${myFunds.length ? `
               <div class="table-wrap">
                 <table>
@@ -2138,7 +2228,7 @@
                   </tbody>
                 </table>
               </div>
-            ` : `<div class="pb-meta">No fund entries yet.</div>`}
+            ` : `<div class="pb-meta">No active balance entries.</div>`}
           </div>
         `;
       }
@@ -2417,7 +2507,7 @@
     restoreCache();
 
     setInterval(() => {
-      if (state.currentUser && document.visibilityState === "visible" && !isUserTypingInField()) {
+      if (state.currentUser && document.visibilityState === "visible" && !isUserInteractingWithFormOrDropdown()) {
         loadAllData(false);
       }
     }, 4000);
