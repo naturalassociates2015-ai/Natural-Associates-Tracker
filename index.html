@@ -34,7 +34,7 @@
     body {
       background-color: var(--bg);
       color: var(--ink);
-      padding-bottom: 84px;
+      padding-bottom: 96px;
       line-height: 1.45;
       min-height: 100vh;
     }
@@ -367,18 +367,21 @@
       color: #ffffff;
     }
 
-    .lr-form-grid {
+    /* Step-by-step Left-Right paired rows */
+    .step-pairs {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .pair-row {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
     }
 
-    .field-full {
-      grid-column: 1 / -1;
-    }
-
-    .field-full textarea {
-      min-height: 72px;
+    .desc-box {
+      min-height: 54px;
       resize: vertical;
       font-size: 14px;
       background: #fafbfc;
@@ -544,21 +547,51 @@
       margin-top: 12px;
     }
 
+    /* Bottom bar + bottom "+" button right above the nav bar */
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: #ffffff;
-      border-top: 1px solid var(--border);
-      box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.08);
       z-index: 40;
+      pointer-events: none;
+    }
+
+    .bottom-plus-bar {
+      max-width: 1100px;
+      margin: 0 auto 8px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: none;
+    }
+
+    .bottom-plus-btn {
+      pointer-events: auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--terracotta);
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 14px rgba(200, 75, 49, 0.45);
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .bottom-nav-inner {
       max-width: 1100px;
       margin: 0 auto;
       display: flex;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.08);
+      pointer-events: auto;
     }
 
     .nav-btn {
@@ -583,16 +616,6 @@
 
     .nav-btn.nav-summary.active {
       background: var(--accent);
-      color: #ffffff;
-    }
-
-    .nav-btn.nav-entry {
-      color: var(--header-bg);
-      background: #f8fafc;
-    }
-
-    .nav-btn.nav-entry.active {
-      background: var(--header-bg);
       color: #ffffff;
     }
 
@@ -707,13 +730,14 @@
     </main>
 
     <nav class="bottom-nav no-print">
+      <div id="bottomPlusBar" class="bottom-plus-bar"></div>
       <div class="bottom-nav-inner" id="bottomNavInner"></div>
     </nav>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V5";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V6";
 
     const ENGINEERS = ["Manikandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
@@ -752,7 +776,7 @@
       currentUser: null,
       activeTab: "summary",
       engPeriod: "All",
-      adminDetailPanel: null, // "client" | "siteExpense" | "selfExpense" | "engineerFund" | "sites" | null
+      adminDetailPanel: null,
       adminFilterOpen: false,
       adminAddFormOpen: false,
       cpSiteFilter: "",
@@ -765,7 +789,7 @@
       editingFundId: null,
       editingSelfExpenseId: null,
       editingSiteName: null,
-      settledUntilByEng: {}, // { [engineer]: "YYYY-MM-DD" }
+      settledUntilByEng: {},
       settlePreview: null,
       pendingOps: [],
       users: [...FALLBACK_USERS],
@@ -1046,7 +1070,6 @@
         .filter(x => x.Amount > 0 && (x.Description.length > 0 || x.For.length > 0));
     }
 
-    // Helper: checks if an item for `eng` on `dateStr` is excluded due to a settlement date
     function isAfterOrOnSettledDate(eng, dateStr) {
       const settledUntil = state.settledUntilByEng[eng];
       if (!settledUntil) return false;
@@ -1118,6 +1141,13 @@
 
     let isSyncingNow = false;
 
+    function isUserTypingInField() {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName;
+      return tag === "TEXTAREA" || (tag === "INPUT" && active.type !== "date");
+    }
+
     async function loadAllData(showMessage = false) {
       if (isSyncingNow) return;
       isSyncingNow = true;
@@ -1173,7 +1203,9 @@
         if (showMessage) setBanner("Check Apps Script access (Anyone).", "warn");
       } finally {
         isSyncingNow = false;
-        if (state.currentUser) render();
+        if (state.currentUser && !isUserTypingInField()) {
+          render();
+        }
       }
     }
 
@@ -1208,10 +1240,7 @@
       state.activeTab = tabId;
       state.settlePreview = null;
       state.adminAddFormOpen = false;
-      if (tabId === "entry") {
-        state.editingExpenseId = null;
-        state.showExpenseForm = true;
-      } else if (tabId !== "expenses") {
+      if (tabId !== "expenses") {
         state.showExpenseForm = false;
         state.editingExpenseId = null;
       }
@@ -1219,15 +1248,19 @@
     }
 
     function renderBottomNav() {
+      const plusBar = document.getElementById("bottomPlusBar");
       const navEl = document.getElementById("bottomNavInner");
 
       if (!isAdmin()) {
+        plusBar.innerHTML = state.activeTab === "expenses"
+          ? `<button type="button" class="bottom-plus-btn" title="Add Expense" onclick="openExpenseForm()">+</button>`
+          : "";
         navEl.innerHTML = `
           <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
-          <button type="button" class="nav-btn nav-entry ${state.activeTab === "entry" ? "active" : ""}" onclick="onBottomNavClick('entry')">Entry</button>
           <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
         `;
       } else {
+        plusBar.innerHTML = "";
         navEl.innerHTML = `
           <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
           <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
@@ -1281,14 +1314,17 @@
     function openExpenseForm(recordId = null) {
       state.editingExpenseId = recordId;
       state.showExpenseForm = true;
-      state.activeTab = recordId ? "expenses" : "entry";
+      state.activeTab = "expenses";
       render();
+      setTimeout(() => {
+        const descEl = document.getElementById("expDesc");
+        if (descEl && !recordId) descEl.focus();
+      }, 40);
     }
 
     function closeExpenseForm() {
       state.editingExpenseId = null;
       state.showExpenseForm = false;
-      state.activeTab = "expenses";
       render();
     }
 
@@ -1355,7 +1391,6 @@
         state.isSavingExpense = false;
         state.editingExpenseId = null;
         state.showExpenseForm = false;
-        state.activeTab = "expenses";
         render();
         await postAction({ action: "updateExpense", record: updated });
       } else {
@@ -1377,12 +1412,9 @@
         state.isSavingExpense = false;
         state.editingExpenseId = null;
         state.showExpenseForm = false;
-        state.activeTab = "expenses";
         render();
         await postAction({ action: "addExpense", record: newRec });
       }
-
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     async function deleteExpense(recordId) {
@@ -1412,73 +1444,124 @@
 
       return `
         <div class="card no-print">
-          <div class="card-title">${editingObj ? "Edit Expense Entry" : "Expense Entry"}</div>
+          <div class="card-title">${editingObj ? "Edit Expense Entry" : "New Expense Entry"}</div>
           <form onsubmit="saveExpense(event)">
-            <div class="lr-form-grid">
-              <div class="field">
-                <label>Date</label>
-                <input type="date" id="expDate" value="${defaultDate}" required />
-              </div>
-              <div class="field">
-                <label>Site</label>
-                <select id="expSite">
-                  ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
-                </select>
+            <div class="step-pairs">
+              <div class="pair-row">
+                <div class="field">
+                  <label>Date</label>
+                  <input type="date" id="expDate" value="${defaultDate}" required />
+                </div>
+                <div class="field">
+                  <label>Site</label>
+                  <select id="expSite">
+                    ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
+                  </select>
+                </div>
               </div>
 
-              <div class="field">
-                <label>Category</label>
-                ${useCategoryDropdown ? `
-                  <select id="expCategory">
-                    ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
-                  </select>
-                ` : `
-                  <input type="text" id="expCategory" value="Material" readonly />
-                `}
-              </div>
-              <div class="field">
-                <label>Vendor / Contractor</label>
-                <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
+              <div class="pair-row">
+                <div class="field">
+                  <label>Category</label>
+                  ${useCategoryDropdown ? `
+                    <select id="expCategory">
+                      ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
+                    </select>
+                  ` : `
+                    <input type="text" id="expCategory" value="Material" readonly />
+                  `}
+                </div>
+                <div class="field">
+                  <label>Vendor / Contractor</label>
+                  <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
+                </div>
               </div>
 
               ${isAdmin() ? `
-                <div class="field field-full">
-                  <label>Engineer</label>
-                  <select id="expEngineer">
-                    ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
-                  </select>
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Engineer</label>
+                    <select id="expEngineer">
+                      ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Description</label>
+                    <textarea id="expDesc" class="desc-box" rows="2" placeholder="Material or work details..." required>${defaultDesc}</textarea>
+                  </div>
                 </div>
-              ` : ""}
+              ` : `
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Description</label>
+                    <textarea id="expDesc" class="desc-box" rows="2" placeholder="Material or work details..." required>${defaultDesc}</textarea>
+                  </div>
+                  <div class="field">
+                    <label>Qty</label>
+                    <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
+                  </div>
+                </div>
+              `}
 
-              <div class="field field-full">
-                <label>Description</label>
-                <textarea id="expDesc" placeholder="Write complete material or work details..." required>${defaultDesc}</textarea>
-              </div>
+              ${isAdmin() ? `
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Qty</label>
+                    <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
+                  </div>
+                  <div class="field">
+                    <label>Unit</label>
+                    <select id="expUnit">
+                      ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                    </select>
+                  </div>
+                </div>
+              ` : `
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Unit</label>
+                    <select id="expUnit">
+                      ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Rate (₹)</label>
+                    <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
+                  </div>
+                </div>
+              `}
 
-              <div class="field">
-                <label>Qty</label>
-                <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
-              </div>
-              <div class="field">
-                <label>Unit</label>
-                <select id="expUnit">
-                  ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
-                </select>
-              </div>
-
-              <div class="field">
-                <label>Rate (₹)</label>
-                <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
-              </div>
-              <div class="field">
-                <label>Amount (₹)</label>
-                <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
-              </div>
+              ${isAdmin() ? `
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Rate (₹)</label>
+                    <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
+                  </div>
+                  <div class="field">
+                    <label>Amount (₹)</label>
+                    <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
+                  </div>
+                </div>
+              ` : `
+                <div class="pair-row">
+                  <div class="field">
+                    <label>Amount (₹)</label>
+                    <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
+                  </div>
+                  <div class="field" style="display:flex; align-items:flex-end; gap:8px;">
+                    <button type="button" class="btn-secondary" style="flex:1;" onclick="closeExpenseForm()">Close</button>
+                    <button type="submit" id="expSaveBtn" class="btn-primary" style="flex:1;">${editingObj ? "Update" : "Save"}</button>
+                  </div>
+                </div>
+              `}
             </div>
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
-              <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
-            </div>
+
+            ${isAdmin() ? `
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
+                <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
+              </div>
+            ` : ""}
           </form>
         </div>
       `;
@@ -1490,13 +1573,11 @@
         ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
         : null;
 
-      if (state.activeTab === "entry" && !isAdmin()) {
-        return renderEntryFormCard(null);
-      }
+      const showForm = (!isAdmin() && state.showExpenseForm) || (isAdmin() && Boolean(editingObj));
 
       let html = "";
 
-      if (editingObj) {
+      if (showForm) {
         html += renderEntryFormCard(editingObj);
       }
 
@@ -2336,7 +2417,7 @@
     restoreCache();
 
     setInterval(() => {
-      if (state.currentUser && document.visibilityState === "visible") {
+      if (state.currentUser && document.visibilityState === "visible" && !isUserTypingInField()) {
         loadAllData(false);
       }
     }, 4000);
