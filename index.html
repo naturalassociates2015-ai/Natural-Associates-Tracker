@@ -39,7 +39,6 @@
       min-height: 100vh;
     }
 
-    /* Clean Light Login Screen */
     .login-screen {
       min-height: 100vh;
       display: flex;
@@ -152,7 +151,6 @@
       text-align: left;
     }
 
-    /* App Shell */
     .app-shell {
       display: none;
     }
@@ -607,7 +605,6 @@
       margin-top: 10px;
     }
 
-    /* Bottom Nav: Summary (Green) | Small Terracotta + Circle | Expense (Terracotta) */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -714,7 +711,6 @@
   </style>
 </head>
 <body>
-  <!-- LOGIN SCREEN -->
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <div class="login-emblem">
@@ -762,7 +758,6 @@
     </div>
   </div>
 
-  <!-- MAIN APPLICATION -->
   <div id="appShell" class="app-shell">
     <header class="topbar">
       <div class="topbar-inner">
@@ -804,7 +799,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V1";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V2";
 
     const ENGINEERS = ["Manigandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
@@ -842,7 +837,7 @@
     const state = {
       currentUser: null,
       activeTab: "summary",
-      engPeriod: "Month", // Day | Week | Month | All
+      engPeriod: "Month",
       adminSetupTab: "Client Payment",
       adminFilterOpen: false,
       adminAddFormOpen: false,
@@ -856,6 +851,7 @@
       editingSiteName: null,
       settledEngineers: {},
       settlePreview: null,
+      pendingOps: [],
       users: [...FALLBACK_USERS],
       expenses: [],
       funds: [],
@@ -883,7 +879,8 @@
           selfExpenses: state.selfExpenses,
           sites: state.sites,
           units: state.units,
-          settledEngineers: state.settledEngineers
+          settledEngineers: state.settledEngineers,
+          pendingOps: state.pendingOps
         }));
       } catch (_) {}
     }
@@ -900,6 +897,7 @@
         if (Array.isArray(p.sites) && p.sites.length) state.sites = p.sites;
         if (Array.isArray(p.units) && p.units.length) state.units = p.units;
         if (p.settledEngineers && typeof p.settledEngineers === "object") state.settledEngineers = p.settledEngineers;
+        if (Array.isArray(p.pendingOps)) state.pendingOps = p.pendingOps;
       } catch (_) {}
     }
 
@@ -1067,7 +1065,6 @@
       return all.length ? all : [...DEFAULT_SITES];
     }
 
-    // Strict filtering so empty or zero dummy rows never appear
     function normalizeExpenses(list) {
       if (!Array.isArray(list)) return [];
       return list
@@ -1143,10 +1140,78 @@
         .filter(x => x.Amount > 0 && (x.Description.length > 0 || x.For.length > 0));
     }
 
+    function applyPendingOpsToState() {
+      if (!Array.isArray(state.pendingOps) || !state.pendingOps.length) return;
+      for (const op of state.pendingOps) {
+        if (op.action === "addExpense" || op.action === "updateExpense") {
+          const rec = normalizeExpenses([op.record])[0];
+          if (rec) {
+            const idx = state.expenses.findIndex(x => x.RecordId === rec.RecordId);
+            if (idx > -1) state.expenses[idx] = rec;
+            else state.expenses.unshift(rec);
+          }
+        } else if (op.action === "deleteExpense") {
+          state.expenses = state.expenses.filter(x => x.RecordId !== op.RecordId);
+        } else if (op.action === "addFund" || op.action === "updateFund") {
+          const rec = normalizeFunds([op.record])[0];
+          if (rec) {
+            const idx = state.funds.findIndex(x => x.RecordId === rec.RecordId);
+            if (idx > -1) state.funds[idx] = rec;
+            else state.funds.unshift(rec);
+          }
+        } else if (op.action === "deleteFund") {
+          state.funds = state.funds.filter(x => x.RecordId !== op.RecordId);
+        } else if (op.action === "addClientPayment" || op.action === "updateClientPayment") {
+          const rec = normalizeClientPayments([op.record])[0];
+          if (rec) {
+            const idx = state.clientPayments.findIndex(x => x.RecordId === rec.RecordId);
+            if (idx > -1) state.clientPayments[idx] = rec;
+            else state.clientPayments.unshift(rec);
+          }
+        } else if (op.action === "deleteClientPayment") {
+          state.clientPayments = state.clientPayments.filter(x => x.RecordId !== op.RecordId);
+        } else if (op.action === "addSelfExpense" || op.action === "updateSelfExpense") {
+          const rec = normalizeSelfExpenses([op.record])[0];
+          if (rec) {
+            const idx = state.selfExpenses.findIndex(x => x.RecordId === rec.RecordId);
+            if (idx > -1) state.selfExpenses[idx] = rec;
+            else state.selfExpenses.unshift(rec);
+          }
+        } else if (op.action === "deleteSelfExpense") {
+          state.selfExpenses = state.selfExpenses.filter(x => x.RecordId !== op.RecordId);
+        }
+      }
+    }
+
+    async function flushPendingOps() {
+      if (!Array.isArray(state.pendingOps) || !state.pendingOps.length) return;
+      const remaining = [];
+      for (const op of state.pendingOps) {
+        try {
+          const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(op)
+          });
+          if (!res.ok) remaining.push(op);
+        } catch (_) {
+          remaining.push(op);
+        }
+      }
+      state.pendingOps = remaining;
+      persistCache();
+    }
+
     async function loadAllData(showMessage = false) {
       if (showMessage) setBanner("Syncing...", "info");
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getAll&t=${Date.now()}`, { method: "GET", cache: "no-store" });
+        await flushPendingOps();
+        const res = await fetch(`${SCRIPT_URL}?action=getAll&t=${Date.now()}`, {
+          method: "GET",
+          redirect: "follow",
+          cache: "no-store"
+        });
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
@@ -1184,6 +1249,7 @@
           state.units = Array.from(mergedUnits);
         }
 
+        applyPendingOpsToState();
         persistCache();
         if (showMessage) setBanner("Synced.", "info");
       } catch (err) {
@@ -1194,26 +1260,29 @@
     }
 
     async function postAction(payload) {
+      state.pendingOps.push(payload);
       persistCache();
       try {
         const res = await fetch(SCRIPT_URL, {
           method: "POST",
+          redirect: "follow",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          try {
-            const json = await res.json();
-            if (json && json.status === "error") {
-              setBanner(json.message || "Error saving record.", "warn");
-              return false;
-            }
-          } catch (_) {}
+          let json = null;
+          try { json = await res.json(); } catch (_) {}
+          if (json && json.status === "error") {
+            setBanner(json.message || "Error saving record.", "warn");
+            return false;
+          }
+          state.pendingOps = state.pendingOps.filter(x => x !== payload);
+          persistCache();
           setBanner("Saved.", "info");
           return true;
         }
       } catch (_) {}
-      setBanner("Saved locally; check connection for sheet sync.", "warn");
+      setBanner("Saved locally; will sync automatically.", "warn");
       return true;
     }
 
