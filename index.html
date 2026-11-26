@@ -34,7 +34,7 @@
     body {
       background-color: var(--bg);
       color: var(--ink);
-      padding-bottom: 92px;
+      padding-bottom: 84px;
       line-height: 1.45;
       min-height: 100vh;
     }
@@ -166,7 +166,7 @@
     }
 
     .topbar-inner {
-      max-width: 980px;
+      max-width: 1100px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -268,16 +268,6 @@
       color: #fff;
     }
 
-    .btn-plus-expense {
-      background: var(--terracotta);
-      color: #ffffff;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 14px;
-      border-radius: 9px;
-      white-space: nowrap;
-    }
-
     .btn-danger {
       background: var(--terracotta);
       color: #fff;
@@ -295,7 +285,7 @@
     }
 
     .container {
-      max-width: 980px;
+      max-width: 1100px;
       margin: 14px auto 0;
       padding: 0 12px;
     }
@@ -347,7 +337,7 @@
     .eng-toolbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 8px;
       flex-wrap: wrap;
       margin-bottom: 12px;
@@ -366,7 +356,7 @@
     .period-btn {
       background: transparent;
       color: var(--muted);
-      padding: 6px 11px;
+      padding: 6px 12px;
       font-size: 12.5px;
       font-weight: 700;
       border-radius: 7px;
@@ -416,102 +406,14 @@
       flex-wrap: wrap;
     }
 
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 13px;
-    }
-
-    .pill-chip {
-      background: #f1f5f9;
-      color: var(--ink);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px 13px;
-      font-size: 12.5px;
-      font-weight: 700;
-    }
-
-    .pill-chip.active {
-      background: var(--header-bg);
-      color: #fff;
-      border-color: var(--header-bg);
-    }
-
-    .date-group-header {
-      background: #f1f5f9;
-      color: var(--ink);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 8px;
-      margin: 12px 0 7px;
-      display: flex;
-      justify-content: space-between;
-      border: 1px solid var(--border);
-    }
-
-    .passbook-item {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-left: 3.5px solid var(--terracotta);
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .pb-left {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .pb-site {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .pb-desc {
-      font-size: 13.5px;
-      color: var(--ink);
-      margin-top: 2px;
-      word-break: break-word;
-    }
-
     .pb-meta {
-      font-size: 11.5px;
+      font-size: 12.5px;
       color: var(--muted);
-      margin-top: 3px;
-    }
-
-    .pb-right {
-      text-align: right;
-      flex-shrink: 0;
-    }
-
-    .pb-amt-expense {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--terracotta);
-    }
-
-    .pb-bal {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-      font-weight: 700;
     }
 
     .pb-actions {
-      margin-top: 5px;
       display: flex;
       gap: 5px;
-      justify-content: flex-end;
     }
 
     .summary-grid-3 {
@@ -523,8 +425,15 @@
 
     .summary-grid-5 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 9px;
+      margin-bottom: 13px;
+    }
+
+    .admin-blocks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
       margin-bottom: 13px;
     }
 
@@ -532,9 +441,27 @@
       background: #ffffff;
       border: 1px solid var(--border);
       border-radius: 11px;
-      padding: 11px 10px;
+      padding: 12px 10px;
       text-align: center;
       box-shadow: var(--shadow);
+    }
+
+    .stat-box.clickable {
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .stat-box.clickable:hover {
+      border-color: var(--header-bg);
+    }
+
+    .stat-box.clickable:active {
+      transform: scale(0.98);
+    }
+
+    .stat-box.selected-box {
+      border: 2px solid var(--header-bg);
+      box-shadow: 0 4px 14px rgba(30, 41, 59, 0.14);
     }
 
     .stat-box.highlight-soft {
@@ -543,7 +470,7 @@
     }
 
     .stat-label {
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--muted);
       font-weight: 700;
       text-transform: uppercase;
@@ -551,9 +478,15 @@
     }
 
     .stat-val {
-      font-size: 16px;
+      font-size: 16.5px;
       font-weight: 800;
       margin-top: 4px;
+    }
+
+    .stat-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
     }
 
     .badge-status {
@@ -581,9 +514,15 @@
     }
 
     th, td {
-      padding: 8px 7px;
+      padding: 8px 8px;
       border-bottom: 1px solid var(--border);
       text-align: left;
+      white-space: nowrap;
+    }
+
+    td.wrap-cell {
+      white-space: normal;
+      min-width: 160px;
     }
 
     th {
@@ -602,7 +541,7 @@
       border: 1px solid #e7cf96;
       border-radius: 10px;
       padding: 12px;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     .bottom-nav {
@@ -610,45 +549,16 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: transparent;
-      z-index: 40;
-      pointer-events: none;
-    }
-
-    .bottom-fab-wrap {
-      display: flex;
-      justify-content: center;
-      margin-bottom: -16px;
-      position: relative;
-      z-index: 42;
-      pointer-events: auto;
-    }
-
-    .fab-mini-circle {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--terracotta);
-      color: #ffffff;
-      border: 2.5px solid #ffffff;
-      box-shadow: 0 4px 12px rgba(200, 75, 49, 0.42);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1;
-      padding: 0;
-    }
-
-    .bottom-nav-inner {
-      max-width: 980px;
-      margin: 0 auto;
-      display: flex;
       background: #ffffff;
       border-top: 1px solid var(--border);
       box-shadow: 0 -3px 12px rgba(15, 23, 42, 0.08);
-      pointer-events: auto;
+      z-index: 40;
+    }
+
+    .bottom-nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
     }
 
     .nav-btn {
@@ -676,6 +586,16 @@
       color: #ffffff;
     }
 
+    .nav-btn.nav-entry {
+      color: var(--header-bg);
+      background: #f8fafc;
+    }
+
+    .nav-btn.nav-entry.active {
+      background: var(--header-bg);
+      color: #ffffff;
+    }
+
     .nav-btn.nav-expense {
       color: var(--terracotta-dark);
       background: var(--terracotta-soft);
@@ -683,11 +603,6 @@
 
     .nav-btn.nav-expense.active {
       background: var(--terracotta);
-      color: #ffffff;
-    }
-
-    .nav-btn.nav-admin.active {
-      background: var(--header-bg);
       color: #ffffff;
     }
 
@@ -792,14 +707,13 @@
     </main>
 
     <nav class="bottom-nav no-print">
-      <div id="bottomFabWrap" class="bottom-fab-wrap"></div>
       <div class="bottom-nav-inner" id="bottomNavInner"></div>
     </nav>
   </div>
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V3";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V5";
 
     const ENGINEERS = ["Manikandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
@@ -837,11 +751,13 @@
     const state = {
       currentUser: null,
       activeTab: "summary",
-      engPeriod: "Month",
-      adminSetupTab: "Client Payment",
+      engPeriod: "All",
+      adminDetailPanel: null, // "client" | "siteExpense" | "selfExpense" | "engineerFund" | "sites" | null
       adminFilterOpen: false,
       adminAddFormOpen: false,
       cpSiteFilter: "",
+      seSiteFilter: "",
+      efEngFilter: "",
       showExpenseForm: false,
       isSavingExpense: false,
       editingExpenseId: null,
@@ -849,7 +765,7 @@
       editingFundId: null,
       editingSelfExpenseId: null,
       editingSiteName: null,
-      settledEngineers: {},
+      settledUntilByEng: {}, // { [engineer]: "YYYY-MM-DD" }
       settlePreview: null,
       pendingOps: [],
       users: [...FALLBACK_USERS],
@@ -879,7 +795,7 @@
           selfExpenses: state.selfExpenses,
           sites: state.sites,
           units: state.units,
-          settledEngineers: state.settledEngineers,
+          settledUntilByEng: state.settledUntilByEng,
           pendingOps: state.pendingOps
         }));
       } catch (_) {}
@@ -896,7 +812,9 @@
         if (Array.isArray(p.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(p.selfExpenses);
         if (Array.isArray(p.sites) && p.sites.length) state.sites = p.sites;
         if (Array.isArray(p.units) && p.units.length) state.units = p.units;
-        if (p.settledEngineers && typeof p.settledEngineers === "object") state.settledEngineers = p.settledEngineers;
+        if (p.settledUntilByEng && typeof p.settledUntilByEng === "object") {
+          state.settledUntilByEng = p.settledUntilByEng;
+        }
         if (Array.isArray(p.pendingOps)) state.pendingOps = p.pendingOps;
       } catch (_) {}
     }
@@ -951,19 +869,6 @@
       return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
     }
 
-    function formatDateHeading(dateStr) {
-      if (!dateStr) return "Unscheduled Date";
-      const clean = toLocalDateStr(dateStr);
-      const dt = new Date(clean + "T00:00:00");
-      if (isNaN(dt.getTime())) return clean;
-      return dt.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-        year: "numeric"
-      });
-    }
-
     function isSettledFlag(val) {
       return val === true || String(val).trim().toUpperCase() === "TRUE";
     }
@@ -1008,11 +913,12 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manigandan" : (matched.role || "ENGINEER"))
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manikandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
       state.activeTab = "summary";
+      state.adminDetailPanel = null;
       state.showExpenseForm = false;
       state.editingExpenseId = null;
       state.adminAddFormOpen = false;
@@ -1138,6 +1044,13 @@
           Amount: Number(r.Amount ?? r.amount ?? 0) || 0
         }))
         .filter(x => x.Amount > 0 && (x.Description.length > 0 || x.For.length > 0));
+    }
+
+    // Helper: checks if an item for `eng` on `dateStr` is excluded due to a settlement date
+    function isAfterOrOnSettledDate(eng, dateStr) {
+      const settledUntil = state.settledUntilByEng[eng];
+      if (!settledUntil) return false;
+      return toLocalDateStr(dateStr) <= settledUntil;
     }
 
     function applyPendingOpsToState() {
@@ -1295,7 +1208,10 @@
       state.activeTab = tabId;
       state.settlePreview = null;
       state.adminAddFormOpen = false;
-      if (tabId !== "expenses") {
+      if (tabId === "entry") {
+        state.editingExpenseId = null;
+        state.showExpenseForm = true;
+      } else if (tabId !== "expenses") {
         state.showExpenseForm = false;
         state.editingExpenseId = null;
       }
@@ -1303,21 +1219,18 @@
     }
 
     function renderBottomNav() {
-      const fabWrap = document.getElementById("bottomFabWrap");
       const navEl = document.getElementById("bottomNavInner");
 
       if (!isAdmin()) {
-        fabWrap.innerHTML = `<button type="button" class="fab-mini-circle" title="Add Expense" onclick="openExpenseForm()">+</button>`;
         navEl.innerHTML = `
           <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-entry ${state.activeTab === "entry" ? "active" : ""}" onclick="onBottomNavClick('entry')">Entry</button>
           <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
         `;
       } else {
-        fabWrap.innerHTML = "";
         navEl.innerHTML = `
           <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
           <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
-          <button type="button" class="nav-btn nav-admin ${state.activeTab === "adminSetup" ? "active" : ""}" onclick="onBottomNavClick('adminSetup')">Admin Setup</button>
         `;
       }
     }
@@ -1325,7 +1238,12 @@
     function getScopedExpenses() {
       let list = [...state.expenses];
       if (!isAdmin()) {
-        list = list.filter(e => e.Engineer === state.currentUser.user && !isSettledFlag(e.Settled));
+        const eng = state.currentUser.user;
+        list = list.filter(e =>
+          e.Engineer === eng &&
+          !isSettledFlag(e.Settled) &&
+          !isAfterOrOnSettledDate(eng, e.Date)
+        );
         const today = todayISO();
         if (state.engPeriod === "Day") {
           list = list.filter(e => toLocalDateStr(e.Date) === today);
@@ -1361,17 +1279,16 @@
     }
 
     function openExpenseForm(recordId = null) {
-      if (!isAdmin() || recordId) {
-        state.editingExpenseId = recordId;
-        state.showExpenseForm = true;
-        state.activeTab = "expenses";
-        render();
-      }
+      state.editingExpenseId = recordId;
+      state.showExpenseForm = true;
+      state.activeTab = recordId ? "expenses" : "entry";
+      render();
     }
 
     function closeExpenseForm() {
       state.editingExpenseId = null;
       state.showExpenseForm = false;
+      state.activeTab = "expenses";
       render();
     }
 
@@ -1438,6 +1355,7 @@
         state.isSavingExpense = false;
         state.editingExpenseId = null;
         state.showExpenseForm = false;
+        state.activeTab = "expenses";
         render();
         await postAction({ action: "updateExpense", record: updated });
       } else {
@@ -1459,6 +1377,7 @@
         state.isSavingExpense = false;
         state.editingExpenseId = null;
         state.showExpenseForm = false;
+        state.activeTab = "expenses";
         render();
         await postAction({ action: "addExpense", record: newRec });
       }
@@ -1473,15 +1392,8 @@
       await postAction({ action: "deleteExpense", RecordId: recordId });
     }
 
-    function renderExpensesView() {
+    function renderEntryFormCard(editingObj) {
       const activeSiteNames = getActiveSiteNames();
-      const allSiteNames = getAllSiteNames();
-      const editingObj = isAdmin() && state.editingExpenseId
-        ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
-        : null;
-
-      const showForm = (!isAdmin() && state.showExpenseForm) || (isAdmin() && Boolean(editingObj));
-
       const defaultEng = editingObj ? editingObj.Engineer : state.currentUser.user;
       const defaultSite = editingObj ? editingObj.Site : (activeSiteNames[0] || DEFAULT_SITES[0]);
       const defaultCat = editingObj ? editingObj.Category : "Material";
@@ -1498,7 +1410,95 @@
         ? [editingObj.Site, ...activeSiteNames]
         : activeSiteNames;
 
+      return `
+        <div class="card no-print">
+          <div class="card-title">${editingObj ? "Edit Expense Entry" : "Expense Entry"}</div>
+          <form onsubmit="saveExpense(event)">
+            <div class="lr-form-grid">
+              <div class="field">
+                <label>Date</label>
+                <input type="date" id="expDate" value="${defaultDate}" required />
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select id="expSite">
+                  ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Category</label>
+                ${useCategoryDropdown ? `
+                  <select id="expCategory">
+                    ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
+                  </select>
+                ` : `
+                  <input type="text" id="expCategory" value="Material" readonly />
+                `}
+              </div>
+              <div class="field">
+                <label>Vendor / Contractor</label>
+                <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
+              </div>
+
+              ${isAdmin() ? `
+                <div class="field field-full">
+                  <label>Engineer</label>
+                  <select id="expEngineer">
+                    ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
+                  </select>
+                </div>
+              ` : ""}
+
+              <div class="field field-full">
+                <label>Description</label>
+                <textarea id="expDesc" placeholder="Write complete material or work details..." required>${defaultDesc}</textarea>
+              </div>
+
+              <div class="field">
+                <label>Qty</label>
+                <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Unit</label>
+                <select id="expUnit">
+                  ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Rate (₹)</label>
+                <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Amount (₹)</label>
+                <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
+              <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
+
+    function renderExpensesView() {
+      const allSiteNames = getAllSiteNames();
+      const editingObj = isAdmin() && state.editingExpenseId
+        ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
+        : null;
+
+      if (state.activeTab === "entry" && !isAdmin()) {
+        return renderEntryFormCard(null);
+      }
+
       let html = "";
+
+      if (editingObj) {
+        html += renderEntryFormCard(editingObj);
+      }
 
       if (!isAdmin()) {
         html += `
@@ -1508,91 +1508,13 @@
                 <button type="button" class="period-btn ${state.engPeriod === p ? "active" : ""}" onclick="state.engPeriod = '${p}'; render();">${p}</button>
               `).join("")}
             </div>
-            <button type="button" class="btn-plus-expense" onclick="openExpenseForm()">+ Expense</button>
           </div>
         `;
-      }
-
-      if (showForm) {
-        html += `
-          <div class="card no-print">
-            <div class="card-title">${editingObj ? "Edit Expense Entry" : "New Expense Entry"}</div>
-            <form onsubmit="saveExpense(event)">
-              <div class="lr-form-grid">
-                <div class="field">
-                  <label>Date</label>
-                  <input type="date" id="expDate" value="${defaultDate}" required />
-                </div>
-                <div class="field">
-                  <label>Site</label>
-                  <select id="expSite">
-                    ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label>Category</label>
-                  ${useCategoryDropdown ? `
-                    <select id="expCategory">
-                      ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
-                    </select>
-                  ` : `
-                    <input type="text" id="expCategory" value="Material" readonly />
-                  `}
-                </div>
-                <div class="field">
-                  <label>Vendor / Contractor</label>
-                  <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
-                </div>
-
-                ${isAdmin() ? `
-                  <div class="field field-full">
-                    <label>Engineer</label>
-                    <select id="expEngineer">
-                      ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
-                    </select>
-                  </div>
-                ` : ""}
-
-                <div class="field field-full">
-                  <label>Description</label>
-                  <textarea id="expDesc" placeholder="Write complete material or work details..." required>${defaultDesc}</textarea>
-                </div>
-
-                <div class="field">
-                  <label>Qty</label>
-                  <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
-                </div>
-                <div class="field">
-                  <label>Unit</label>
-                  <select id="expUnit">
-                    ${state.units.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
-                  </select>
-                </div>
-
-                <div class="field">
-                  <label>Rate (₹)</label>
-                  <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
-                </div>
-                <div class="field">
-                  <label>Amount (₹)</label>
-                  <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
-                <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
-              </div>
-            </form>
-          </div>
-        `;
-      }
-
-      if (isAdmin()) {
+      } else {
         html += `
           <div class="card no-print">
             <div class="card-title" style="margin-bottom:${state.adminFilterOpen ? "11px" : "0"};">
-              <span>Expense List</span>
+              <span>Expense Filter</span>
               <div style="display:flex; gap:6px;">
                 <button type="button" class="btn-secondary btn-sm" onclick="state.adminFilterOpen = !state.adminFilterOpen; render();">
                   ${state.adminFilterOpen ? "Hide Filter" : "Filter"}
@@ -1653,77 +1575,362 @@
       });
 
       const totalScopedExpense = scoped.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
-
-      const allUserExpenses = (isAdmin()
-        ? [...state.expenses]
-        : state.expenses.filter(e => e.Engineer === state.currentUser.user && !isSettledFlag(e.Settled))
-      ).sort((a, b) => {
-        const da = toLocalDateStr(a.Date);
-        const db = toLocalDateStr(b.Date);
-        if (da !== db) return da.localeCompare(db);
-        return String(a.RecordId).localeCompare(String(b.RecordId));
-      });
-
-      let runningBal = isAdmin()
-        ? (state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0) ||
-           state.funds.filter(f => !isSettledFlag(f.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0)) -
-          state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0)
-        : state.funds
-            .filter(f => f.Engineer === state.currentUser.user && !isSettledFlag(f.Settled))
-            .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-
-      const balById = {};
-      for (const row of allUserExpenses) {
-        if (!isSettledFlag(row.Settled)) {
-          runningBal -= Number(row.Amount) || 0;
-        }
-        balById[row.RecordId] = runningBal;
-      }
-
-      const listHeading = isAdmin()
-        ? "Entries"
-        : `Entries (${state.engPeriod})`;
+      const listHeading = isAdmin() ? "Expenses" : `Expenses (${state.engPeriod})`;
 
       if (!scoped.length) {
         html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(0)}</span></div><div class="pb-meta">No entries found.</div></div>`;
         return html;
       }
 
-      html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(totalScopedExpense)}</span></div>`;
+      html += `
+        <div class="card">
+          <div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(totalScopedExpense)}</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Engineer</th>
+                  <th>Site</th>
+                  <th>Category</th>
+                  <th>Vendor / Contractor</th>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Unit</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                  ${isAdmin() ? `<th class="no-print">Action</th>` : ""}
+                </tr>
+              </thead>
+              <tbody>
+                ${scoped.map(item => `
+                  <tr>
+                    <td>${toLocalDateStr(item.Date)}</td>
+                    <td><strong>${item.Engineer}</strong></td>
+                    <td>${item.Site}</td>
+                    <td>${item.Category}</td>
+                    <td>${item["Vendor/Contractor"] || "-"}</td>
+                    <td class="wrap-cell">${item.Description}</td>
+                    <td>${item.Qty}</td>
+                    <td>${item.Unit}</td>
+                    <td>${formatINR(item.Rate)}</td>
+                    <td class="c-red"><strong>${formatINR(item.Amount)}</strong></td>
+                    ${isAdmin() ? `
+                      <td class="no-print">
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
+                        </div>
+                      </td>
+                    ` : ""}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
 
-      let currentDate = "";
-      for (const item of scoped) {
-        const itemDate = toLocalDateStr(item.Date);
-        if (itemDate !== currentDate) {
-          currentDate = itemDate;
-          const daySum = scoped
-            .filter(x => toLocalDateStr(x.Date) === currentDate)
-            .reduce((s, x) => s + (Number(x.Amount) || 0), 0);
-          html += `
-            <div class="date-group-header">
-              <span>${formatDateHeading(currentDate)}</span>
-              <span>${formatINR(daySum)}</span>
+      return html;
+    }
+
+    function toggleAdminPanel(panelName) {
+      state.adminDetailPanel = state.adminDetailPanel === panelName ? null : panelName;
+      state.adminAddFormOpen = false;
+      state.settlePreview = null;
+      render();
+    }
+
+    function renderAdminDetailSection(activeSiteNames, allSiteNames) {
+      const panel = state.adminDetailPanel;
+      if (!panel) return "";
+
+      if (panel === "client") {
+        const editCp = state.editingClientPaymentId
+          ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
+          : null;
+        const showForm = state.adminAddFormOpen || Boolean(editCp);
+        const cpSiteOptions = editCp && !activeSiteNames.includes(editCp.Site)
+          ? [editCp.Site, ...activeSiteNames]
+          : activeSiteNames;
+
+        const filteredCp = state.cpSiteFilter
+          ? state.clientPayments.filter(c => c.Site === state.cpSiteFilter)
+          : state.clientPayments;
+
+        return `
+          <div class="card">
+            <div class="card-title">
+              <span>Client Received Details</span>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <select style="width:155px;" onchange="state.cpSiteFilter = this.value; render();">
+                  <option value="">All Sites</option>
+                  ${allSiteNames.map(s => `<option value="${s}" ${state.cpSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+                <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingClientPaymentId = null; render();">
+                  ${showForm ? "Close" : "+ Add Payment"}
+                </button>
+              </div>
             </div>
-          `;
-        }
 
-        const vendorTag = item["Vendor/Contractor"] ? ` • ${item["Vendor/Contractor"]}` : "";
-        const qtyTag = `${item.Qty} ${item.Unit} × ${formatINR(item.Rate)}`;
+            ${showForm ? `
+              <form onsubmit="submitClientPayment(event)" style="margin-bottom:14px;">
+                <div class="form-grid">
+                  <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? toLocalDateStr(editCp.Date) : todayISO()}" required /></div>
+                  <div class="field"><label>Site</label><select id="cpSite">${cpSiteOptions.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+                  <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
+                  <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
+                  <div class="field"><label>Total Amount (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
+                  <div class="field">
+                    <label>Payment Mode</label>
+                    <select id="cpMode">
+                      ${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="field"><label>Reference No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" placeholder="UTR / Cheque No" /></div>
+                  <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" placeholder="Client / Stage / notes" /></div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">${editCp ? "Update Payment" : "Save Payment"}</button>
+                </div>
+              </form>
+            ` : ""}
 
-        html += `
-          <div class="passbook-item">
-            <div class="pb-left">
-              <div class="pb-site">${item.Site}</div>
-              <div class="pb-desc">${item.Description}</div>
-              <div class="pb-meta">${item.Category}${vendorTag} • ${qtyTag} • ${item.Engineer}</div>
+            ${filteredCp.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Site</th><th>Base</th><th>GST%</th><th>Total</th><th>Mode</th><th>Ref No</th><th>Remarks</th><th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredCp.map(c => `
+                      <tr>
+                        <td>${toLocalDateStr(c.Date)}</td>
+                        <td><strong>${c.Site}</strong></td>
+                        <td>${formatINR(c["Base Amount"])}</td>
+                        <td>${c["Gst%"]}%</td>
+                        <td class="c-green"><strong>${formatINR(c.TotalAmount)}</strong></td>
+                        <td>${c.PaymentMode}</td>
+                        <td>${c.ReferenceNo || "-"}</td>
+                        <td class="wrap-cell">${c.Remarks || "-"}</td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingClientPaymentId = '${c.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteClientPayment('${c.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No client payments found.</div>`}
+          </div>
+        `;
+      }
+
+      if (panel === "siteExpense") {
+        let list = [...state.expenses];
+        if (state.seSiteFilter) list = list.filter(e => e.Site === state.seSiteFilter);
+        list = list.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
+
+        return `
+          <div class="card">
+            <div class="card-title">
+              <span>Site Expense Details</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <select style="width:155px;" onchange="state.seSiteFilter = this.value; render();">
+                  <option value="">All Sites</option>
+                  ${allSiteNames.map(s => `<option value="${s}" ${state.seSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+                <button type="button" class="btn-secondary btn-sm" onclick="state.adminDetailPanel = null; render();">Close</button>
+              </div>
             </div>
-            <div class="pb-right">
-              <div class="pb-amt-expense">${formatINR(item.Amount)}</div>
-              <div class="pb-bal">Bal ${formatINR(balById[item.RecordId])}</div>
-              ${isAdmin() ? `
-                <div class="pb-actions no-print">
-                  <button class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
-                  <button class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
+            ${list.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th><th>Engineer</th><th>Site</th><th>Category</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${list.map(item => `
+                      <tr>
+                        <td>${toLocalDateStr(item.Date)}</td>
+                        <td><strong>${item.Engineer}</strong></td>
+                        <td>${item.Site}</td>
+                        <td>${item.Category}</td>
+                        <td>${item["Vendor/Contractor"] || "-"}</td>
+                        <td class="wrap-cell">${item.Description}</td>
+                        <td class="c-red"><strong>${formatINR(item.Amount)}</strong></td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No site expenses found.</div>`}
+          </div>
+        `;
+      }
+
+      if (panel === "selfExpense") {
+        const editSe = state.editingSelfExpenseId
+          ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
+          : null;
+        const showForm = state.adminAddFormOpen || Boolean(editSe);
+
+        return `
+          <div class="card">
+            <div class="card-title">
+              <span>Self Expenses</span>
+              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSelfExpenseId = null; render();">
+                ${showForm ? "Close" : "+ Add Self Expense"}
+              </button>
+            </div>
+
+            ${showForm ? `
+              <form onsubmit="submitSelfExpense(event)" style="margin-bottom:14px;">
+                <div class="form-grid">
+                  <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? toLocalDateStr(editSe.Date) : todayISO()}" required /></div>
+                  <div class="field">
+                    <label>For</label>
+                    <select id="seFor">
+                      ${["Senthil", "Manikandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
+                  <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="seAmt" value="${editSe ? editSe.Amount : ""}" required /></div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">${editSe ? "Update" : "Save"}</button>
+                </div>
+              </form>
+            ` : ""}
+
+            ${state.selfExpenses.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Date</th><th>For</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
+                  <tbody>
+                    ${state.selfExpenses.map(s => `
+                      <tr>
+                        <td>${toLocalDateStr(s.Date)}</td>
+                        <td><strong>${s.For}</strong></td>
+                        <td class="wrap-cell">${s.Description}</td>
+                        <td class="c-red"><strong>${formatINR(s.Amount)}</strong></td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingSelfExpenseId = '${s.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteSelfExpense('${s.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No self expenses yet.</div>`}
+          </div>
+        `;
+      }
+
+      if (panel === "engineerFund") {
+        const editFnd = state.editingFundId
+          ? state.funds.find(f => f.RecordId === state.editingFundId)
+          : null;
+        const showForm = state.adminAddFormOpen || Boolean(editFnd);
+
+        const filteredFunds = state.efEngFilter
+          ? state.funds.filter(f => f.Engineer === state.efEngFilter)
+          : state.funds;
+
+        return `
+          <div class="card">
+            <div class="card-title">
+              <span>Engineer Fund Details</span>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <select style="width:150px;" onchange="state.efEngFilter = this.value; render();">
+                  <option value="">All Engineers</option>
+                  ${ENGINEERS.map(e => `<option value="${e}" ${state.efEngFilter === e ? "selected" : ""}>${e}</option>`).join("")}
+                </select>
+                <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingFundId = null; render();">
+                  ${showForm ? "Close" : "+ Add Fund"}
+                </button>
+              </div>
+            </div>
+
+            ${showForm ? `
+              <form onsubmit="submitEngineerFund(event)" style="margin-bottom:14px;">
+                <div class="form-grid">
+                  <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? toLocalDateStr(editFnd.Date) : todayISO()}" required /></div>
+                  <div class="field"><label>Engineer</label><select id="efEng">${ENGINEERS.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+                  <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
+                  <div class="field">
+                    <label>Mode</label>
+                    <select id="efMode">
+                      ${["GPay / UPI", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editFnd && editFnd.Mode === m ? "selected" : ""}>${m}</option>`).join("")}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">${editFnd ? "Update Fund" : "Save Fund"}</button>
+                </div>
+              </form>
+            ` : ""}
+
+            ${filteredFunds.length ? `
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Date</th><th>Engineer</th><th>Mode</th><th>Amount</th><th>Settled</th><th>Action</th></tr></thead>
+                  <tbody>
+                    ${filteredFunds.map(f => `
+                      <tr>
+                        <td>${toLocalDateStr(f.Date)}</td>
+                        <td><strong>${f.Engineer}</strong></td>
+                        <td>${f.Mode}</td>
+                        <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
+                        <td>${isSettledFlag(f.Settled) ? "Yes" : "No"}</td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteFund('${f.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="pb-meta">No fund entries yet.</div>`}
+
+            <div class="confirm-box">
+              <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance)</div>
+              <form onsubmit="previewSettlePeriod(event)">
+                <div class="form-grid">
+                  <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${ENGINEERS.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+                  <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
+                </div>
+                <div class="form-actions"><button type="submit" class="btn-secondary btn-sm">Check Balance</button></div>
+              </form>
+              ${state.settlePreview ? `
+                <div style="font-size:13px; margin-top:8px; padding-top:8px; border-top:1px solid #e7cf96;">
+                  <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
+                  Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
+                  Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
+                  Carry Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
+                  <div class="form-actions" style="margin-top:8px;">
+                    <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
+                    <button type="button" class="btn-primary btn-sm" onclick="confirmSettlePeriod()">Confirm &amp; Settle</button>
+                  </div>
                 </div>
               ` : ""}
             </div>
@@ -1731,24 +1938,97 @@
         `;
       }
 
-      html += `</div>`;
-      return html;
+      if (panel === "sites") {
+        const editSiteObj = state.editingSiteName
+          ? state.sites.find(s => s["Site Name"] === state.editingSiteName)
+          : null;
+        const showForm = state.adminAddFormOpen || Boolean(editSiteObj);
+
+        return `
+          <div class="card">
+            <div class="card-title">
+              <span>Sites</span>
+              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSiteName = null; render();">
+                ${showForm ? "Close" : "+ Add Site"}
+              </button>
+            </div>
+
+            ${showForm ? `
+              <form onsubmit="submitAddSite(event)" style="margin-bottom:14px;">
+                <div class="form-grid">
+                  <div class="field"><label>Site Name</label><input type="text" id="newSiteName" value="${editSiteObj ? editSiteObj["Site Name"] : ""}" placeholder="Enter Site Name" required /></div>
+                  <div class="field"><label>Location</label><input type="text" id="newSiteLoc" value="${editSiteObj ? (editSiteObj.Location || "") : ""}" placeholder="Enter Location" /></div>
+                  <div class="field">
+                    <label>Status</label>
+                    <select id="newSiteStatus">
+                      <option value="Active" ${!editSiteObj || String(editSiteObj.Status).toLowerCase() !== "completed" ? "selected" : ""}>Active</option>
+                      <option value="Completed" ${editSiteObj && String(editSiteObj.Status).toLowerCase() === "completed" ? "selected" : ""}>Completed</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">${editSiteObj ? "Update Site" : "Save Site"}</button>
+                </div>
+              </form>
+            ` : ""}
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Site Name</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  ${state.sites.map(s => {
+                    const name = s["Site Name"];
+                    const status = String(s.Status || "Active").toLowerCase() === "completed" ? "Completed" : "Active";
+                    const isComp = status === "Completed";
+                    return `
+                      <tr>
+                        <td><strong>${name}</strong></td>
+                        <td>${s.Location || "-"}</td>
+                        <td><span class="badge-status ${isComp ? "badge-completed" : "badge-active"}">${status}</span></td>
+                        <td>
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteSite('${name.replace(/'/g, "\\'")}')">Del</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      return "";
     }
 
     function renderSummaryView() {
       if (!isAdmin()) {
         const engName = state.currentUser.user;
-        const myFunds = state.funds.filter(f => f.Engineer === engName && !isSettledFlag(f.Settled));
-        const myExp = state.expenses.filter(e => e.Engineer === engName && !isSettledFlag(e.Settled));
+        const settledUntil = state.settledUntilByEng[engName] || "";
+
+        const myFunds = state.funds.filter(f =>
+          f.Engineer === engName &&
+          !isSettledFlag(f.Settled) &&
+          (!settledUntil || toLocalDateStr(f.Date) > settledUntil || f.Mode === "Carry Balance")
+        );
+        const myExp = state.expenses.filter(e =>
+          e.Engineer === engName &&
+          !isSettledFlag(e.Settled) &&
+          !isAfterOrOnSettledDate(engName, e.Date)
+        );
+
+        const carryItem = myFunds.find(f => f.Mode === "Carry Balance");
         const fSum = myFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
         const eSum = myExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
         const balVal = fSum - eSum;
-        const isSettled = Boolean(state.settledEngineers[engName]);
 
         return `
           <div class="summary-grid-3">
             <div class="stat-box highlight-soft">
-              <div class="stat-label">Fund Received</div>
+              <div class="stat-label">${carryItem ? "Carry / Fund" : "Fund Received"}</div>
               <div class="stat-val c-green">${formatINR(fSum)}</div>
             </div>
             <div class="stat-box">
@@ -1756,7 +2036,7 @@
               <div class="stat-val c-red">${formatINR(eSum)}</div>
             </div>
             <div class="stat-box">
-              <div class="stat-label">${isSettled ? "Carry Balance" : "Balance"}</div>
+              <div class="stat-label">Balance</div>
               <div class="stat-val c-ink">${formatINR(balVal)}</div>
             </div>
           </div>
@@ -1788,401 +2068,56 @@
       const totalSelfExpense = state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       const netBalance = siteBalance - totalSelfExpense;
 
-      const allSites = getAllSiteNames();
-      const siteRows = allSites.map(siteName => {
-        const paymentsForSite = state.clientPayments.filter(c => c.Site === siteName);
-        const baseAmt = paymentsForSite.reduce((s, r) => s + (Number(r["Base Amount"]) || 0), 0);
-        const totalAmt = paymentsForSite.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
-        const gstAmt = totalAmt - baseAmt;
-        const expAmt = state.expenses.filter(e => e.Site === siteName).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        return { siteName, baseAmt, gstAmt, totalAmt, expAmt, bal: totalAmt - expAmt };
-      });
+      const totalEngineerFund = state.funds
+        .filter(f => !isSettledFlag(f.Settled))
+        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
 
-      const engRows = ENGINEERS.map(eng => {
-        const fAmt = state.funds.filter(f => f.Engineer === eng && !isSettledFlag(f.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const eAmt = state.expenses.filter(e => e.Engineer === eng && !isSettledFlag(e.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const isSettled = Boolean(state.settledEngineers[eng]);
-        return { eng, fAmt, eAmt, bal: fAmt - eAmt, isSettled };
-      });
+      const activeSiteNames = getActiveSiteNames();
+      const allSiteNames = getAllSiteNames();
 
       return `
         <div class="summary-grid-5">
-          <div class="stat-box highlight-soft">
+          <div class="stat-box highlight-soft clickable ${state.adminDetailPanel === "client" ? "selected-box" : ""}" onclick="toggleAdminPanel('client')">
             <div class="stat-label">Client Received</div>
             <div class="stat-val c-green">${formatINR(totalClientReceived)}</div>
+            <div class="stat-hint">Tap for details</div>
           </div>
-          <div class="stat-box">
+          <div class="stat-box clickable ${state.adminDetailPanel === "siteExpense" ? "selected-box" : ""}" onclick="toggleAdminPanel('siteExpense')">
             <div class="stat-label">Site Expense</div>
             <div class="stat-val c-red">${formatINR(totalSiteExpense)}</div>
+            <div class="stat-hint">Tap for details</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Balance</div>
             <div class="stat-val c-ink">${formatINR(siteBalance)}</div>
+            <div class="stat-hint">Client - Site Exp</div>
           </div>
-          <div class="stat-box">
+          <div class="stat-box clickable ${state.adminDetailPanel === "selfExpense" ? "selected-box" : ""}" onclick="toggleAdminPanel('selfExpense')">
             <div class="stat-label">Self Expense</div>
             <div class="stat-val c-red">${formatINR(totalSelfExpense)}</div>
+            <div class="stat-hint">Tap for details</div>
           </div>
           <div class="stat-box highlight-soft">
             <div class="stat-label">Net Balance</div>
             <div class="stat-val c-ink">${formatINR(netBalance)}</div>
+            <div class="stat-hint">Balance - Self Exp</div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Site-wise Summary</div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Site</th>
-                  <th>Client Base</th>
-                  <th>GST Amount</th>
-                  <th>Client Total</th>
-                  <th>Site Expense</th>
-                  <th>Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${siteRows.map(r => `
-                  <tr>
-                    <td><strong>${r.siteName}</strong></td>
-                    <td>${formatINR(r.baseAmt)}</td>
-                    <td>${formatINR(r.gstAmt)}</td>
-                    <td class="c-green"><strong>${formatINR(r.totalAmt)}</strong></td>
-                    <td class="c-red">${formatINR(r.expAmt)}</td>
-                    <td><strong>${formatINR(r.bal)}</strong></td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
+        <div class="admin-blocks-grid">
+          <div class="stat-box clickable ${state.adminDetailPanel === "engineerFund" ? "selected-box" : ""}" onclick="toggleAdminPanel('engineerFund')">
+            <div class="stat-label">Engineer Fund</div>
+            <div class="stat-val c-green">${formatINR(totalEngineerFund)}</div>
+            <div class="stat-hint">Tap for breakdown &amp; settle</div>
+          </div>
+          <div class="stat-box clickable ${state.adminDetailPanel === "sites" ? "selected-box" : ""}" onclick="toggleAdminPanel('sites')">
+            <div class="stat-label">Sites</div>
+            <div class="stat-val c-ink">${activeSiteNames.length} Active / ${allSiteNames.length} Total</div>
+            <div class="stat-hint">Tap to Add / Edit / Delete</div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Engineer Fund Summary</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Engineer</th><th>Fund Received</th><th>Expense</th><th>Balance / Carry</th></tr></thead>
-              <tbody>
-                ${engRows.map(r => `
-                  <tr>
-                    <td><strong>${r.eng}</strong></td>
-                    <td class="c-green">${formatINR(r.fAmt)}</td>
-                    <td class="c-red">${formatINR(r.eAmt)}</td>
-                    <td><strong>${formatINR(r.bal)}</strong> ${r.isSettled ? `<span class="badge-status badge-active">Carry</span>` : ""}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-    }
-
-    const ADMIN_PILLS = [
-      "Client Payment",
-      "Engineer Fund",
-      "Self Expense",
-      "Add Site",
-      "Settle Period"
-    ];
-
-    function renderAdminSetupView() {
-      if (!isAdmin()) return "";
-      const activeSiteNames = getActiveSiteNames();
-      const allSiteNames = getAllSiteNames();
-
-      let bodyHtml = "";
-      if (state.adminSetupTab === "Client Payment") {
-        const editCp = state.editingClientPaymentId
-          ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editCp);
-
-        const cpSiteOptions = editCp && !activeSiteNames.includes(editCp.Site)
-          ? [editCp.Site, ...activeSiteNames]
-          : activeSiteNames;
-
-        const filteredCp = state.cpSiteFilter
-          ? state.clientPayments.filter(c => c.Site === state.cpSiteFilter)
-          : state.clientPayments;
-
-        bodyHtml = `
-          <div class="card-title">
-            <span>Client Payments</span>
-            <div style="display:flex; gap:8px; align-items:center;">
-              <select style="width:150px;" onchange="state.cpSiteFilter = this.value; render();">
-                <option value="">All Sites</option>
-                ${allSiteNames.map(s => `<option value="${s}" ${state.cpSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
-              </select>
-              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingClientPaymentId = null; render();">
-                ${showForm ? "Close" : "+ Add New"}
-              </button>
-            </div>
-          </div>
-
-          ${showForm ? `
-            <form onsubmit="submitClientPayment(event)" style="margin-bottom:14px;">
-              <div class="form-grid">
-                <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? toLocalDateStr(editCp.Date) : todayISO()}" required /></div>
-                <div class="field"><label>Site</label><select id="cpSite">${cpSiteOptions.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
-                <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
-                <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
-                <div class="field"><label>Total Amount (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
-                <div class="field">
-                  <label>Payment Mode</label>
-                  <select id="cpMode">
-                    ${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="field"><label>Reference No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" placeholder="UTR / Cheque No" /></div>
-                <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" placeholder="Stage / notes" /></div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary">${editCp ? "Update Payment" : "Save Payment"}</button>
-              </div>
-            </form>
-          ` : ""}
-
-          ${filteredCp.length ? `
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th><th>Site</th><th>Base</th><th>GST%</th><th>Total</th><th>Mode</th><th>Ref No</th><th>Remarks</th><th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredCp.map(c => `
-                    <tr>
-                      <td>${toLocalDateStr(c.Date)}</td>
-                      <td><strong>${c.Site}</strong></td>
-                      <td>${formatINR(c["Base Amount"])}</td>
-                      <td>${c["Gst%"]}%</td>
-                      <td class="c-green"><strong>${formatINR(c.TotalAmount)}</strong></td>
-                      <td>${c.PaymentMode}</td>
-                      <td>${c.ReferenceNo}</td>
-                      <td>${c.Remarks}</td>
-                      <td>
-                        <div class="pb-actions">
-                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingClientPaymentId = '${c.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                          <button type="button" class="btn-danger btn-sm" onclick="deleteClientPayment('${c.RecordId}')">Del</button>
-                        </div>
-                      </td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          ` : `<div class="pb-meta">No client payments yet.</div>`}
-        `;
-      } else if (state.adminSetupTab === "Engineer Fund") {
-        const editFnd = state.editingFundId
-          ? state.funds.find(f => f.RecordId === state.editingFundId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editFnd);
-
-        bodyHtml = `
-          <div class="card-title">
-            <span>Engineer Fund</span>
-            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingFundId = null; render();">
-              ${showForm ? "Close" : "+ Add New"}
-            </button>
-          </div>
-
-          ${showForm ? `
-            <form onsubmit="submitEngineerFund(event)" style="margin-bottom:14px;">
-              <div class="form-grid">
-                <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? toLocalDateStr(editFnd.Date) : todayISO()}" required /></div>
-                <div class="field"><label>Engineer</label><select id="efEng">${ENGINEERS.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
-                <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
-                <div class="field">
-                  <label>Mode</label>
-                  <select id="efMode">
-                    ${["GPay / UPI", "Bank Transfer", "Cash"].map(m => `<option value="${m}" ${editFnd && editFnd.Mode === m ? "selected" : ""}>${m}</option>`).join("")}
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary">${editFnd ? "Update Fund" : "Save Fund"}</button>
-              </div>
-            </form>
-          ` : ""}
-
-          ${state.funds.length ? `
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Date</th><th>Engineer</th><th>Mode</th><th>Amount</th><th>Settled</th><th>Action</th></tr></thead>
-                <tbody>
-                  ${state.funds.map(f => `
-                    <tr>
-                      <td>${toLocalDateStr(f.Date)}</td>
-                      <td><strong>${f.Engineer}</strong></td>
-                      <td>${f.Mode}</td>
-                      <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
-                      <td>${isSettledFlag(f.Settled) ? "Yes" : "No"}</td>
-                      <td>
-                        <div class="pb-actions">
-                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                          <button type="button" class="btn-danger btn-sm" onclick="deleteFund('${f.RecordId}')">Del</button>
-                        </div>
-                      </td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          ` : `<div class="pb-meta">No fund entries yet.</div>`}
-        `;
-      } else if (state.adminSetupTab === "Self Expense") {
-        const editSe = state.editingSelfExpenseId
-          ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editSe);
-
-        bodyHtml = `
-          <div class="card-title">
-            <span>Self Expenses</span>
-            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSelfExpenseId = null; render();">
-              ${showForm ? "Close" : "+ Add New"}
-            </button>
-          </div>
-
-          ${showForm ? `
-            <form onsubmit="submitSelfExpense(event)" style="margin-bottom:14px;">
-              <div class="form-grid">
-                <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? toLocalDateStr(editSe.Date) : todayISO()}" required /></div>
-                <div class="field">
-                  <label>For</label>
-                  <select id="seFor">
-                    ${["Senthil", "Manikandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
-                <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="seAmt" value="${editSe ? editSe.Amount : ""}" required /></div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary">${editSe ? "Update" : "Save"}</button>
-              </div>
-            </form>
-          ` : ""}
-
-          ${state.selfExpenses.length ? `
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Date</th><th>For</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
-                <tbody>
-                  ${state.selfExpenses.map(s => `
-                    <tr>
-                      <td>${toLocalDateStr(s.Date)}</td>
-                      <td><strong>${s.For}</strong></td>
-                      <td>${s.Description}</td>
-                      <td class="c-red"><strong>${formatINR(s.Amount)}</strong></td>
-                      <td>
-                        <div class="pb-actions">
-                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingSelfExpenseId = '${s.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                          <button type="button" class="btn-danger btn-sm" onclick="deleteSelfExpense('${s.RecordId}')">Del</button>
-                        </div>
-                      </td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
-          ` : `<div class="pb-meta">No self expenses yet.</div>`}
-        `;
-      } else if (state.adminSetupTab === "Add Site") {
-        const editSiteObj = state.editingSiteName
-          ? state.sites.find(s => s["Site Name"] === state.editingSiteName)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editSiteObj);
-
-        bodyHtml = `
-          <div class="card-title">
-            <span>Sites</span>
-            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSiteName = null; render();">
-              ${showForm ? "Close" : "+ Add New"}
-            </button>
-          </div>
-
-          ${showForm ? `
-            <form onsubmit="submitAddSite(event)" style="margin-bottom:14px;">
-              <div class="form-grid">
-                <div class="field"><label>Site Name</label><input type="text" id="newSiteName" value="${editSiteObj ? editSiteObj["Site Name"] : ""}" placeholder="Enter Site Name" required /></div>
-                <div class="field"><label>Location</label><input type="text" id="newSiteLoc" value="${editSiteObj ? (editSiteObj.Location || "") : ""}" placeholder="Enter Location" /></div>
-                <div class="field">
-                  <label>Status</label>
-                  <select id="newSiteStatus">
-                    <option value="Active" ${!editSiteObj || String(editSiteObj.Status).toLowerCase() !== "completed" ? "selected" : ""}>Active</option>
-                    <option value="Completed" ${editSiteObj && String(editSiteObj.Status).toLowerCase() === "completed" ? "selected" : ""}>Completed</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary">${editSiteObj ? "Update Site" : "Save Site"}</button>
-              </div>
-            </form>
-          ` : ""}
-
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Site Name</th><th>Location</th><th>Status</th><th>Edit</th></tr></thead>
-              <tbody>
-                ${state.sites.map(s => {
-                  const name = s["Site Name"];
-                  const status = String(s.Status || "Active").toLowerCase() === "completed" ? "Completed" : "Active";
-                  const isComp = status === "Completed";
-                  return `
-                    <tr>
-                      <td><strong>${name}</strong></td>
-                      <td>${s.Location || "-"}</td>
-                      <td><span class="badge-status ${isComp ? "badge-completed" : "badge-active"}">${status}</span></td>
-                      <td>
-                        <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
-                      </td>
-                    </tr>
-                  `;
-                }).join("")}
-              </tbody>
-            </table>
-          </div>
-        `;
-      } else if (state.adminSetupTab === "Settle Period") {
-        bodyHtml = `
-          <form onsubmit="previewSettlePeriod(event)">
-            <div class="form-grid">
-              <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${ENGINEERS.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
-              <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
-            </div>
-            <div class="form-actions"><button type="submit" class="btn-secondary">Check Balance</button></div>
-          </form>
-          ${state.settlePreview ? `
-            <div class="confirm-box">
-              <div style="font-size:13px; margin-bottom:8px;">
-                <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
-                Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
-                Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
-                Carry Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
-              </div>
-              <div class="form-actions" style="margin-top:6px;">
-                <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
-                <button type="button" class="btn-primary btn-sm" onclick="confirmSettlePeriod()">Confirm &amp; Settle</button>
-              </div>
-            </div>
-          ` : ""}
-        `;
-      }
-
-      return `
-        <div class="card">
-          <div class="pill-row">
-            ${ADMIN_PILLS.map(p => `
-              <button type="button" class="pill-chip ${state.adminSetupTab === p ? "active" : ""}" onclick="state.adminSetupTab = '${p}'; state.adminAddFormOpen = false; state.settlePreview = null; render();">${p}</button>
-            `).join("")}
-          </div>
-          ${bodyHtml}
-        </div>
+        ${renderAdminDetailSection(activeSiteNames, allSiteNames)}
       `;
     }
 
@@ -2237,6 +2172,14 @@
       state.editingSiteName = siteName;
       state.adminAddFormOpen = true;
       render();
+    }
+
+    async function deleteSite(siteName) {
+      if (!isAdmin()) return;
+      state.sites = state.sites.filter(s => s["Site Name"] !== siteName);
+      if (state.editingSiteName === siteName) state.editingSiteName = null;
+      render();
+      await postAction({ action: "deleteSite", siteName });
     }
 
     async function submitAddSite(ev) {
@@ -2360,7 +2303,10 @@
         if (e.Engineer === eng && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
       });
 
-      state.settledEngineers[eng] = { settledDate: upTo, carry };
+      const prevSettledDate = state.settledUntilByEng[eng];
+      if (!prevSettledDate || upTo > prevSettledDate) {
+        state.settledUntilByEng[eng] = upTo;
+      }
 
       const carryRec = {
         RecordId: "CF_" + Date.now(),
@@ -2382,14 +2328,18 @@
       const container = document.getElementById("viewContainer");
       if (state.activeTab === "summary") {
         container.innerHTML = renderSummaryView();
-      } else if (state.activeTab === "adminSetup" && isAdmin()) {
-        container.innerHTML = renderAdminSetupView();
       } else {
         container.innerHTML = renderExpensesView();
       }
     }
 
     restoreCache();
+
+    setInterval(() => {
+      if (state.currentUser && document.visibilityState === "visible") {
+        loadAllData(false);
+      }
+    }, 4000);
 
     (function initSession() {
       const saved = sessionStorage.getItem("NA_SESSION");
@@ -2400,11 +2350,6 @@
             state.currentUser = parsed;
             showAppShell();
             loadAllData(false);
-            setInterval(() => {
-              if (state.currentUser && document.visibilityState === "visible") {
-                loadAllData(false);
-              }
-            }, 15000);
             return;
           }
         } catch (_) {}
