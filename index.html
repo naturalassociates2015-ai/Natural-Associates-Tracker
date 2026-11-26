@@ -367,7 +367,6 @@
       color: #ffffff;
     }
 
-    /* Step-by-step Left-Right paired rows */
     .step-pairs {
       display: flex;
       flex-direction: column;
@@ -547,7 +546,6 @@
       margin-top: 12px;
     }
 
-    /* Bottom bar + bottom "+" button right above the nav bar */
     .bottom-nav {
       position: fixed;
       bottom: 0;
@@ -668,10 +666,10 @@
         <div class="login-field">
           <select id="loginUserSelect" class="login-user-select" aria-label="User">
             <option value="Admin" selected>Admin</option>
-            <option value="Manigandan">Manigandan</option>
             <option value="Senthil">Senthil</option>
-            <option value="Sivashankar">Sivashankar</option>
+            <option value="Manigandan">Manigandan</option>
             <option value="Yogesh">Yogesh</option>
+            <option value="Sivashankar">Sivashankar</option>
           </select>
         </div>
         <div class="login-field">
@@ -736,10 +734,10 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V7";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V8";
 
-    const ENGINEERS = ["Manigandan", "Senthil", "Sivashankar", "Yogesh"];
+    const ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -754,29 +752,23 @@
       "Granite layer"
     ];
     const DEFAULT_SITES = [
-      "Madhuravoyal-Kannan Sir",
-      "Sithalapakam-Nakkiran Sir",
-      "Oragadam-Thyagarajan",
-      "Valasaravakkam-Maran Sir",
-      "SVS-Plot6A&10",
-      "SVS-Plot11",
-       "SVS-Plot30",
-      "SVS-Plot23"
-      
+      "Madhuravoyal",
+      "Sithalapakam",
+      "Oragadam",
+      "Sunguvachathiram",
+      "Plot-6A"
     ];
     const REMOVED_UNITS = new Set(["load", "day", "d", "nmr", "w-payment", "w payment"]);
     const DEFAULT_UNITS = [
-      "Nos", "Kg", "Tons", "Cft", "Ltr", "Unit", "Bundle", "Advance", "Transport"
+      "Nos", "Kg", "Tons", "Cft", "Ltr", "Bags", "Bundle", "Advance", "Transport", "Unit"
     ];
 
-    const FALLBACK_USERS = [
+    const CONFIGURED_USERS = [
       { user: "Admin", role: "ADMIN", password: "2021" },
-       { user: "Manigandan", role: "Manigandan", password: "8889" },
-       { user: "Senthil", role: "ENGINEER", password: "1981" },
-      { user: "Sivashankar", role: "ENGINEER", password: "2962" },
-      { user: "Yogesh", role: "ENGINEER", password: "7699" }
-     
-      
+      { user: "Senthil", role: "ENGINEER", password: "1981" },
+      { user: "Manigandan", role: "Manigandan", password: "8889" },
+      { user: "Yogesh", role: "ENGINEER", password: "7699" },
+      { user: "Sivashankar", role: "ENGINEER", password: "2962" }
     ];
 
     const state = {
@@ -799,7 +791,7 @@
       settledUntilByEng: {},
       settlePreview: null,
       pendingOps: [],
-      users: [...FALLBACK_USERS],
+      users: [...CONFIGURED_USERS],
       expenses: [],
       funds: [],
       clientPayments: [],
@@ -882,7 +874,6 @@
       const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
       if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
 
-      // Handle DD/MM/YYYY or D/M/YYYY (common in India)
       const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (slashMatch) {
         const p1 = Number(slashMatch[1]);
@@ -966,7 +957,7 @@
     function handleLogin(ev) {
       ev.preventDefault();
       const selectedUser = document.getElementById("loginUserSelect").value;
-      const enteredPw = document.getElementById("loginPasswordInput").value;
+      const enteredPw = document.getElementById("loginPasswordInput").value.trim();
       const errEl = document.getElementById("loginError");
 
       const matched = state.users.find(
@@ -1251,14 +1242,9 @@
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
-        if (Array.isArray(data.users) && data.users.length) {
-          const mapU = new Map();
-          FALLBACK_USERS.forEach(u => mapU.set(u.user.toLowerCase(), u));
-          data.users.forEach(u => {
-            if (u.user && u.password) mapU.set(u.user.toLowerCase(), u);
-          });
-          state.users = Array.from(mapU.values());
-        }
+        // Enforce configured passwords so sheet old PINs don't override new PINs
+        state.users = [...CONFIGURED_USERS];
+
         if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
         if (Array.isArray(data.funds)) state.funds = normalizeFunds(data.funds);
         if (Array.isArray(data.clientPayments)) state.clientPayments = normalizeClientPayments(data.clientPayments);
