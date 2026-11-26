@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Natural Associates - Site Expense Tracker</title>
+  <link rel="icon" type="image/png" href="icon-192.png" />
   <style>
     :root {
       --bg: #f1f5f1;
@@ -36,7 +37,7 @@
       background-color: var(--bg);
       background-image: var(--bg-pattern);
       color: var(--ink);
-      padding-bottom: 84px;
+      padding-bottom: 92px;
       line-height: 1.45;
       min-height: 100vh;
     }
@@ -72,6 +73,7 @@
       justify-content: center;
       margin-bottom: 12px;
       border: 1px solid var(--sage-border);
+      overflow: hidden;
     }
 
     .login-brand {
@@ -146,7 +148,7 @@
     .topbar {
       background: linear-gradient(135deg, var(--forest-dark) 0%, var(--forest) 100%);
       color: #fff;
-      padding: 13px 16px;
+      padding: 12px 16px;
       position: sticky;
       top: 0;
       z-index: 30;
@@ -169,14 +171,22 @@
     }
 
     .brand-leaf {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.14);
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.16);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .brand-leaf img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
     }
 
     .brand-title {
@@ -589,22 +599,51 @@
       margin-top: 10px;
     }
 
-    /* Bottom Button Bar */
+    /* Bottom Button Bar + Small Centered Circular Terracotta + Button */
     .bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: #ffffff;
-      border-top: 1px solid var(--sage-border);
-      box-shadow: 0 -4px 16px rgba(17, 63, 39, 0.08);
+      background: transparent;
       z-index: 40;
+      pointer-events: none;
+    }
+
+    .bottom-fab-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: -17px;
+      position: relative;
+      z-index: 42;
+      pointer-events: auto;
+    }
+
+    .fab-mini-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--terracotta);
+      color: #ffffff;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(200, 75, 49, 0.42);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1;
+      padding: 0;
     }
 
     .bottom-nav-inner {
       max-width: 980px;
       margin: 0 auto;
       display: flex;
+      background: #ffffff;
+      border-top: 1px solid var(--sage-border);
+      box-shadow: 0 -4px 16px rgba(17, 63, 39, 0.08);
+      pointer-events: auto;
     }
 
     .nav-btn {
@@ -671,6 +710,13 @@
   <div id="loginScreen" class="login-screen">
     <div class="login-card">
       <div class="login-emblem">
+        <img
+          src="icon-192.png"
+          alt="Logo"
+          style="width:100%; height:100%; object-fit:cover; display:none;"
+          onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
           <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
@@ -683,11 +729,11 @@
         <div class="login-field">
           <label for="loginUserSelect">Select User</label>
           <select id="loginUserSelect">
+            <option value="Admin" selected>Admin</option>
             <option value="Manigandan">Manigandan</option>
-            <option value="Yogesh">Yogesh</option>
-            <option value="Sivashankar">Sivashankar</option>
             <option value="Senthil">Senthil</option>
-            <option value="Admin">Admin</option>
+            <option value="Sivashankar">Sivashankar</option>
+            <option value="Yogesh">Yogesh</option>
           </select>
         </div>
         <div class="login-field">
@@ -708,6 +754,12 @@
       <div class="topbar-inner">
         <div class="brand-wrap">
           <div class="brand-leaf">
+            <img
+              src="icon-192.png"
+              alt="Logo"
+              onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            />
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
               <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
@@ -731,6 +783,7 @@
     </main>
 
     <nav class="bottom-nav no-print">
+      <div id="bottomFabWrap" class="bottom-fab-wrap"></div>
       <div class="bottom-nav-inner" id="bottomNavInner"></div>
     </nav>
   </div>
@@ -738,7 +791,7 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
 
-    const ENGINEERS = ["Sivashankar", "Yogesh", "Senthil", "Manigandan"];
+    const ENGINEERS = ["Manigandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -766,9 +819,9 @@
     const FALLBACK_USERS = [
       { user: "Admin", role: "ADMIN", password: "1234" },
       { user: "Manigandan", role: "Manigandan", password: "1234" },
-      { user: "Yogesh", role: "ENGINEER", password: "1234" },
+      { user: "Senthil", role: "ENGINEER", password: "1234" },
       { user: "Sivashankar", role: "ENGINEER", password: "1234" },
-      { user: "Senthil", role: "ENGINEER", password: "1234" }
+      { user: "Yogesh", role: "ENGINEER", password: "1234" }
     ];
 
     const state = {
@@ -783,6 +836,8 @@
       editingClientPaymentId: null,
       editingFundId: null,
       editingSelfExpenseId: null,
+      editingSiteName: null,
+      settledEngineers: {},
       settlePreview: null,
       users: [...FALLBACK_USERS],
       expenses: [],
@@ -801,6 +856,25 @@
         toDate: ""
       }
     };
+
+    function toLocalDateStr(val) {
+      if (!val) return "";
+      const str = String(val).trim();
+      const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (slashMatch) {
+        return `${slashMatch[3]}-${String(slashMatch[1]).padStart(2, "0")}-${String(slashMatch[2]).padStart(2, "0")}`;
+      }
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+      return str.slice(0, 10);
+    }
 
     function todayISO() {
       const d = new Date();
@@ -835,7 +909,7 @@
 
     function formatDateHeading(dateStr) {
       if (!dateStr) return "Unscheduled Date";
-      const clean = String(dateStr).slice(0, 10);
+      const clean = toLocalDateStr(dateStr);
       const dt = new Date(clean + "T00:00:00");
       if (isNaN(dt.getTime())) return clean;
       return dt.toLocaleDateString("en-GB", {
@@ -894,7 +968,7 @@
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
-      state.activeTab = "expenses";
+      state.activeTab = isAdmin() ? "summary" : "summary";
       state.showExpenseForm = false;
       state.editingExpenseId = null;
       showAppShell();
@@ -954,7 +1028,7 @@
         const amt = Number(r.Amount ?? r.amount ?? (qty * rate)) || 0;
         return {
           RecordId: String(r.RecordId || r.id || `EXP_${i + 1}`),
-          Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+          Date: toLocalDateStr(r.Date || r.date || todayISO()),
           Engineer: String(r.Engineer || r.engineer || "Manigandan"),
           Site: String(r.Site || r.site || DEFAULT_SITES[0]),
           Category: String(r.Category || r.category || "Material"),
@@ -973,7 +1047,7 @@
       if (!Array.isArray(list)) return [];
       return list.map((r, i) => ({
         RecordId: String(r.RecordId || r.id || `FND_${i + 1}`),
-        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        Date: toLocalDateStr(r.Date || r.date || todayISO()),
         Engineer: String(r.Engineer || r.engineer || "Manigandan"),
         Amount: Number(r.Amount ?? r.amount ?? 0) || 0,
         Mode: String(r.Mode || r.mode || "Online"),
@@ -985,7 +1059,7 @@
       if (!Array.isArray(list)) return [];
       return list.map((r, i) => ({
         RecordId: String(r.RecordId || r.id || `CP_${i + 1}`),
-        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        Date: toLocalDateStr(r.Date || r.date || todayISO()),
         Site: String(r.Site || r.site || DEFAULT_SITES[0]),
         "Base Amount": Number(r["Base Amount"] ?? r.baseAmount ?? 0) || 0,
         "Gst%": Number(r["Gst%"] ?? r.gstPct ?? 0) || 0,
@@ -1000,7 +1074,7 @@
       if (!Array.isArray(list)) return [];
       return list.map((r, i) => ({
         RecordId: String(r.RecordId || r.id || `SE_${i + 1}`),
-        Date: String(r.Date || r.date || todayISO()).slice(0, 10),
+        Date: toLocalDateStr(r.Date || r.date || todayISO()),
         For: String(r.For || r.for || "Office"),
         Description: String(r.Description || r.description || ""),
         Amount: Number(r.Amount ?? r.amount ?? 0) || 0
@@ -1010,7 +1084,7 @@
     async function loadAllData(showMessage = false) {
       if (showMessage) setBanner("Syncing with Google Sheet...", "info");
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=getAll`, { method: "GET" });
+        const res = await fetch(`${SCRIPT_URL}?action=getAll&t=${Date.now()}`, { method: "GET", cache: "no-store" });
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
@@ -1090,17 +1164,21 @@
     }
 
     function renderBottomNav() {
+      const fabWrap = document.getElementById("bottomFabWrap");
       const navEl = document.getElementById("bottomNavInner");
-      if (isAdmin()) {
-        navEl.innerHTML = `
-          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
-          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
-          <button type="button" class="nav-btn nav-admin ${state.activeTab === "adminSetup" ? "active" : ""}" onclick="onBottomNavClick('adminSetup')">Admin Setup</button>
-        `;
-      } else {
+
+      if (!isAdmin()) {
+        fabWrap.innerHTML = `<button type="button" class="fab-mini-circle" title="Add Expense" onclick="openExpenseForm()">+</button>`;
         navEl.innerHTML = `
           <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
           <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
+        `;
+      } else {
+        fabWrap.innerHTML = "";
+        navEl.innerHTML = `
+          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
+          <button type="button" class="nav-btn nav-admin ${state.activeTab === "adminSetup" ? "active" : ""}" onclick="onBottomNavClick('adminSetup')">Admin Setup</button>
         `;
       }
     }
@@ -1108,16 +1186,22 @@
     function getScopedExpenses() {
       let list = [...state.expenses];
       if (!isAdmin()) {
-        list = list.filter(e => e.Engineer === state.currentUser.user);
+        list = list.filter(e => e.Engineer === state.currentUser.user && !isSettledFlag(e.Settled));
         const today = todayISO();
         if (state.engPeriod === "Day") {
-          list = list.filter(e => e.Date === today);
+          list = list.filter(e => toLocalDateStr(e.Date) === today);
         } else if (state.engPeriod === "Week") {
           const weekStart = getStartOfWeekISO();
-          list = list.filter(e => e.Date >= weekStart && e.Date <= today);
+          list = list.filter(e => {
+            const d = toLocalDateStr(e.Date);
+            return d >= weekStart && d <= today;
+          });
         } else if (state.engPeriod === "Month") {
           const monthStart = getStartOfMonthISO();
-          list = list.filter(e => e.Date >= monthStart && e.Date <= today);
+          list = list.filter(e => {
+            const d = toLocalDateStr(e.Date);
+            return d >= monthStart && d <= today;
+          });
         }
       } else {
         if (state.filters.engineer) list = list.filter(e => e.Engineer === state.filters.engineer);
@@ -1131,8 +1215,8 @@
           const dq = state.filters.description.trim().toLowerCase();
           list = list.filter(e => String(e.Description || "").toLowerCase().includes(dq));
         }
-        if (state.filters.fromDate) list = list.filter(e => e.Date >= state.filters.fromDate);
-        if (state.filters.toDate) list = list.filter(e => e.Date <= state.filters.toDate);
+        if (state.filters.fromDate) list = list.filter(e => toLocalDateStr(e.Date) >= state.filters.fromDate);
+        if (state.filters.toDate) list = list.filter(e => toLocalDateStr(e.Date) <= state.filters.toDate);
       }
       return list;
     }
@@ -1169,7 +1253,7 @@
         ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
         : null;
 
-      const date = document.getElementById("expDate").value || todayISO();
+      const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
         ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
         : state.currentUser.user;
@@ -1212,6 +1296,10 @@
         };
         const idx = state.expenses.findIndex(e => e.RecordId === editingObj.RecordId);
         if (idx > -1) state.expenses[idx] = updated;
+        state.isSavingExpense = false;
+        state.editingExpenseId = null;
+        state.showExpenseForm = false;
+        render();
         await postAction({ action: "updateExpense", record: updated });
       } else {
         const newRec = {
@@ -1229,21 +1317,21 @@
           Settled: false
         };
         state.expenses.unshift(newRec);
+        state.isSavingExpense = false;
+        state.editingExpenseId = null;
+        state.showExpenseForm = false;
+        render();
         await postAction({ action: "addExpense", record: newRec });
       }
 
-      state.isSavingExpense = false;
-      state.editingExpenseId = null;
-      state.showExpenseForm = false;
-      render();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     async function deleteExpense(recordId) {
       if (!isAdmin()) return;
       state.expenses = state.expenses.filter(e => e.RecordId !== recordId);
-      await postAction({ action: "deleteExpense", RecordId: recordId });
       render();
+      await postAction({ action: "deleteExpense", RecordId: recordId });
     }
 
     function renderExpensesView() {
@@ -1258,7 +1346,7 @@
       const defaultEng = editingObj ? editingObj.Engineer : state.currentUser.user;
       const defaultSite = editingObj ? editingObj.Site : (activeSiteNames[0] || DEFAULT_SITES[0]);
       const defaultCat = editingObj ? editingObj.Category : "Material";
-      const defaultDate = editingObj ? editingObj.Date : todayISO();
+      const defaultDate = editingObj ? toLocalDateStr(editingObj.Date) : todayISO();
       const defaultVendor = editingObj ? editingObj["Vendor/Contractor"] : "";
       const defaultDesc = editingObj ? editingObj.Description : "";
       const defaultQty = editingObj ? editingObj.Qty : 1;
@@ -1412,32 +1500,35 @@
       }
 
       const scoped = getScopedExpenses().sort((a, b) => {
-        if (b.Date !== a.Date) return b.Date.localeCompare(a.Date);
+        const da = toLocalDateStr(a.Date);
+        const db = toLocalDateStr(b.Date);
+        if (db !== da) return db.localeCompare(da);
         return String(b.RecordId).localeCompare(String(a.RecordId));
       });
 
       const totalScopedExpense = scoped.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
 
-      // Compute running balance across full unsettled ledger for accuracy
       const allUserExpenses = (isAdmin()
         ? [...state.expenses]
-        : state.expenses.filter(e => e.Engineer === state.currentUser.user)
+        : state.expenses.filter(e => e.Engineer === state.currentUser.user && !isSettledFlag(e.Settled))
       ).sort((a, b) => {
-        if (a.Date !== b.Date) return a.Date.localeCompare(b.Date);
+        const da = toLocalDateStr(a.Date);
+        const db = toLocalDateStr(b.Date);
+        if (da !== db) return da.localeCompare(db);
         return String(a.RecordId).localeCompare(String(b.RecordId));
       });
 
       let runningBal = isAdmin()
         ? (state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0) ||
-           state.funds.filter(f => !f.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0)) -
+           state.funds.filter(f => !isSettledFlag(f.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0)) -
           state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0)
         : state.funds
-            .filter(f => f.Engineer === state.currentUser.user && !f.Settled)
+            .filter(f => f.Engineer === state.currentUser.user && !isSettledFlag(f.Settled))
             .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
 
       const balById = {};
       for (const row of allUserExpenses) {
-        if (!row.Settled) {
+        if (!isSettledFlag(row.Settled)) {
           runningBal -= Number(row.Amount) || 0;
         }
         balById[row.RecordId] = runningBal;
@@ -1456,10 +1547,11 @@
 
       let currentDate = "";
       for (const item of scoped) {
-        if (item.Date !== currentDate) {
-          currentDate = item.Date;
+        const itemDate = toLocalDateStr(item.Date);
+        if (itemDate !== currentDate) {
+          currentDate = itemDate;
           const daySum = scoped
-            .filter(x => x.Date === currentDate)
+            .filter(x => toLocalDateStr(x.Date) === currentDate)
             .reduce((s, x) => s + (Number(x.Amount) || 0), 0);
           html += `
             <div class="date-group-header">
@@ -1500,15 +1592,17 @@
     function renderSummaryView() {
       if (!isAdmin()) {
         const engName = state.currentUser.user;
-        const myFunds = state.funds.filter(f => f.Engineer === engName && !f.Settled);
-        const myExp = state.expenses.filter(e => e.Engineer === engName && !e.Settled);
+        const myFunds = state.funds.filter(f => f.Engineer === engName && !isSettledFlag(f.Settled));
+        const myExp = state.expenses.filter(e => e.Engineer === engName && !isSettledFlag(e.Settled));
         const fSum = myFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
         const eSum = myExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const balVal = fSum - eSum;
+        const isSettled = Boolean(state.settledEngineers[engName]);
 
         return `
           <div class="summary-grid-3">
             <div class="stat-box highlight-sage">
-              <div class="stat-label">Fund In</div>
+              <div class="stat-label">Fund Received</div>
               <div class="stat-val c-green">${formatINR(fSum)}</div>
             </div>
             <div class="stat-box">
@@ -1516,12 +1610,12 @@
               <div class="stat-val c-red">${formatINR(eSum)}</div>
             </div>
             <div class="stat-box">
-              <div class="stat-label">Balance</div>
-              <div class="stat-val c-ink">${formatINR(fSum - eSum)}</div>
+              <div class="stat-label">${isSettled ? "Carry Balance" : "Balance"}</div>
+              <div class="stat-val c-ink">${formatINR(balVal)}</div>
             </div>
           </div>
           <div class="card">
-            <div class="card-title">Fund Given Details (${engName})</div>
+            <div class="card-title">Fund Details (${engName})</div>
             ${myFunds.length ? `
               <div class="table-wrap">
                 <table>
@@ -1529,7 +1623,7 @@
                   <tbody>
                     ${myFunds.map(f => `
                       <tr>
-                        <td>${f.Date}</td>
+                        <td>${toLocalDateStr(f.Date)}</td>
                         <td>${f.Mode || "Online"}</td>
                         <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
                       </tr>
@@ -1542,7 +1636,6 @@
         `;
       }
 
-      // Top Overall Admin Summary: Client Received, Site Expense, Balance, Self Expense, Net Balance
       const totalClientReceived = state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
       const totalSiteExpense = state.expenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       const siteBalance = totalClientReceived - totalSiteExpense;
@@ -1560,9 +1653,10 @@
       });
 
       const engRows = ENGINEERS.map(eng => {
-        const fAmt = state.funds.filter(f => f.Engineer === eng && !f.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const eAmt = state.expenses.filter(e => e.Engineer === eng && !e.Settled).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        return { eng, fAmt, eAmt, bal: fAmt - eAmt };
+        const fAmt = state.funds.filter(f => f.Engineer === eng && !isSettledFlag(f.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const eAmt = state.expenses.filter(e => e.Engineer === eng && !isSettledFlag(e.Settled)).reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const isSettled = Boolean(state.settledEngineers[eng]);
+        return { eng, fAmt, eAmt, bal: fAmt - eAmt, isSettled };
       });
 
       return `
@@ -1623,14 +1717,14 @@
           <div class="card-title">Engineer Fund Summary</div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Engineer</th><th>Fund Given</th><th>Spent</th><th>Balance</th></tr></thead>
+              <thead><tr><th>Engineer</th><th>Fund Received</th><th>Expense</th><th>Balance / Carry</th></tr></thead>
               <tbody>
                 ${engRows.map(r => `
                   <tr>
                     <td><strong>${r.eng}</strong></td>
                     <td class="c-green">${formatINR(r.fAmt)}</td>
                     <td class="c-red">${formatINR(r.eAmt)}</td>
-                    <td><strong>${formatINR(r.bal)}</strong></td>
+                    <td><strong>${formatINR(r.bal)}</strong> ${r.isSettled ? `<span class="badge-status badge-active">Carry</span>` : ""}</td>
                   </tr>
                 `).join("")}
               </tbody>
@@ -1670,7 +1764,7 @@
         bodyHtml = `
           <form onsubmit="submitClientPayment(event)">
             <div class="form-grid">
-              <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? editCp.Date : todayISO()}" required /></div>
+              <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? toLocalDateStr(editCp.Date) : todayISO()}" required /></div>
               <div class="field"><label>Site</label><select id="cpSite">${cpSiteOptions.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
               <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
               <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
@@ -1711,7 +1805,7 @@
                   <tbody>
                     ${filteredCp.map(c => `
                       <tr>
-                        <td>${c.Date}</td>
+                        <td>${toLocalDateStr(c.Date)}</td>
                         <td><strong>${c.Site}</strong></td>
                         <td>${formatINR(c["Base Amount"])}</td>
                         <td>${c["Gst%"]}%</td>
@@ -1734,42 +1828,46 @@
           </div>
         `;
       } else if (state.adminSetupTab === "Add Site") {
+        const editSiteObj = state.editingSiteName
+          ? state.sites.find(s => s["Site Name"] === state.editingSiteName)
+          : null;
+
         bodyHtml = `
           <form onsubmit="submitAddSite(event)">
             <div class="form-grid">
-              <div class="field"><label>Site / Client Name</label><input type="text" id="newSiteName" placeholder="e.g. SVS-Plot12-Thomas" required /></div>
-              <div class="field"><label>Location</label><input type="text" id="newSiteLoc" placeholder="e.g. Sithalapakkam" /></div>
+              <div class="field"><label>Site Name</label><input type="text" id="newSiteName" value="${editSiteObj ? editSiteObj["Site Name"] : ""}" placeholder="Enter Site Name" required /></div>
+              <div class="field"><label>Location</label><input type="text" id="newSiteLoc" value="${editSiteObj ? (editSiteObj.Location || "") : ""}" placeholder="Enter Location" /></div>
               <div class="field">
                 <label>Status</label>
                 <select id="newSiteStatus">
-                  <option value="Active">Active</option>
-                  <option value="Completed">Completed</option>
+                  <option value="Active" ${!editSiteObj || String(editSiteObj.Status).toLowerCase() !== "completed" ? "selected" : ""}>Active</option>
+                  <option value="Completed" ${editSiteObj && String(editSiteObj.Status).toLowerCase() === "completed" ? "selected" : ""}>Completed</option>
                 </select>
               </div>
             </div>
-            <div class="form-actions"><button type="submit" class="btn-primary">Save Site</button></div>
+            <div class="form-actions">
+              ${editSiteObj ? `<button type="button" class="btn-secondary" onclick="state.editingSiteName = null; render();">Cancel Edit</button>` : ""}
+              <button type="submit" class="btn-primary">${editSiteObj ? "Update Site" : "Save Site"}</button>
+            </div>
           </form>
 
           <div style="margin-top:16px;">
-            <div class="card-title">Sites List (Completed sites are hidden from active dropdowns)</div>
+            <div class="card-title">Sites List</div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Site / Client Name</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Site Name</th><th>Location</th><th>Status</th><th>Edit</th></tr></thead>
                 <tbody>
                   ${state.sites.map(s => {
                     const name = s["Site Name"];
-                    const status = s.Status || "Active";
-                    const isComp = status.toLowerCase() === "completed";
+                    const status = String(s.Status || "Active").toLowerCase() === "completed" ? "Completed" : "Active";
+                    const isComp = status === "Completed";
                     return `
                       <tr>
                         <td><strong>${name}</strong></td>
                         <td>${s.Location || "-"}</td>
                         <td><span class="badge-status ${isComp ? "badge-completed" : "badge-active"}">${status}</span></td>
                         <td>
-                          ${isComp
-                            ? `<button type="button" class="btn-secondary btn-sm" onclick="toggleSiteStatus('${name.replace(/'/g, "\\'")}', 'Active')">Mark Active</button>`
-                            : `<button type="button" class="btn-secondary btn-sm" onclick="toggleSiteStatus('${name.replace(/'/g, "\\'")}', 'Completed')">Mark Completed</button>`
-                          }
+                          <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
                         </td>
                       </tr>
                     `;
@@ -1787,7 +1885,7 @@
         bodyHtml = `
           <form onsubmit="submitSelfExpense(event)">
             <div class="form-grid">
-              <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? editSe.Date : todayISO()}" required /></div>
+              <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? toLocalDateStr(editSe.Date) : todayISO()}" required /></div>
               <div class="field">
                 <label>For</label>
                 <select id="seFor">
@@ -1812,7 +1910,7 @@
                   <tbody>
                     ${state.selfExpenses.map(s => `
                       <tr>
-                        <td>${s.Date}</td>
+                        <td>${toLocalDateStr(s.Date)}</td>
                         <td><strong>${s.For}</strong></td>
                         <td>${s.Description}</td>
                         <td class="c-red"><strong>${formatINR(s.Amount)}</strong></td>
@@ -1838,7 +1936,7 @@
         bodyHtml = `
           <form onsubmit="submitEngineerFund(event)">
             <div class="form-grid">
-              <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? editFnd.Date : todayISO()}" required /></div>
+              <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? toLocalDateStr(editFnd.Date) : todayISO()}" required /></div>
               <div class="field"><label>Engineer</label><select id="efEng">${ENGINEERS.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
               <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
               <div class="field">
@@ -1863,11 +1961,11 @@
                   <tbody>
                     ${state.funds.map(f => `
                       <tr>
-                        <td>${f.Date}</td>
+                        <td>${toLocalDateStr(f.Date)}</td>
                         <td><strong>${f.Engineer}</strong></td>
                         <td>${f.Mode}</td>
                         <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
-                        <td>${f.Settled ? "Yes" : "No"}</td>
+                        <td>${isSettledFlag(f.Settled) ? "Yes" : "No"}</td>
                         <td>
                           <div class="pb-actions">
                             <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; render();">Edit</button>
@@ -1897,7 +1995,7 @@
                 <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
                 Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
                 Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
-                Carry Forward Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
+                Carry Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
               </div>
               <div class="form-actions" style="margin-top:6px;">
                 <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
@@ -1936,7 +2034,7 @@
 
       const rec = {
         RecordId: existing ? existing.RecordId : ("CP_" + Date.now()),
-        Date: document.getElementById("cpDate").value,
+        Date: toLocalDateStr(document.getElementById("cpDate").value),
         Site: document.getElementById("cpSite").value,
         "Base Amount": Number(document.getElementById("cpBase").value) || 0,
         "Gst%": Number(document.getElementById("cpGstPct").value) || 0,
@@ -1950,18 +2048,24 @@
         const idx = state.clientPayments.findIndex(c => c.RecordId === existing.RecordId);
         if (idx > -1) state.clientPayments[idx] = rec;
         state.editingClientPaymentId = null;
+        render();
         await postAction({ action: "updateClientPayment", record: rec });
       } else {
         state.clientPayments.unshift(rec);
+        render();
         await postAction({ action: "addClientPayment", record: rec });
       }
-      render();
     }
 
     async function deleteClientPayment(recordId) {
       if (!isAdmin()) return;
       state.clientPayments = state.clientPayments.filter(c => c.RecordId !== recordId);
+      render();
       await postAction({ action: "deleteClientPayment", RecordId: recordId });
+    }
+
+    function startEditSite(siteName) {
+      state.editingSiteName = siteName;
       render();
     }
 
@@ -1973,25 +2077,18 @@
       if (!name) return;
 
       const rec = { "Site Name": name, Location: loc, Status: status };
-      const idx = state.sites.findIndex(s => s["Site Name"].toLowerCase() === name.toLowerCase());
-      if (idx > -1) {
-        state.sites[idx] = rec;
+      if (state.editingSiteName) {
+        const prevIdx = state.sites.findIndex(s => s["Site Name"] === state.editingSiteName);
+        if (prevIdx > -1) state.sites[prevIdx] = rec;
+        state.editingSiteName = null;
       } else {
-        state.sites.push(rec);
+        const idx = state.sites.findIndex(s => s["Site Name"].toLowerCase() === name.toLowerCase());
+        if (idx > -1) state.sites[idx] = rec;
+        else state.sites.push(rec);
       }
-      await postAction({ action: "addSite", record: rec });
-      document.getElementById("newSiteName").value = "";
-      document.getElementById("newSiteLoc").value = "";
-      render();
-    }
 
-    async function toggleSiteStatus(siteName, newStatus) {
-      const idx = state.sites.findIndex(s => s["Site Name"] === siteName);
-      if (idx > -1) {
-        state.sites[idx].Status = newStatus;
-        await postAction({ action: "updateSiteStatus", record: state.sites[idx] });
-        render();
-      }
+      render();
+      await postAction({ action: "addSite", record: rec });
     }
 
     async function submitSelfExpense(ev) {
@@ -2002,7 +2099,7 @@
 
       const rec = {
         RecordId: existing ? existing.RecordId : ("SE_" + Date.now()),
-        Date: document.getElementById("seDate").value,
+        Date: toLocalDateStr(document.getElementById("seDate").value),
         For: document.getElementById("seFor").value,
         Description: document.getElementById("seDesc").value.trim(),
         Amount: Number(document.getElementById("seAmt").value) || 0
@@ -2012,19 +2109,20 @@
         const idx = state.selfExpenses.findIndex(s => s.RecordId === existing.RecordId);
         if (idx > -1) state.selfExpenses[idx] = rec;
         state.editingSelfExpenseId = null;
+        render();
         await postAction({ action: "updateSelfExpense", record: rec });
       } else {
         state.selfExpenses.unshift(rec);
+        render();
         await postAction({ action: "addSelfExpense", record: rec });
       }
-      render();
     }
 
     async function deleteSelfExpense(recordId) {
       if (!isAdmin()) return;
       state.selfExpenses = state.selfExpenses.filter(s => s.RecordId !== recordId);
-      await postAction({ action: "deleteSelfExpense", RecordId: recordId });
       render();
+      await postAction({ action: "deleteSelfExpense", RecordId: recordId });
     }
 
     async function submitEngineerFund(ev) {
@@ -2035,41 +2133,42 @@
 
       const rec = {
         RecordId: existing ? existing.RecordId : ("FND_" + Date.now()),
-        Date: document.getElementById("efDate").value,
+        Date: toLocalDateStr(document.getElementById("efDate").value),
         Engineer: document.getElementById("efEng").value,
         Amount: Number(document.getElementById("efAmt").value) || 0,
         Mode: document.getElementById("efMode").value,
-        Settled: existing ? existing.Settled : false
+        Settled: existing ? isSettledFlag(existing.Settled) : false
       };
 
       if (existing) {
         const idx = state.funds.findIndex(f => f.RecordId === existing.RecordId);
         if (idx > -1) state.funds[idx] = rec;
         state.editingFundId = null;
+        render();
         await postAction({ action: "updateFund", record: rec });
       } else {
         state.funds.unshift(rec);
+        render();
         await postAction({ action: "addFund", record: rec });
       }
-      render();
     }
 
     async function deleteFund(recordId) {
       if (!isAdmin()) return;
       state.funds = state.funds.filter(f => f.RecordId !== recordId);
-      await postAction({ action: "deleteFund", RecordId: recordId });
       render();
+      await postAction({ action: "deleteFund", RecordId: recordId });
     }
 
     function previewSettlePeriod(ev) {
       ev.preventDefault();
       const eng = document.getElementById("spEng").value;
-      const upTo = document.getElementById("spDate").value;
+      const upTo = toLocalDateStr(document.getElementById("spDate").value);
       const fSum = state.funds
-        .filter(f => f.Engineer === eng && !f.Settled && f.Date <= upTo)
+        .filter(f => f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       const eSum = state.expenses
-        .filter(e => e.Engineer === eng && !e.Settled && e.Date <= upTo)
+        .filter(e => e.Engineer === eng && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
@@ -2080,26 +2179,27 @@
       const { eng, upTo, carry } = state.settlePreview;
 
       state.funds.forEach(f => {
-        if (f.Engineer === eng && !f.Settled && f.Date <= upTo) f.Settled = true;
+        if (f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo) f.Settled = true;
       });
       state.expenses.forEach(e => {
-        if (e.Engineer === eng && !e.Settled && e.Date <= upTo) e.Settled = true;
+        if (e.Engineer === eng && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
       });
 
-      if (carry !== 0) {
-        state.funds.unshift({
-          RecordId: "CF_" + Date.now(),
-          Date: todayISO(),
-          Engineer: eng,
-          Amount: carry,
-          Mode: "Carry Forward",
-          Settled: false
-        });
-      }
+      state.settledEngineers[eng] = { settledDate: upTo, carry };
+
+      const carryRec = {
+        RecordId: "CF_" + Date.now(),
+        Date: todayISO(),
+        Engineer: eng,
+        Amount: carry,
+        Mode: "Carry Balance",
+        Settled: false
+      };
+      state.funds.unshift(carryRec);
 
       state.settlePreview = null;
-      await postAction({ action: "settlePeriod", engineer: eng, upToDate: upTo, carryForward: carry });
       render();
+      await postAction({ action: "settlePeriod", engineer: eng, upToDate: upTo, carryForward: carry, carryRecord: carryRec });
     }
 
     function render() {
