@@ -798,10 +798,10 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V2";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V3";
 
-    const ENGINEERS = ["Manigandan", "Senthil", "Sivashankar", "Yogesh"];
+    const ENGINEERS = ["Manikandan", "Senthil", "Sivashankar", "Yogesh"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -828,7 +828,7 @@
 
     const FALLBACK_USERS = [
       { user: "Admin", role: "ADMIN", password: "1234" },
-      { user: "Manigandan", role: "Manigandan", password: "1234" },
+      { user: "Manikandan", role: "Manikandan", password: "1234" },
       { user: "Senthil", role: "ENGINEER", password: "1234" },
       { user: "Sivashankar", role: "ENGINEER", password: "1234" },
       { user: "Yogesh", role: "ENGINEER", password: "1234" }
@@ -972,8 +972,8 @@
       return state.currentUser && state.currentUser.role === "ADMIN";
     }
 
-    function isManigandan() {
-      return state.currentUser && state.currentUser.user === "Manigandan";
+    function isManikandan() {
+      return state.currentUser && state.currentUser.user === "Manikandan";
     }
 
     function togglePasswordVisibility() {
@@ -1008,7 +1008,7 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manigandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
@@ -1078,7 +1078,7 @@
           return {
             RecordId: recId || `EXP_${i + 1}`,
             Date: toLocalDateStr(r.Date || r.date || todayISO()),
-            Engineer: String(r.Engineer || r.engineer || "Manigandan").trim(),
+            Engineer: String(r.Engineer || r.engineer || "Manikandan").trim(),
             Site: String(r.Site || r.site || "").trim(),
             Category: String(r.Category || r.category || "Material").trim(),
             "Vendor/Contractor": String(r["Vendor/Contractor"] || r.vendor || "").trim(),
@@ -1203,7 +1203,11 @@
       persistCache();
     }
 
+    let isSyncingNow = false;
+
     async function loadAllData(showMessage = false) {
+      if (isSyncingNow) return;
+      isSyncingNow = true;
       if (showMessage) setBanner("Syncing...", "info");
       try {
         await flushPendingOps();
@@ -1253,8 +1257,9 @@
         persistCache();
         if (showMessage) setBanner("Synced.", "info");
       } catch (err) {
-        if (showMessage) setBanner("Sync check needed.", "warn");
+        if (showMessage) setBanner("Check Apps Script access (Anyone).", "warn");
       } finally {
+        isSyncingNow = false;
         if (state.currentUser) render();
       }
     }
@@ -1282,7 +1287,7 @@
           return true;
         }
       } catch (_) {}
-      setBanner("Saved locally; will sync automatically.", "warn");
+      setBanner("Saved locally; retrying sync...", "warn");
       return true;
     }
 
@@ -1389,10 +1394,10 @@
 
       const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
-        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
+        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manikandan")
         : state.currentUser.user;
       const site = document.getElementById("expSite").value;
-      const category = (isAdmin() || isManigandan())
+      const category = (isAdmin() || isManikandan())
         ? (document.getElementById("expCategory")?.value || "Material")
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
@@ -1488,7 +1493,7 @@
       const defaultRate = editingObj ? editingObj.Rate : "";
       const defaultAmt = editingObj ? editingObj.Amount : "";
 
-      const useCategoryDropdown = isAdmin() || isManigandan();
+      const useCategoryDropdown = isAdmin() || isManikandan();
       const formSiteOptions = editingObj && !activeSiteNames.includes(editingObj.Site)
         ? [editingObj.Site, ...activeSiteNames]
         : activeSiteNames;
@@ -2051,7 +2056,7 @@
                 <div class="field">
                   <label>For</label>
                   <select id="seFor">
-                    ${["Senthil", "Manigandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
+                    ${["Senthil", "Manikandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
                   </select>
                 </div>
                 <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
@@ -2395,6 +2400,11 @@
             state.currentUser = parsed;
             showAppShell();
             loadAllData(false);
+            setInterval(() => {
+              if (state.currentUser && document.visibilityState === "visible") {
+                loadAllData(false);
+              }
+            }, 15000);
             return;
           }
         } catch (_) {}
