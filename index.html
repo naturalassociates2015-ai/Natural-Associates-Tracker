@@ -132,6 +132,8 @@
       .topbar, .bottom-nav, .side-drawer, .drawer-backdrop, .no-print { display: none !important; }
       body { background: #fff; padding-bottom: 0; }
       .card { box-shadow: none; border: 1px solid #ccc; }
+      body.print-only-section .card:not(.print-target) { display: none !important; }
+      body.print-only-section .print-target { display: block !important; }
     }
   </style>
 </head>
@@ -216,7 +218,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYnHGJJLzEbasxIjOjIefBTOMR9A5q2c7J-r2C-0K2udxiBJtpmzwYiIgfJTIfDHDwxg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
     const CACHE_KEY = "NA_TRACKER_FRESH_V1";
 
     const SELF_EXPENSE_PERSONS = ["Senthil", "Manigandan"];
@@ -279,6 +281,23 @@
 
     function formatINR(n) {
       return "₹" + (Number(n) || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+
+    function printCardById(cardId) {
+      document.querySelectorAll(".card.print-target").forEach(el => el.classList.remove("print-target"));
+      const target = document.getElementById(cardId);
+      if (target) {
+        target.classList.add("print-target");
+        document.body.classList.add("print-only-section");
+      }
+      const cleanup = () => {
+        document.body.classList.remove("print-only-section");
+        if (target) target.classList.remove("print-target");
+        window.removeEventListener("afterprint", cleanup);
+      };
+      window.addEventListener("afterprint", cleanup);
+      window.print();
+      setTimeout(cleanup, 1000);
     }
 
     function userKey(name) {
@@ -1011,7 +1030,6 @@
               <span>Expense Filter</span>
               <div style="display:flex; gap:6px;">
                 <button type="button" class="btn-secondary btn-sm" onclick="state.adminFilterOpen = !state.adminFilterOpen; render();">${state.adminFilterOpen ? "Hide Filter" : "Filter"}</button>
-                <button type="button" class="btn-secondary btn-sm" onclick="window.print()">Print</button>
               </div>
             </div>
             ${state.adminFilterOpen ? `
@@ -1035,12 +1053,18 @@
         : list.filter(x => deductsEngineerBalance(x)).reduce((s, x) => s + numVal(x.Amount), 0);
 
       if (!list.length) {
-        return html + `<div class="card"><div class="card-title"><span>Expenses</span><span>Paid Total: ${formatINR(0)}</span></div><div class="pb-meta">No entries found.</div></div>`;
+        return html + `<div id="expensesListCard" class="card"><div class="card-title"><span>Expenses</span><div style="display:flex; gap:8px; align-items:center;"><span>Paid Total: ${formatINR(0)}</span>${isAdmin() ? `<button type="button" class="btn-secondary btn-sm no-print" onclick="printCardById('expensesListCard')">Print</button>` : ""}</div></div><div class="pb-meta">No entries found.</div></div>`;
       }
 
       html += `
-        <div class="card">
-          <div class="card-title"><span>Expenses</span><span>Paid Total: ${formatINR(paidSum)}</span></div>
+        <div id="expensesListCard" class="card">
+          <div class="card-title">
+            <span>Expenses</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span>Paid Total: ${formatINR(paidSum)}</span>
+              ${isAdmin() ? `<button type="button" class="btn-secondary btn-sm no-print" onclick="printCardById('expensesListCard')">Print</button>` : ""}
+            </div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -1150,6 +1174,12 @@
         return { site, baseAmt, gstAmt, totalAmt, expAmt, balAmt: totalAmt - expAmt };
       });
 
+      const siteTotBase = siteRows.reduce((s, r) => s + r.baseAmt, 0);
+      const siteTotGst = siteRows.reduce((s, r) => s + r.gstAmt, 0);
+      const siteTotAll = siteRows.reduce((s, r) => s + r.totalAmt, 0);
+      const siteTotExp = siteRows.reduce((s, r) => s + r.expAmt, 0);
+      const siteTotBal = siteRows.reduce((s, r) => s + r.balAmt, 0);
+
       const rows = getEngineerList().map(eng => {
         const ek = userKey(eng);
         const fGiven = state.funds.filter(f => userKey(f.Engineer) === ek && !isSettled(f.Settled)).reduce((s, r) => s + numVal(r.Amount), 0);
@@ -1165,8 +1195,11 @@
           <div class="stat-box"><div class="stat-label">Self Expense</div><div class="stat-val c-red">${formatINR(selfSum)}</div></div>
           <div class="stat-box highlight-soft"><div class="stat-label">Net Balance</div><div class="stat-val c-green">${formatINR(net)}</div></div>
         </div>
-        <div class="card">
-          <div class="card-title">Site-wise Summary</div>
+        <div id="siteWiseSummaryCard" class="card">
+          <div class="card-title">
+            <span>Site-wise Summary</span>
+            <button type="button" class="btn-secondary btn-sm no-print" onclick="printCardById('siteWiseSummaryCard')">Print</button>
+          </div>
           ${siteRows.length ? `
             <div class="table-wrap"><table><thead><tr><th>Site</th><th>Base Amount</th><th>GST Amount</th><th>Total Amount</th><th>Expense</th><th>Balance</th></tr></thead><tbody>
               ${siteRows.map(s => `
@@ -1179,6 +1212,14 @@
                   <td class="c-ink"><strong>${formatINR(s.balAmt)}</strong></td>
                 </tr>
               `).join("")}
+              <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>${formatINR(siteTotBase)}</strong></td>
+                <td><strong>${formatINR(siteTotGst)}</strong></td>
+                <td class="c-green"><strong>${formatINR(siteTotAll)}</strong></td>
+                <td class="c-red"><strong>${formatINR(siteTotExp)}</strong></td>
+                <td class="c-ink"><strong>${formatINR(siteTotBal)}</strong></td>
+              </tr>
             </tbody></table></div>
           ` : `<div class="pb-meta">No site data found.</div>`}
         </div>
@@ -1475,7 +1516,6 @@
           <div class="card-title">
             <span>Client Payment</span>
             <div style="display:flex; gap:6px;">
-              <button type="button" class="btn-secondary btn-sm" onclick="window.print()">Print</button>
               <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen=!state.adminAddFormOpen; state.editingCpId=null; render();">${showForm ? "Close" : "+"}</button>
             </div>
           </div>
@@ -1501,8 +1541,14 @@
             </form>
           ` : ""}
         </div>
-        <div class="card">
-          <div class="card-title"><span>Client Payment List</span><span>Total: ${formatINR(tot)}</span></div>
+        <div id="clientPaymentListCard" class="card">
+          <div class="card-title">
+            <span>Client Payment List</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span>Total: ${formatINR(tot)}</span>
+              <button type="button" class="btn-secondary btn-sm no-print" onclick="printCardById('clientPaymentListCard')">Print</button>
+            </div>
+          </div>
           ${list.length ? `
             <div class="table-wrap"><table><thead><tr><th>Date</th><th>Site</th><th>Base</th><th>GST</th><th>Total</th><th>Mode</th><th>Ref</th><th>Remarks</th><th class="no-print">Action</th></tr></thead><tbody>
               ${list.map(c => `
