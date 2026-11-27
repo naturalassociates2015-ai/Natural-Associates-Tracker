@@ -259,6 +259,14 @@
       return normPay(item.PaymentStatus ?? item.Status) === "Paid";
     }
 
+    function isPaidByAdmin(item) {
+      return isPaid(item) && (item.PaidByAdmin === true || String(item.PaidByAdmin ?? "").trim().toUpperCase() === "TRUE");
+    }
+
+    function deductsEngineerBalance(item) {
+      return isPaid(item) && !isPaidByAdmin(item);
+    }
+
     function isSettled(val) {
       return val === true || String(val ?? "").trim().toUpperCase() === "TRUE";
     }
@@ -348,6 +356,7 @@
       cpToDate: "",
       efEngFilter: "",
       seWhoFilter: "",
+      settleEng: "",
       settleUpToDate: todayISO(),
       settlePreview: null,
       users: dedupeUsers(DEFAULT_USERS),
@@ -408,6 +417,8 @@
           const qty = numVal(r.Qty ?? r.qty ?? 1) || 1;
           const rate = numVal(r.Rate ?? r.rate ?? 0);
           const amt = numVal(r.Amount ?? r.amount ?? (qty * rate));
+          const pay = normPay(r.PaymentStatus ?? r.paymentStatus ?? r.Status);
+          const paidAdmin = pay === "Paid" && (r.PaidByAdmin === true || String(r.PaidByAdmin ?? "").trim().toUpperCase() === "TRUE");
           return {
             RecordId: String(r.RecordId || r.id || `EXP_${i + 1}`).trim(),
             Date: toDateISO(r.Date || r.date || todayISO()),
@@ -420,8 +431,9 @@
             Unit: String(r.Unit || r.unit || "Nos").trim(),
             Rate: rate,
             Amount: amt,
-            PaymentStatus: normPay(r.PaymentStatus ?? r.paymentStatus ?? r.Status),
-            Settled: isSettled(r.Settled ?? r.settled)
+            PaymentStatus: pay,
+            Settled: isSettled(r.Settled ?? r.settled),
+            PaidByAdmin: paidAdmin
           };
         })
         .filter(x => x.Amount > 0 && (x.Description || x.Site));
@@ -613,6 +625,7 @@
       if (state.showExpenseForm || state.editingExpenseId || state.adminAddFormOpen || state.settlePreview) return true;
       const el = document.activeElement;
       if (!el) return false;
+      if (el.id === "spEng") return true;
       return ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
     }
 
@@ -777,6 +790,10 @@
 
       state.isSaving = true;
       if (editing) {
+        const wasUnpaid = !isPaid(editing);
+        const paidAdmin = payStatus === "Paid"
+          ? (wasUnpaid ? true : isPaidByAdmin(editing))
+          : false;
         const updated = {
           ...editing,
           Date: date,
@@ -789,7 +806,8 @@
           Unit: unit,
           Rate: rate,
           Amount: amt,
-          PaymentStatus: payStatus
+          PaymentStatus: payStatus,
+          PaidByAdmin: paidAdmin
         };
         const idx = state.expenses.findIndex(e => e.RecordId === editing.RecordId);
         if (idx > -1) state.expenses[idx] = updated;
@@ -812,7 +830,8 @@
           Rate: rate,
           Amount: amt,
           PaymentStatus: payStatus,
-          Settled: false
+          Settled: false,
+          PaidByAdmin: false
         };
         state.expenses.unshift(rec);
         state.isSaving = false;
@@ -827,7 +846,12 @@
       if (!isAdmin()) return;
       const idx = state.expenses.findIndex(e => e.RecordId === recordId);
       if (idx === -1) return;
-      const updated = { ...state.expenses[idx], PaymentStatus: normPay(nextVal) };
+      const cur = state.expenses[idx];
+      const nextStatus = normPay(nextVal);
+      const nextPaidAdmin = nextStatus === "Paid"
+        ? (!isPaid(cur) ? true : isPaidByAdmin(cur))
+        : false;
+      const updated = { ...cur, PaymentStatus: nextStatus, PaidByAdmin: nextPaidAdmin };
       state.expenses[idx] = updated;
       render();
       await sendAction({ action: "updateExpense", record: updated });
@@ -844,7 +868,12 @@
       let list = [...state.expenses];
       if (!isAdmin()) {
         const ek = userKey(state.currentUser.user);
-        list = list.filter(e => userKey(e.Engineer) === ek && !isSiteDone(e.Site) && !isSettled(e.Settled));
+        list = list.filter(e =>
+          userKey(e.Engineer) === ek &&
+          !isSiteDone(e.Site) &&
+          !isSettled(e.Settled) &&
+          !isPaidByAdmin(e)
+        );
         const today = todayISO();
         if (state.engPeriod === "Day") {
           list = list.filter(e => toDateISO(e.Date) === today);
@@ -1001,7 +1030,9 @@
       }
 
       const list = getScopedExpenses().sort((a, b) => toDateISO(b.Date).localeCompare(toDateISO(a.Date)) || String(b.RecordId).localeCompare(String(a.RecordId)));
-      const paidSum = list.filter(x => isPaid(x)).reduce((s, x) => s + numVal(x.Amount), 0);
+      const paidSum = isAdmin()
+        ? list.filter(x => isPaid(x)).reduce((s, x) => s + numVal(x.Amount), 0)
+        : list.filter(x => deductsEngineerBalance(x)).reduce((s, x) => s + numVal(x.Amount), 0);
 
       if (!list.length) {
         return html + `<div class="card"><div class="card-title"><span>Expenses</span><span>Paid Total: ${formatINR(0)}</span></div><div class="pb-meta">No entries found.</div></div>`;
@@ -1066,7 +1097,7 @@
         const eng = state.currentUser.user;
         const ek = userKey(eng);
         const funds = state.funds.filter(f => userKey(f.Engineer) === ek && !isSettled(f.Settled));
-        const paidExp = state.expenses.filter(e => userKey(e.Engineer) === ek && !isSiteDone(e.Site) && isPaid(e) && !isSettled(e.Settled));
+        const paidExp = state.expenses.filter(e => userKey(e.Engineer) === ek && !isSiteDone(e.Site) && deductsEngineerBalance(e) && !isSettled(e.Settled));
         const fSum = funds.reduce((s, r) => s + numVal(r.Amount), 0);
         const eSum = paidExp.reduce((s, r) => s + numVal(r.Amount), 0);
 
@@ -1096,7 +1127,7 @@
       const rows = getEngineerList().map(eng => {
         const ek = userKey(eng);
         const fGiven = state.funds.filter(f => userKey(f.Engineer) === ek && !isSettled(f.Settled)).reduce((s, r) => s + numVal(r.Amount), 0);
-        const spent = state.expenses.filter(e => userKey(e.Engineer) === ek && isPaid(e) && !isSettled(e.Settled)).reduce((s, r) => s + numVal(r.Amount), 0);
+        const spent = state.expenses.filter(e => userKey(e.Engineer) === ek && deductsEngineerBalance(e) && !isSettled(e.Settled)).reduce((s, r) => s + numVal(r.Amount), 0);
         return { eng, fGiven, spent, rem: fGiven - spent };
       });
 
@@ -1123,11 +1154,12 @@
       const showForm = state.adminAddFormOpen || Boolean(editF);
 
       const actFunds = state.funds.filter(f => !isSettled(f.Settled) && (!state.efEngFilter || userKey(f.Engineer) === userKey(state.efEngFilter)));
-      const actPaidExp = state.expenses.filter(e => isPaid(e) && !isSettled(e.Settled) && (!state.efEngFilter || userKey(e.Engineer) === userKey(state.efEngFilter)));
+      const actPaidExp = state.expenses.filter(e => deductsEngineerBalance(e) && !isSettled(e.Settled) && (!state.efEngFilter || userKey(e.Engineer) === userKey(state.efEngFilter)));
 
       const fTot = actFunds.reduce((s, r) => s + numVal(r.Amount), 0);
       const eTot = actPaidExp.reduce((s, r) => s + numVal(r.Amount), 0);
       const upToVal = state.settlePreview?.upTo || state.settleUpToDate || todayISO();
+      const selectedSpEng = state.settleEng || state.settlePreview?.eng || engs[0] || "";
 
       return `
         <div class="summary-grid-5" style="grid-template-columns: repeat(3, 1fr);">
@@ -1183,7 +1215,7 @@
             <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance)</div>
             <form onsubmit="previewSettle(event)">
               <div class="form-grid">
-                <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview=null; render();">${engs.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+                <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settleEng=this.value; state.settlePreview=null;">${engs.map(e => `<option value="${e}" ${selectedSpEng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
                 <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${upToVal}" oninput="state.settleUpToDate=toDateISO(this.value); state.settlePreview=null;" required /></div>
               </div>
               <div class="form-actions"><button type="submit" class="btn-secondary btn-sm">Check Balance</button></div>
@@ -1208,11 +1240,12 @@
     function previewSettle(ev) {
       ev.preventDefault();
       const eng = document.getElementById("spEng").value;
+      state.settleEng = eng;
       const ek = userKey(eng);
       const upTo = toDateISO(document.getElementById("spDate").value || state.settleUpToDate || todayISO());
       state.settleUpToDate = upTo;
       const fSum = state.funds.filter(f => userKey(f.Engineer) === ek && !isSettled(f.Settled) && toDateISO(f.Date) <= upTo).reduce((s, r) => s + numVal(r.Amount), 0);
-      const eSum = state.expenses.filter(e => userKey(e.Engineer) === ek && isPaid(e) && !isSettled(e.Settled) && toDateISO(e.Date) <= upTo).reduce((s, r) => s + numVal(r.Amount), 0);
+      const eSum = state.expenses.filter(e => userKey(e.Engineer) === ek && deductsEngineerBalance(e) && !isSettled(e.Settled) && toDateISO(e.Date) <= upTo).reduce((s, r) => s + numVal(r.Amount), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
     }
