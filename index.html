@@ -805,7 +805,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V11";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V12";
 
     const DEFAULT_ENGINEERS = ["Senthil", "Manikandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
@@ -881,6 +881,37 @@
       }
     };
 
+    function dedupeUsersList(rawList) {
+      const map = new Map();
+      const addUser = (u) => {
+        if (!u || !u.user) return;
+        const cleanName = String(u.user).trim();
+        const lower = cleanName.toLowerCase();
+        if (!cleanName || isUserDeleted(cleanName)) return;
+        const canonicalKey = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
+        const displayName = canonicalKey === "manikandan" ? "Manikandan" : cleanName;
+        const role = canonicalKey === "admin"
+          ? "ADMIN"
+          : (canonicalKey === "manikandan" ? "Manikandan" : (u.role || "ENGINEER"));
+        const existing = map.get(canonicalKey);
+        map.set(canonicalKey, {
+          user: displayName,
+          role,
+          password: String(u.password || existing?.password || "1234")
+        });
+      };
+
+      if (Array.isArray(rawList)) {
+        rawList.forEach(addUser);
+      }
+      CONFIGURED_USERS.forEach(u => {
+        if (!map.has(u.user.toLowerCase()) && !isUserDeleted(u.user)) {
+          addUser(u);
+        }
+      });
+      return Array.from(map.values());
+    }
+
     function isUserDeleted(username) {
       const target = String(username || "").trim().toLowerCase();
       if (!target || target === "admin") return false;
@@ -910,9 +941,11 @@
         const lower = val.toLowerCase();
         if (lower === "admin") return;
         if (isUserDeleted(val)) return;
-        if (!seen.has(lower)) {
-          seen.add(lower);
-          names.push(val);
+        const key = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
+        const label = key === "manikandan" ? "Manikandan" : val;
+        if (!seen.has(key)) {
+          seen.add(key);
+          names.push(label);
         }
       };
       state.users.forEach(u => pushEng(u.user));
@@ -973,7 +1006,7 @@
         const p = JSON.parse(raw);
         if (Array.isArray(p.deletedUsers)) state.deletedUsers = p.deletedUsers;
         if (Array.isArray(p.users) && p.users.length) {
-          state.users = p.users.filter(u => !isUserDeleted(u.user));
+          state.users = dedupeUsersList(p.users);
         }
         if (Array.isArray(p.expenses)) state.expenses = normalizeExpenses(p.expenses);
         if (Array.isArray(p.funds)) state.funds = normalizeFunds(p.funds);
@@ -1069,7 +1102,7 @@
     }
 
     function isManikandan() {
-      return state.currentUser && state.currentUser.user === "Manikandan";
+      return state.currentUser && String(state.currentUser.user).toLowerCase() === "manikandan";
     }
 
     function openSideDrawer() {
@@ -1100,23 +1133,7 @@
       const sel = document.getElementById("loginUserSelect");
       if (!sel) return;
       const prevVal = sel.value || "Admin";
-      const orderedUsers = [];
-      const seen = new Set();
-
-      CONFIGURED_USERS.forEach(u => {
-        if (isUserDeleted(u.user)) return;
-        seen.add(u.user.toLowerCase());
-        const live = state.users.find(x => String(x.user).toLowerCase() === u.user.toLowerCase());
-        orderedUsers.push(live || u);
-      });
-      state.users.forEach(u => {
-        if (!u.user || isUserDeleted(u.user)) return;
-        if (!seen.has(String(u.user).toLowerCase())) {
-          seen.add(String(u.user).toLowerCase());
-          orderedUsers.push(u);
-        }
-      });
-
+      const orderedUsers = dedupeUsersList(state.users);
       const nextSelected = orderedUsers.some(u => u.user === prevVal) ? prevVal : "Admin";
       sel.innerHTML = orderedUsers.map(u =>
         `<option value="${u.user}" ${u.user === nextSelected ? "selected" : ""}>${u.user}</option>`
@@ -1395,6 +1412,7 @@
             const idx = state.users.findIndex(x => String(x.user).toLowerCase() === String(u.user).toLowerCase());
             if (idx > -1) state.users[idx] = u;
             else state.users.push(u);
+            state.users = dedupeUsersList(state.users);
           }
         } else if (op.action === "deleteUser") {
           const target = String(op.user || "").trim().toLowerCase();
@@ -1402,7 +1420,7 @@
             if (!state.deletedUsers.some(x => String(x).toLowerCase() === target)) {
               state.deletedUsers.push(op.user);
             }
-            state.users = state.users.filter(x => String(x.user).trim().toLowerCase() !== target);
+            state.users = dedupeUsersList(state.users.filter(x => String(x.user).trim().toLowerCase() !== target));
           }
         } else if (op.action === "addSite") {
           const s = op.record;
@@ -1465,25 +1483,20 @@
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
-        const mapU = new Map();
-        CONFIGURED_USERS.forEach(u => {
-          if (!isUserDeleted(u.user)) {
-            mapU.set(u.user.toLowerCase(), { ...u });
-          }
-        });
+        const rawUsers = [];
         if (Array.isArray(data.users) && data.users.length) {
           data.users.forEach(u => {
-            if (u.user && u.password && !isUserDeleted(u.user)) {
-              const key = String(u.user).toLowerCase();
-              mapU.set(key, {
-                user: u.user,
-                role: key === "admin" ? "ADMIN" : (key === "manikandan" ? "Manikandan" : (u.role || "ENGINEER")),
-                password: String(u.password)
-              });
+            if (u && u.user && u.password && !isUserDeleted(u.user)) {
+              rawUsers.push(u);
             }
           });
         }
-        state.users = Array.from(mapU.values());
+        CONFIGURED_USERS.forEach(u => {
+          if (!isUserDeleted(u.user)) {
+            rawUsers.push(u);
+          }
+        });
+        state.users = dedupeUsersList(rawUsers);
         syncLoginUserSelectOptions();
 
         if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
@@ -1588,7 +1601,7 @@
       if (!isAdmin()) {
         const eng = state.currentUser.user;
         list = list.filter(e =>
-          e.Engineer === eng &&
+          String(e.Engineer).toLowerCase() === String(eng).toLowerCase() &&
           !isSiteCompleted(e.Site) &&
           !isSettledFlag(e.Settled) &&
           !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
@@ -1610,7 +1623,9 @@
           });
         }
       } else {
-        if (state.filters.engineer) list = list.filter(e => e.Engineer === state.filters.engineer);
+        if (state.filters.engineer) {
+          list = list.filter(e => String(e.Engineer).toLowerCase() === String(state.filters.engineer).toLowerCase());
+        }
         if (state.filters.site) list = list.filter(e => e.Site === state.filters.site);
         if (state.filters.category) list = list.filter(e => e.Category === state.filters.category);
         if (state.filters.vendor.trim()) {
@@ -1628,6 +1643,7 @@
     }
 
     function openExpenseForm(recordId = null) {
+      if (!isAdmin() && recordId) return;
       state.editingExpenseId = recordId;
       state.showExpenseForm = true;
       state.activeTab = "expenses";
@@ -1661,6 +1677,10 @@
         ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
         : null;
 
+      if (!isAdmin() && editingObj) {
+        return;
+      }
+
       const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
         ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manikandan")
@@ -1676,9 +1696,10 @@
       const rate = Number(document.getElementById("expRate").value) || 0;
       const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
 
+      // Engineer chooses Paid or Unpaid at entry time; Admin controls Paid/Unpaid updates & edits
       const paymentStatus = isAdmin()
         ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
-        : (editingObj ? normalizePaymentStatus(editingObj.PaymentStatus) : "Unpaid");
+        : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Unpaid");
 
       if (!description || amount <= 0) {
         setBanner("Please enter Description and valid Amount.", "warn");
@@ -1823,8 +1844,11 @@
                 <input type="number" step="0.01" min="0.01" id="expAmount" placeholder="0" required />
               </div>
               <div class="field">
-                <label>Status</label>
-                <input type="text" id="expPayStatus" value="Unpaid" readonly />
+                <label>Payment Status</label>
+                <select id="expPayStatus">
+                  <option value="Unpaid" selected>Unpaid</option>
+                  <option value="Paid">Paid</option>
+                </select>
               </div>
             </div>
             <div class="form-actions">
@@ -2088,12 +2112,13 @@
         const engName = state.currentUser.user;
 
         const myFunds = state.funds.filter(f =>
-          f.Engineer === engName &&
+          String(f.Engineer).toLowerCase() === String(engName).toLowerCase() &&
           !isSettledFlag(f.Settled) &&
           !isRecordBeforeSettlement(engName, f.Date, f.RecordId)
         );
-        const myExp = state.expenses.filter(e =>
-          e.Engineer === engName &&
+        // Paid expenses by engineer deduct from their balance; Unpaid do not deduct
+        const myPaidExp = state.expenses.filter(e =>
+          String(e.Engineer).toLowerCase() === String(engName).toLowerCase() &&
           !isSiteCompleted(e.Site) &&
           isPaidEntry(e) &&
           !isSettledFlag(e.Settled) &&
@@ -2102,7 +2127,7 @@
 
         const carryItem = myFunds.find(f => f.Mode === "Carry Balance");
         const fSum = myFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const eSum = myExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const eSum = myPaidExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
         const balVal = fSum - eSum;
 
         return `
@@ -2153,12 +2178,12 @@
       const engList = getEngineerNames();
       const engRows = engList.map(eng => {
         const engFunds = state.funds.filter(f =>
-          f.Engineer === eng &&
+          String(f.Engineer).toLowerCase() === String(eng).toLowerCase() &&
           !isSettledFlag(f.Settled) &&
           !isRecordBeforeSettlement(eng, f.Date, f.RecordId)
         );
         const engPaidExp = state.expenses.filter(e =>
-          e.Engineer === eng &&
+          String(e.Engineer).toLowerCase() === String(eng).toLowerCase() &&
           isPaidEntry(e) &&
           !isSettledFlag(e.Settled) &&
           !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
@@ -2437,7 +2462,7 @@
     }
 
     function renderAddEngineerPage() {
-      const visibleUsers = state.users.filter(u => u.user && !isUserDeleted(u.user));
+      const visibleUsers = dedupeUsersList(state.users);
       const editUser = state.editingUserName
         ? visibleUsers.find(u => u.user === state.editingUserName)
         : null;
@@ -2753,14 +2778,14 @@
       const lower = name.toLowerCase();
       state.deletedUsers = state.deletedUsers.filter(u => String(u).toLowerCase() !== lower);
 
-      const role = lower === "admin"
+      const canonicalKey = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
+      const displayName = canonicalKey === "manikandan" ? "Manikandan" : name;
+      const role = canonicalKey === "admin"
         ? "ADMIN"
-        : (lower === "manikandan" ? "Manikandan" : "ENGINEER");
+        : (canonicalKey === "manikandan" ? "Manikandan" : "ENGINEER");
 
-      const rec = { user: name, role, password: pin };
-      const idx = state.users.findIndex(u => String(u.user).toLowerCase() === lower);
-      if (idx > -1) state.users[idx] = rec;
-      else state.users.push(rec);
+      const rec = { user: displayName, role, password: pin };
+      state.users = dedupeUsersList([...state.users.filter(u => u.user.toLowerCase() !== canonicalKey), rec]);
 
       syncLoginUserSelectOptions();
       state.editingUserName = null;
@@ -2777,7 +2802,7 @@
       if (!state.deletedUsers.some(u => String(u).toLowerCase() === lower)) {
         state.deletedUsers.push(username);
       }
-      state.users = state.users.filter(u => String(u.user).trim().toLowerCase() !== lower);
+      state.users = dedupeUsersList(state.users.filter(u => String(u.user).trim().toLowerCase() !== lower));
       if (state.editingUserName && String(state.editingUserName).toLowerCase() === lower) {
         state.editingUserName = null;
       }
