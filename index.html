@@ -719,7 +719,7 @@
           <select id="loginUserSelect" class="login-user-select" aria-label="User">
             <option value="Admin" selected>Admin</option>
             <option value="Senthil">Senthil</option>
-            <option value="Manikandan">Manikandan</option>
+            <option value="Manigandan">Manigandan</option>
             <option value="Yogesh">Yogesh</option>
             <option value="Sivashankar">Sivashankar</option>
           </select>
@@ -807,7 +807,7 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBTKwNtMbEta5sp8qiUi2_Q30B6lMjz-_A5y4NJesqLxTYCC3TO7MdLv_T4o3ChG0h8A/exec";
     const CACHE_KEY = "NA_TRACKER_CACHE_V13";
 
-    const DEFAULT_ENGINEERS = ["Senthil", "Manikandan", "Yogesh", "Sivashankar"];
+    const DEFAULT_ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -836,7 +836,7 @@
     const CONFIGURED_USERS = [
       { user: "Admin", role: "ADMIN", password: "2021" },
       { user: "Senthil", role: "ENGINEER", password: "1981" },
-      { user: "Manikandan", role: "Manikandan", password: "8889" },
+      { user: "Manigandan", role: "Manigandan", password: "8889" },
       { user: "Yogesh", role: "ENGINEER", password: "7699" },
       { user: "Sivashankar", role: "ENGINEER", password: "2962" }
     ];
@@ -894,11 +894,11 @@
         const cleanName = String(u.user).trim();
         const lower = cleanName.toLowerCase();
         if (!cleanName || isUserDeleted(cleanName)) return;
-        const canonicalKey = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
-        const displayName = canonicalKey === "manikandan" ? "Manikandan" : cleanName;
+        const canonicalKey = (lower === "manigandan" || lower === "Manigandan") ? "Manigandan" : lower;
+        const displayName = canonicalKey === "Manigandan" ? "Manigandan" : cleanName;
         const role = canonicalKey === "admin"
           ? "ADMIN"
-          : (canonicalKey === "manikandan" ? "Manikandan" : (u.role || "ENGINEER"));
+          : (canonicalKey === "Manigandan" ? "Manigandan" : (u.role || "ENGINEER"));
         const existing = map.get(canonicalKey);
         map.set(canonicalKey, {
           user: displayName,
@@ -941,8 +941,8 @@
         const lower = val.toLowerCase();
         if (lower === "admin") return;
         if (isUserDeleted(val)) return;
-        const key = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
-        const label = key === "manikandan" ? "Manikandan" : val;
+        const key = (lower === "manigandan" || lower === "Manigandan") ? "Manigandan" : lower;
+        const label = key === "Manigandan" ? "Manigandan" : val;
         if (!seen.has(key)) {
           seen.add(key);
           names.push(label);
@@ -1101,8 +1101,8 @@
       return state.currentUser && state.currentUser.role === "ADMIN";
     }
 
-    function isManikandan() {
-      return state.currentUser && String(state.currentUser.user).toLowerCase() === "manikandan";
+    function isManigandan() {
+      return state.currentUser && String(state.currentUser.user).toLowerCase() === "Manigandan";
     }
 
     function openSideDrawer() {
@@ -1178,7 +1178,7 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manikandan" : (matched.role || "ENGINEER"))
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
@@ -1251,7 +1251,7 @@
           return {
             RecordId: recId || `EXP_${i + 1}`,
             Date: toLocalDateStr(r.Date || r.date || todayISO()),
-            Engineer: String(r.Engineer || r.engineer || "Manikandan").trim(),
+            Engineer: String(r.Engineer || r.engineer || "Manigandan").trim(),
             Site: String(r.Site || r.site || "").trim(),
             Category: String(r.Category || r.category || "Material").trim(),
             "Vendor/Contractor": String(r["Vendor/Contractor"] || r.vendor || "").trim(),
@@ -1688,10 +1688,10 @@
 
       const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
-        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manikandan")
+        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
         : state.currentUser.user;
       const site = document.getElementById("expSite").value;
-      const category = (isAdmin() || isManikandan())
+      const category = (isAdmin() || isManigandan())
         ? (document.getElementById("expCategory")?.value || "Material")
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
@@ -1792,7 +1792,7 @@
     function renderEngineerEntryOnlyForm() {
       const onProcessSites = getOnProcessSiteNames();
       const unitOptions = sanitizeUnitsList(state.units);
-      const useCategoryDropdown = isManikandan();
+      const useCategoryDropdown = isManigandan();
 
       return `
         <div class="card no-print">
@@ -2783,11 +2783,11 @@
       const lower = name.toLowerCase();
       state.deletedUsers = state.deletedUsers.filter(u => String(u).toLowerCase() !== lower);
 
-      const canonicalKey = (lower === "manigandan" || lower === "manikandan") ? "manikandan" : lower;
-      const displayName = canonicalKey === "manikandan" ? "Manikandan" : name;
+      const canonicalKey = (lower === "manigandan" || lower === "Manigandan") ? "Manigandan" : lower;
+      const displayName = canonicalKey === "Manigandan" ? "Manigandan" : name;
       const role = canonicalKey === "admin"
         ? "ADMIN"
-        : (canonicalKey === "manikandan" ? "Manikandan" : "ENGINEER");
+        : (canonicalKey === "Manigandan" ? "Manigandan" : "ENGINEER");
 
       const rec = { user: displayName, role, password: pin };
       state.users = dedupeUsersList([...state.users.filter(u => u.user.toLowerCase() !== canonicalKey), rec]);
