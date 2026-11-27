@@ -806,9 +806,8 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBTKwNtMbEta5sp8qiUi2_Q30B6lMjz-_A5y4NJesqLxTYCC3TO7MdLv_T4o3ChG0h8A/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V19";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V20";
 
-    const DEFAULT_ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
     const SELF_EXPENSE_PERSONS = ["Senthil", "Manigandan"];
     const CATEGORIES = [
       "Material",
@@ -1351,15 +1350,21 @@
       const engKey = getCanonicalUserKey(eng);
       const settledUntil = state.settledUntilByEng[eng] || state.settledUntilByEng[engKey];
       const latestCarry = getLatestCarryRecForEng(eng);
+
       if (latestCarry) {
         if (recId && recId === latestCarry.RecordId) return false;
+        const carryIdNum = Number(String(latestCarry.RecordId || "").replace(/\D+/g, "")) || 0;
+        const recIdNum = Number(String(recId || "").replace(/\D+/g, "")) || 0;
+        if (carryIdNum > 0 && recIdNum > 0 && recIdNum < carryIdNum) {
+          return true;
+        }
         const carryDate = toLocalDateStr(latestCarry.Date);
         const d = toLocalDateStr(recDate);
         if (settledUntil && d <= settledUntil) return true;
         if (d < carryDate) return true;
-        if (d === carryDate && recId && String(recId) < String(latestCarry.RecordId)) return true;
         return false;
       }
+
       if (!settledUntil) return false;
       return toLocalDateStr(recDate) <= settledUntil;
     }
@@ -1946,10 +1951,17 @@
         const engName = state.currentUser.user;
         const engKey = getCanonicalUserKey(engName);
 
-        const myFunds = state.funds.filter(f =>
-          getCanonicalUserKey(f.Engineer) === engKey &&
-          isActiveUnsettledFund(f)
-        );
+        const myFunds = state.funds
+          .filter(f =>
+            getCanonicalUserKey(f.Engineer) === engKey &&
+            isActiveUnsettledFund(f)
+          )
+          .sort((a, b) => {
+            if (a.Mode === "Carry Balance" && b.Mode !== "Carry Balance") return -1;
+            if (b.Mode === "Carry Balance" && a.Mode !== "Carry Balance") return 1;
+            return toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)) || String(b.RecordId).localeCompare(String(a.RecordId));
+          });
+
         const myPaidExp = state.expenses.filter(e =>
           getCanonicalUserKey(e.Engineer) === engKey &&
           !isSiteCompleted(e.Site) &&
@@ -1965,7 +1977,7 @@
         return `
           <div class="summary-grid-5" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-box highlight-soft">
-              <div class="stat-label">${carryItem ? "Carry Balance" : "Fund Received"}</div>
+              <div class="stat-label">${carryItem && myFunds.length === 1 ? "Carry Balance" : "Fund Received"}</div>
               <div class="stat-val c-green">${formatINR(fSum)}</div>
             </div>
             <div class="stat-box">
@@ -1987,7 +1999,7 @@
                     ${myFunds.map(f => `
                       <tr>
                         <td>${toLocalDateStr(f.Date)}</td>
-                        <td>${f.Mode || "Online"}</td>
+                        <td><strong>${f.Mode || "Online"}</strong></td>
                         <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
                       </tr>
                     `).join("")}
@@ -2900,10 +2912,10 @@
       const engKey = getCanonicalUserKey(eng);
       const upTo = toLocalDateStr(document.getElementById("spDate").value);
       const fSum = state.funds
-        .filter(f => getCanonicalUserKey(f.Engineer) === engKey && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
+        .filter(f => getCanonicalUserKey(f.Engineer) === engKey && isActiveUnsettledFund(f) && toLocalDateStr(f.Date) <= upTo)
         .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
       const eSum = state.expenses
-        .filter(e => getCanonicalUserKey(e.Engineer) === engKey && isPaidEntry(e) && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
+        .filter(e => getCanonicalUserKey(e.Engineer) === engKey && isPaidEntry(e) && isActiveUnsettledExpense(e) && toLocalDateStr(e.Date) <= upTo)
         .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
