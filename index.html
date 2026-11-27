@@ -806,7 +806,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBTKwNtMbEta5sp8qiUi2_Q30B6lMjz-_A5y4NJesqLxTYCC3TO7MdLv_T4o3ChG0h8A/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V20";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V23";
 
     const SELF_EXPENSE_PERSONS = ["Senthil", "Manigandan"];
     const CATEGORIES = [
@@ -833,6 +833,14 @@
       { user: "Sivashankar", role: "ENGINEER", password: "2962" }
     ];
 
+    function todayISO() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
     const state = {
       currentUser: null,
       activeTab: "summary",
@@ -853,6 +861,7 @@
       editingSiteName: null,
       editingUserName: null,
       settledUntilByEng: {},
+      settleUpToDate: todayISO(),
       settlePreview: null,
       users: [...CONFIGURED_USERS],
       expenses: [],
@@ -888,7 +897,7 @@
     function getCanonicalUserKey(name) {
       const lower = String(name || "").trim().toLowerCase();
       if (!lower) return "";
-      if (lower === "manigandan" || lower === "Manigandan" || lower === "மணிகண்டன்") return "Manigandan";
+      if (lower === "manigandan" || lower === "manikandan" || lower === "மணிகண்டன்") return "manigandan";
       if (lower === "senthil" || lower === "செந்தில்") return "senthil";
       if (lower === "yogesh" || lower === "யோகேஷ்") return "yogesh";
       if (lower === "sivashankar" || lower === "சிவசங்கர்") return "sivashankar";
@@ -898,7 +907,7 @@
 
     function getCanonicalDisplayName(name) {
       const key = getCanonicalUserKey(name);
-      if (key === "Manigandan") return "Manigandan";
+      if (key === "manigandan") return "Manigandan";
       if (key === "senthil") return "Senthil";
       if (key === "yogesh") return "Yogesh";
       if (key === "sivashankar") return "Sivashankar";
@@ -917,7 +926,7 @@
           const displayName = getCanonicalDisplayName(cleanName);
           const role = key === "admin"
             ? "ADMIN"
-            : (key === "Manigandan" ? "Manigandan" : (u.role || "ENGINEER"));
+            : (key === "manigandan" ? "Manigandan" : (u.role || "ENGINEER"));
           map.set(key, {
             user: displayName,
             role,
@@ -1069,14 +1078,6 @@
       return str.slice(0, 10);
     }
 
-    function todayISO() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
-
     function getStartOfWeekISO() {
       const d = new Date();
       const dayOfWeek = d.getDay();
@@ -1108,8 +1109,8 @@
       return state.currentUser && state.currentUser.role === "ADMIN";
     }
 
-    function isManigandan() {
-      return state.currentUser && getCanonicalUserKey(state.currentUser.user) === "Manigandan";
+    function isManikandan() {
+      return state.currentUser && getCanonicalUserKey(state.currentUser.user) === "manigandan";
     }
 
     function syncDrawerActiveState() {
@@ -1189,7 +1190,7 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selKey === "admin" ? "ADMIN" : (selKey === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
+        role: selKey === "admin" ? "ADMIN" : (selKey === "manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
@@ -1387,13 +1388,19 @@
     let suppressRemoteOverwriteUntil = 0;
 
     function isUserInteractingWithFormOrDropdown() {
-      if (state.showExpenseForm || state.editingExpenseId || state.adminAddFormOpen || state.settlePreview) {
+      if (
+        state.activeTab === "engineerFund" ||
+        state.showExpenseForm ||
+        state.editingExpenseId ||
+        state.adminAddFormOpen ||
+        state.settlePreview
+      ) {
         return true;
       }
       const active = document.activeElement;
       if (!active) return false;
       const tag = active.tagName;
-      return tag === "SELECT" || tag === "TEXTAREA" || (tag === "INPUT" && active.type !== "date");
+      return tag === "SELECT" || tag === "TEXTAREA" || tag === "INPUT";
     }
 
     async function loadAllData(showMessage = false) {
@@ -1602,7 +1609,7 @@
         ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
         : state.currentUser.user;
       const site = document.getElementById("expSite").value;
-      const category = (isAdmin() || isManigandan())
+      const category = (isAdmin() || isManikandan())
         ? (document.getElementById("expCategory")?.value || "Material")
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
@@ -1702,7 +1709,7 @@
     function renderEngineerEntryOnlyForm() {
       const onProcessSites = getOnProcessSiteNames();
       const unitOptions = sanitizeUnitsList(state.units);
-      const useCategoryDropdown = isManigandan();
+      const useCategoryDropdown = isManikandan();
 
       return `
         <div class="card no-print">
@@ -2350,12 +2357,19 @@
       `;
     }
 
+    function onSettleDateChange(val) {
+      state.settleUpToDate = toLocalDateStr(val);
+      state.settlePreview = null;
+    }
+
     function renderEngineerFundPage() {
       const engList = getEngineerNames();
       const editFnd = state.editingFundId
         ? state.funds.find(f => f.RecordId === state.editingFundId)
         : null;
       const showForm = state.adminAddFormOpen || Boolean(editFnd);
+
+      const dateVal = state.settlePreview?.upTo || state.settleUpToDate || todayISO();
 
       const activeFunds = state.funds.filter(f =>
         isActiveUnsettledFund(f) &&
@@ -2453,11 +2467,11 @@
           ` : `<div class="pb-meta">No active fund entries.</div>`}
 
           <div class="confirm-box">
-            <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance - Paid Expenses Only)</div>
+            <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance)</div>
             <form onsubmit="previewSettlePeriod(event)">
               <div class="form-grid">
                 <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${engList.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
-                <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
+                <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${dateVal}" oninput="onSettleDateChange(this.value)" onchange="onSettleDateChange(this.value)" required /></div>
               </div>
               <div class="form-actions"><button type="submit" class="btn-secondary btn-sm">Check Balance</button></div>
             </form>
@@ -2833,7 +2847,7 @@
       const displayName = getCanonicalDisplayName(rawName);
       const role = canonicalKey === "admin"
         ? "ADMIN"
-        : (canonicalKey === "Manigandan" ? "Manigandan" : "ENGINEER");
+        : (canonicalKey === "manigandan" ? "Manigandan" : "ENGINEER");
 
       const rec = { user: displayName, role, password: pin };
       state.users = dedupeUsersList([
@@ -2910,7 +2924,8 @@
       ev.preventDefault();
       const eng = document.getElementById("spEng").value;
       const engKey = getCanonicalUserKey(eng);
-      const upTo = toLocalDateStr(document.getElementById("spDate").value);
+      const upTo = toLocalDateStr(document.getElementById("spDate").value || state.settleUpToDate || todayISO());
+      state.settleUpToDate = upTo;
       const fSum = state.funds
         .filter(f => getCanonicalUserKey(f.Engineer) === engKey && isActiveUnsettledFund(f) && toLocalDateStr(f.Date) <= upTo)
         .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
@@ -2995,6 +3010,10 @@
         container.innerHTML = renderAddUnitsPage();
       } else {
         container.innerHTML = renderSummaryView();
+      }
+      const spDateEl = document.getElementById("spDate");
+      if (spDateEl && state.settleUpToDate) {
+        spDateEl.value = state.settleUpToDate;
       }
     }
 
