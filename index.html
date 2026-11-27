@@ -805,8 +805,8 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3oXqkecaGdURyy3LtgA5lNJxuBFz911CDZIIphwf64ZhwSIVblPoPoKzQjEmXgUnPDA/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V23";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V24";
 
     const SELF_EXPENSE_PERSONS = ["Senthil", "Manigandan"];
     const CATEGORIES = [
@@ -968,7 +968,7 @@
     }
 
     function normalizePaymentStatus(val) {
-      const s = String(val || "").trim().toLowerCase();
+      const s = String(val ?? "").trim().toLowerCase();
       return s === "unpaid" ? "Unpaid" : "Paid";
     }
 
@@ -1403,6 +1403,26 @@
       return tag === "SELECT" || tag === "TEXTAREA" || tag === "INPUT";
     }
 
+    function mergeExpensesWithLocalProtection(remoteExpenses) {
+      const normalizedRemote = normalizeExpenses(remoteExpenses);
+      if (Date.now() >= suppressRemoteOverwriteUntil) {
+        return normalizedRemote;
+      }
+      const remoteMap = new Map(normalizedRemote.map(item => [item.RecordId, item]));
+      state.expenses.forEach(localItem => {
+        if (!remoteMap.has(localItem.RecordId)) {
+          remoteMap.set(localItem.RecordId, localItem);
+        } else {
+          const rItem = remoteMap.get(localItem.RecordId);
+          remoteMap.set(localItem.RecordId, {
+            ...rItem,
+            PaymentStatus: localItem.PaymentStatus
+          });
+        }
+      });
+      return Array.from(remoteMap.values());
+    }
+
     async function loadAllData(showMessage = false) {
       if (isSyncingNow) return;
       isSyncingNow = true;
@@ -1416,17 +1436,20 @@
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
-        if (Date.now() < suppressRemoteOverwriteUntil) {
-          if (showMessage) setBanner("Synced.", "info");
-          return;
-        }
-
         if (Array.isArray(data.users) && data.users.length) {
           state.users = dedupeUsersList(data.users);
         }
         syncLoginUserSelectOptions();
 
-        if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
+        if (Array.isArray(data.expenses)) {
+          state.expenses = mergeExpensesWithLocalProtection(data.expenses);
+        }
+        if (Date.now() < suppressRemoteOverwriteUntil) {
+          persistCache();
+          if (showMessage) setBanner("Synced.", "info");
+          return;
+        }
+
         if (Array.isArray(data.funds)) state.funds = normalizeFunds(data.funds);
         if (Array.isArray(data.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(data.selfExpenses);
         if (Array.isArray(data.clientPayments)) state.clientPayments = normalizeClientPayments(data.clientPayments);
@@ -1462,7 +1485,7 @@
     }
 
     async function postAction(payload) {
-      suppressRemoteOverwriteUntil = Date.now() + 3500;
+      suppressRemoteOverwriteUntil = Date.now() + 8000;
       persistCache();
       try {
         const res = await fetch(SCRIPT_URL, {
@@ -1618,9 +1641,7 @@
       const unit = document.getElementById("expUnit").value || "Nos";
       const rate = parseMoneyValue(document.getElementById("expRate").value);
       const amount = parseMoneyValue(document.getElementById("expAmount").value) || (qty * rate);
-      const paymentStatus = isAdmin()
-        ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
-        : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Paid");
+      const paymentStatus = normalizePaymentStatus(document.getElementById("expPayStatus")?.value);
 
       if (!description || amount <= 0) {
         setBanner("Please enter Description and valid Amount.", "warn");
