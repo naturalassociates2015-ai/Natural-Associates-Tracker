@@ -780,8 +780,8 @@
           </div>
         </div>
         <div class="top-actions">
-          <button class="btn-ghost btn-sm" onclick="loadAllData(true)">Sync</button>
-          <button class="btn-ghost btn-sm" onclick="handleLogout()">Logout</button>
+          <button type="button" class="btn-ghost btn-sm" onclick="loadAllData(true)">Sync</button>
+          <button type="button" class="btn-ghost btn-sm" onclick="handleLogout()">Logout</button>
         </div>
       </div>
     </header>
@@ -798,8 +798,8 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBTKwNtMbEta5sp8qiUi2_Q30B6lMjz-_A5y4NJesqLxTYCC3TO7MdLv_T4o3ChG0h8A/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V15";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEAoJfYOUEBCtOzJ3938s-81eHi8LDwSiQDxSiVqEg8N2Wcc-pagsmxWLfdbjZO80A/exec";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V16";
 
     const DEFAULT_ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
@@ -861,6 +861,18 @@
         toDate: ""
       }
     };
+
+    function normalizeTabName(tab) {
+      const t = String(tab || "").trim().toLowerCase();
+      if (t === "expense" || t === "expenses") return "expenses";
+      if (t === "summary") return "summary";
+      if (t === "clientpayment" || t === "client payment") return "clientPayment";
+      if (t === "engineerfund" || t === "engineer fund") return "engineerFund";
+      if (t === "addengineer" || t === "add engineer") return "addEngineer";
+      if (t === "addsite" || t === "add site") return "addSite";
+      if (t === "addunits" || t === "add units") return "addUnits";
+      return "summary";
+    }
 
     function getCanonicalUserKey(name) {
       const lower = String(name || "").trim().toLowerCase();
@@ -937,7 +949,7 @@
 
     function normalizePaymentStatus(val) {
       const s = String(val || "").trim().toLowerCase();
-      return s === "paid" ? "Paid" : "Unpaid";
+      return s === "unpaid" ? "Unpaid" : "Paid";
     }
 
     function isPaidEntry(item) {
@@ -1088,8 +1100,9 @@
     }
 
     function syncDrawerActiveState() {
+      const current = normalizeTabName(state.activeTab);
       document.querySelectorAll("#sideDrawer .drawer-item").forEach(btn => {
-        btn.classList.toggle("active", btn.getAttribute("data-view") === state.activeTab);
+        btn.classList.toggle("active", normalizeTabName(btn.getAttribute("data-view")) === current);
       });
     }
 
@@ -1107,7 +1120,7 @@
 
     function selectDrawerView(viewName) {
       closeSideDrawer();
-      state.activeTab = viewName;
+      state.activeTab = normalizeTabName(viewName);
       state.adminAddFormOpen = false;
       state.settlePreview = null;
       state.editingExpenseId = null;
@@ -1412,10 +1425,10 @@
     }
 
     function onBottomNavClick(tabId) {
-      state.activeTab = tabId;
+      state.activeTab = normalizeTabName(tabId);
       state.settlePreview = null;
       state.adminAddFormOpen = false;
-      if (tabId !== "expenses") {
+      if (state.activeTab !== "expenses") {
         state.showExpenseForm = false;
         state.editingExpenseId = null;
       }
@@ -1425,20 +1438,21 @@
     function renderBottomNav() {
       const plusBar = document.getElementById("bottomPlusBar");
       const navEl = document.getElementById("bottomNavInner");
+      const currentTab = normalizeTabName(state.activeTab);
 
       if (!isAdmin()) {
-        plusBar.innerHTML = state.activeTab === "expenses"
+        plusBar.innerHTML = currentTab === "expenses"
           ? `<button type="button" class="bottom-plus-btn" title="Add Expense" onclick="openExpenseForm()">+</button>`
           : "";
         navEl.innerHTML = `
-          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
-          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
+          <button type="button" class="nav-btn nav-summary ${currentTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-expense ${currentTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expense</button>
         `;
       } else {
         plusBar.innerHTML = "";
         navEl.innerHTML = `
-          <button type="button" class="nav-btn nav-summary ${state.activeTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
-          <button type="button" class="nav-btn nav-expense ${state.activeTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
+          <button type="button" class="nav-btn nav-summary ${currentTab === "summary" ? "active" : ""}" onclick="onBottomNavClick('summary')">Summary</button>
+          <button type="button" class="nav-btn nav-expense ${currentTab === "expenses" ? "active" : ""}" onclick="onBottomNavClick('expenses')">Expenses</button>
         `;
       }
     }
@@ -1542,7 +1556,7 @@
       const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
       const paymentStatus = isAdmin()
         ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
-        : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Unpaid");
+        : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Paid");
 
       if (!description || amount <= 0) {
         setBanner("Please enter Description and valid Amount.", "warn");
@@ -1661,10 +1675,10 @@
               <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" min="0.01" id="expAmount" placeholder="0" required /></div>
               <div class="field">
                 <label>Payment Status</label>
-               <select id="expPayStatus">
-  <option value="Paid" ${payStatus === "Paid" ? "selected" : ""}>Paid</option>
-  <option value="Unpaid" ${payStatus !== "Paid" ? "selected" : ""}>Unpaid</option>
-</select>
+                <select id="expPayStatus">
+                  <option value="Paid" selected>Paid</option>
+                  <option value="Unpaid">Unpaid</option>
+                </select>
               </div>
             </div>
             <div class="form-actions">
@@ -1702,8 +1716,8 @@
               <div class="field">
                 <label>Payment Status</label>
                 <select id="expPayStatus">
-                  <option value="Unpaid" ${payStatus === "Unpaid" ? "selected" : ""}>Unpaid</option>
                   <option value="Paid" ${payStatus === "Paid" ? "selected" : ""}>Paid</option>
+                  <option value="Unpaid" ${payStatus === "Unpaid" ? "selected" : ""}>Unpaid</option>
                 </select>
               </div>
             </div>
@@ -1848,8 +1862,8 @@
                       <td>
                         ${isAdmin() ? `
                           <select class="no-print" style="width:92px; padding:4px 6px; font-size:12px;" onchange="toggleExpensePaymentStatus('${item.RecordId}', this.value)">
-                            <option value="Unpaid" ${!paid ? "selected" : ""}>Unpaid</option>
                             <option value="Paid" ${paid ? "selected" : ""}>Paid</option>
+                            <option value="Unpaid" ${!paid ? "selected" : ""}>Unpaid</option>
                           </select>
                         ` : `
                           <span class="badge-status ${paid ? "badge-paid" : "badge-unpaid"}">${paid ? "Paid" : "Unpaid"}</span>
@@ -2144,6 +2158,7 @@
                 ${showForm ? "Close" : "+"}
               </button>
             </div>
+            
           </div>
 
           ${showForm ? `
@@ -2692,6 +2707,7 @@
     }
 
     function render() {
+      state.activeTab = normalizeTabName(state.activeTab);
       syncDrawerActiveState();
       renderBottomNav();
       const container = document.getElementById("viewContainer");
