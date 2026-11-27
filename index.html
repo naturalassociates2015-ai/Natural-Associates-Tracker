@@ -1270,7 +1270,7 @@
                 <div class="field"><label>Date</label><input type="date" id="efDate" value="${editF ? toDateISO(editF.Date) : todayISO()}" required /></div>
                 <div class="field"><label>Engineer</label><select id="efEng">${engs.map(e => `<option value="${e}" ${editF && userKey(editF.Engineer) === userKey(e) ? "selected" : ""}>${e}</option>`).join("")}</select></div>
                 <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editF ? editF.Amount : ""}" required /></div>
-                <div class="field"><label>Mode</label><select id="efMode">${["GPay / UPI", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editF && editF.Mode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
+                <div class="field"><label>Mode</label><select id="efMode">${["GPay", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editF && editF.Mode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
               </div>
               <div class="form-actions"><button type="submit" class="btn-primary">${editF ? "Update Fund" : "Save"}</button></div>
             </form>
@@ -1533,7 +1533,7 @@
                 <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
                 <div class="field"><label>GST Amt</label><input type="number" step="0.01" id="cpGstAmt" value="${editCp ? editCp["GST Amount"] : 0}" readonly /></div>
                 <div class="field"><label>Total (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
-                <div class="field"><label>Mode</label><select id="cpMode">${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
+                <div class="field"><label>Mode</label><select id="cpMode">${["Bank Transfer", "GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
                 <div class="field"><label>Ref No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" /></div>
                 <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" /></div>
               </div>
