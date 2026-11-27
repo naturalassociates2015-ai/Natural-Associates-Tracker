@@ -132,6 +132,7 @@
       .topbar, .bottom-nav, .side-drawer, .drawer-backdrop, .no-print { display: none !important; }
       body { background: #fff; padding-bottom: 0; }
       .card { box-shadow: none; border: 1px solid #ccc; }
+      body.print-only-section .summary-grid-5,
       body.print-only-section .card:not(.print-target) { display: none !important; }
       body.print-only-section .print-target { display: block !important; }
     }
@@ -385,7 +386,7 @@
       clientPayments: [],
       sites: [],
       units: [...DEFAULT_UNITS],
-      filters: { engineer: "", site: "", category: "", vendor: "", description: "", fromDate: "", toDate: "" }
+      filters: { engineer: "", site: "", category: "", status: "", vendor: "", description: "", fromDate: "", toDate: "" }
     };
 
     function isAdmin() {
@@ -911,6 +912,7 @@
         if (state.filters.engineer) list = list.filter(e => userKey(e.Engineer) === userKey(state.filters.engineer));
         if (state.filters.site) list = list.filter(e => e.Site === state.filters.site);
         if (state.filters.category) list = list.filter(e => e.Category === state.filters.category);
+        if (state.filters.status) list = list.filter(e => normPay(e.PaymentStatus) === state.filters.status);
         if (state.filters.vendor.trim()) {
           const v = state.filters.vendor.trim().toLowerCase();
           list = list.filter(e => String(e["Vendor/Contractor"] || "").toLowerCase().includes(v));
@@ -1037,6 +1039,7 @@
                 <div class="field"><label>Engineer</label><select onchange="state.filters.engineer=this.value; render();"><option value="">All Engineers</option>${engs.map(e => `<option value="${e}" ${state.filters.engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
                 <div class="field"><label>Site</label><select onchange="state.filters.site=this.value; render();"><option value="">All Sites</option>${sites.map(s => `<option value="${s}" ${state.filters.site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
                 <div class="field"><label>Category</label><select onchange="state.filters.category=this.value; render();"><option value="">All Categories</option>${CATEGORIES.map(c => `<option value="${c}" ${state.filters.category === c ? "selected" : ""}>${c}</option>`).join("")}</select></div>
+                <div class="field"><label>Status</label><select onchange="state.filters.status=this.value; render();"><option value="" ${state.filters.status === "" ? "selected" : ""}>All</option><option value="Paid" ${state.filters.status === "Paid" ? "selected" : ""}>Paid</option><option value="Unpaid" ${state.filters.status === "Unpaid" ? "selected" : ""}>Unpaid</option></select></div>
                 <div class="field"><label>Vendor</label><input type="text" value="${state.filters.vendor}" oninput="state.filters.vendor=this.value; render();" /></div>
                 <div class="field"><label>Description</label><input type="text" value="${state.filters.description}" oninput="state.filters.description=this.value; render();" /></div>
                 <div class="field"><label>From</label><input type="date" value="${state.filters.fromDate}" onchange="state.filters.fromDate=this.value; render();" /></div>
@@ -1089,14 +1092,7 @@
                       <td>${item.Unit}</td>
                       <td>${formatINR(item.Rate)}</td>
                       <td class="${paid ? "c-red" : "pb-meta"}"><strong>${formatINR(item.Amount)}</strong></td>
-                      <td>
-                        ${isAdmin() ? `
-                          <select class="no-print" style="width:92px; padding:4px 6px; font-size:12px;" onchange="setExpensePayStatus('${item.RecordId}', this.value)">
-                            <option value="Paid" ${paid ? "selected" : ""}>Paid</option>
-                            <option value="Unpaid" ${!paid ? "selected" : ""}>Unpaid</option>
-                          </select>
-                        ` : `<span class="badge-status ${paid ? "badge-paid" : "badge-unpaid"}">${paid ? "Paid" : "Unpaid"}</span>`}
-                      </td>
+                      <td><span class="badge-status ${paid ? "badge-paid" : "badge-unpaid"}">${paid ? "Paid" : "Unpaid"}</span></td>
                       ${isAdmin() ? `
                         <td class="no-print">
                           <div class="pb-actions">
@@ -1147,6 +1143,7 @@
       const bal = clientSum - paidExpSum;
       const selfSum = state.selfExpenses.reduce((s, r) => s + numVal(r.Amount), 0);
       const net = bal - selfSum;
+      const unpaidSum = state.expenses.filter(e => !isPaid(e)).reduce((s, r) => s + numVal(r.Amount), 0);
 
       const siteNames = [];
       const seenSites = new Set();
@@ -1171,7 +1168,8 @@
         const totalAmt = cpSite.reduce((s, r) => s + numVal(r.TotalAmount), 0);
         const expSite = state.expenses.filter(e => String(e.Site || "").trim().toLowerCase() === sk && isPaid(e));
         const expAmt = expSite.reduce((s, r) => s + numVal(r.Amount), 0);
-        return { site, baseAmt, gstAmt, totalAmt, expAmt, balAmt: totalAmt - expAmt };
+        const unpaidAmt = state.expenses.filter(e => String(e.Site || "").trim().toLowerCase() === sk && !isPaid(e)).reduce((s, r) => s + numVal(r.Amount), 0);
+        return { site, baseAmt, gstAmt, totalAmt, expAmt, balAmt: totalAmt - expAmt, unpaidAmt };
       });
 
       const siteTotBase = siteRows.reduce((s, r) => s + r.baseAmt, 0);
@@ -1179,6 +1177,7 @@
       const siteTotAll = siteRows.reduce((s, r) => s + r.totalAmt, 0);
       const siteTotExp = siteRows.reduce((s, r) => s + r.expAmt, 0);
       const siteTotBal = siteRows.reduce((s, r) => s + r.balAmt, 0);
+      const siteTotUnpaid = siteRows.reduce((s, r) => s + r.unpaidAmt, 0);
 
       const rows = getEngineerList().map(eng => {
         const ek = userKey(eng);
@@ -1194,6 +1193,7 @@
           <div class="stat-box highlight-soft"><div class="stat-label">Balance</div><div class="stat-val c-ink">${formatINR(bal)}</div></div>
           <div class="stat-box"><div class="stat-label">Self Expense</div><div class="stat-val c-red">${formatINR(selfSum)}</div></div>
           <div class="stat-box highlight-soft"><div class="stat-label">Net Balance</div><div class="stat-val c-green">${formatINR(net)}</div></div>
+          <div class="stat-box"><div class="stat-label">Unpaid Amount</div><div class="stat-val c-red">${formatINR(unpaidSum)}</div></div>
         </div>
         <div id="siteWiseSummaryCard" class="card">
           <div class="card-title">
@@ -1201,7 +1201,7 @@
             <button type="button" class="btn-secondary btn-sm no-print" onclick="printCardById('siteWiseSummaryCard')">Print</button>
           </div>
           ${siteRows.length ? `
-            <div class="table-wrap"><table><thead><tr><th>Site</th><th>Base Amount</th><th>GST Amount</th><th>Total Amount</th><th>Expense</th><th>Balance</th></tr></thead><tbody>
+            <div class="table-wrap"><table><thead><tr><th>Site</th><th>Base Amount</th><th>GST Amount</th><th>Total Amount</th><th>Expense</th><th>Balance</th><th>Unpaid</th></tr></thead><tbody>
               ${siteRows.map(s => `
                 <tr>
                   <td><strong>${s.site}</strong></td>
@@ -1210,6 +1210,7 @@
                   <td class="c-green"><strong>${formatINR(s.totalAmt)}</strong></td>
                   <td class="c-red"><strong>${formatINR(s.expAmt)}</strong></td>
                   <td class="c-ink"><strong>${formatINR(s.balAmt)}</strong></td>
+                  <td class="c-red"><strong>${formatINR(s.unpaidAmt)}</strong></td>
                 </tr>
               `).join("")}
               <tr>
@@ -1219,6 +1220,7 @@
                 <td class="c-green"><strong>${formatINR(siteTotAll)}</strong></td>
                 <td class="c-red"><strong>${formatINR(siteTotExp)}</strong></td>
                 <td class="c-ink"><strong>${formatINR(siteTotBal)}</strong></td>
+                <td class="c-red"><strong>${formatINR(siteTotUnpaid)}</strong></td>
               </tr>
             </tbody></table></div>
           ` : `<div class="pb-meta">No site data found.</div>`}
@@ -1270,7 +1272,7 @@
                 <div class="field"><label>Date</label><input type="date" id="efDate" value="${editF ? toDateISO(editF.Date) : todayISO()}" required /></div>
                 <div class="field"><label>Engineer</label><select id="efEng">${engs.map(e => `<option value="${e}" ${editF && userKey(editF.Engineer) === userKey(e) ? "selected" : ""}>${e}</option>`).join("")}</select></div>
                 <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editF ? editF.Amount : ""}" required /></div>
-                <div class="field"><label>Mode</label><select id="efMode">${["GPay", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editF && editF.Mode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
+                <div class="field"><label>Mode</label><select id="efMode">${["GPay / UPI", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editF && editF.Mode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
               </div>
               <div class="form-actions"><button type="submit" class="btn-primary">${editF ? "Update Fund" : "Save"}</button></div>
             </form>
@@ -1533,7 +1535,7 @@
                 <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
                 <div class="field"><label>GST Amt</label><input type="number" step="0.01" id="cpGstAmt" value="${editCp ? editCp["GST Amount"] : 0}" readonly /></div>
                 <div class="field"><label>Total (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
-                <div class="field"><label>Mode</label><select id="cpMode">${["Bank Transfer", "GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
+                <div class="field"><label>Mode</label><select id="cpMode">${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}</select></div>
                 <div class="field"><label>Ref No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" /></div>
                 <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" /></div>
               </div>
