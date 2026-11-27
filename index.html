@@ -180,6 +180,22 @@
       gap: 10px;
     }
 
+    .menu-toggle-btn {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
     .brand-leaf {
       width: 32px;
       height: 32px;
@@ -214,6 +230,85 @@
       display: flex;
       align-items: center;
       gap: 7px;
+    }
+
+    .drawer-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 60;
+    }
+
+    .drawer-backdrop.open {
+      display: block;
+    }
+
+    .side-drawer {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 265px;
+      max-width: 82vw;
+      height: 100vh;
+      background: #ffffff;
+      z-index: 70;
+      box-shadow: 4px 0 22px rgba(15, 23, 42, 0.18);
+      transition: left 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 14px;
+    }
+
+    .side-drawer.open {
+      left: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .drawer-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .drawer-close {
+      background: #f1f5f9;
+      color: var(--ink);
+      padding: 4px 9px;
+      font-size: 13px;
+      border-radius: 7px;
+    }
+
+    .drawer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .drawer-item {
+      width: 100%;
+      text-align: left;
+      background: #f8fafc;
+      color: var(--ink);
+      padding: 11px 12px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .drawer-item:hover, .drawer-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent-border);
     }
 
     select, input, textarea {
@@ -367,20 +462,14 @@
       color: #ffffff;
     }
 
-    .step-pairs {
+    .vertical-stack {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-    }
-
-    .pair-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 11px;
     }
 
     .desc-box {
-      min-height: 54px;
+      min-height: 64px;
       resize: vertical;
       font-size: 14px;
       background: #fafbfc;
@@ -416,26 +505,13 @@
     .pb-actions {
       display: flex;
       gap: 5px;
-    }
-
-    .summary-grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
+      align-items: center;
     }
 
     .summary-grid-5 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 9px;
-      margin-bottom: 13px;
-    }
-
-    .admin-blocks-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
       margin-bottom: 13px;
     }
 
@@ -446,24 +522,6 @@
       padding: 12px 10px;
       text-align: center;
       box-shadow: var(--shadow);
-    }
-
-    .stat-box.clickable {
-      cursor: pointer;
-      transition: border-color 0.15s ease, transform 0.08s ease;
-    }
-
-    .stat-box.clickable:hover {
-      border-color: var(--header-bg);
-    }
-
-    .stat-box.clickable:active {
-      transform: scale(0.98);
-    }
-
-    .stat-box.selected-box {
-      border: 2px solid var(--header-bg);
-      box-shadow: 0 4px 14px rgba(30, 41, 59, 0.14);
     }
 
     .stat-box.highlight-soft {
@@ -485,12 +543,6 @@
       margin-top: 4px;
     }
 
-    .stat-hint {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-
     .badge-status {
       display: inline-block;
       padding: 2px 8px;
@@ -509,6 +561,16 @@
       color: #374151;
     }
 
+    .badge-paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-unpaid {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -524,7 +586,7 @@
 
     td.wrap-cell {
       white-space: normal;
-      min-width: 160px;
+      min-width: 150px;
     }
 
     th {
@@ -543,7 +605,7 @@
       border: 1px solid #e7cf96;
       border-radius: 10px;
       padding: 12px;
-      margin-top: 12px;
+      margin-top: 14px;
     }
 
     .bottom-nav {
@@ -632,7 +694,7 @@
     .c-ink { color: var(--ink); }
 
     @media print {
-      .topbar, .bottom-nav, .no-print {
+      .topbar, .bottom-nav, .side-drawer, .drawer-backdrop, .no-print {
         display: none !important;
       }
       body {
@@ -667,7 +729,7 @@
           <select id="loginUserSelect" class="login-user-select" aria-label="User">
             <option value="Admin" selected>Admin</option>
             <option value="Senthil">Senthil</option>
-            <option value="Manigandan">Manigandan</option>
+            <option value="Manikandan">Manikandan</option>
             <option value="Yogesh">Yogesh</option>
             <option value="Sivashankar">Sivashankar</option>
           </select>
@@ -695,9 +757,27 @@
   </div>
 
   <div id="appShell" class="app-shell">
+    <div id="drawerBackdrop" class="drawer-backdrop no-print" onclick="closeSideDrawer()"></div>
+    <aside id="sideDrawer" class="side-drawer no-print" aria-label="Admin Menu">
+      <div class="drawer-header">
+        <span class="drawer-title">Admin Menu</span>
+        <button type="button" class="drawer-close" onclick="closeSideDrawer()">✕</button>
+      </div>
+      <div class="drawer-list">
+        <button type="button" class="drawer-item ${state.activeTab === 'summary' ? 'active' : ''}" onclick="selectDrawerView('summary')">Summary</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'expenses' ? 'active' : ''}" onclick="selectDrawerView('expenses')">Expenses</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'clientPayment' ? 'active' : ''}" onclick="selectDrawerView('clientPayment')">Client Payment</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'engineerFund' ? 'active' : ''}" onclick="selectDrawerView('engineerFund')">Engineer Fund</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'addEngineer' ? 'active' : ''}" onclick="selectDrawerView('addEngineer')">Add Engineer</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'addSite' ? 'active' : ''}" onclick="selectDrawerView('addSite')">Add Site</button>
+        <button type="button" class="drawer-item ${state.activeTab === 'addUnits' ? 'active' : ''}" onclick="selectDrawerView('addUnits')">Add Units</button>
+      </div>
+    </aside>
+
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand-wrap">
+          <button type="button" id="menuBtn" class="menu-toggle-btn no-print" title="Menu" onclick="openSideDrawer()">☰</button>
           <div class="brand-leaf">
             <img
               src="icon-192.png"
@@ -735,9 +815,9 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V8";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V10";
 
-    const ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
+    const DEFAULT_ENGINEERS = ["Senthil", "Manikandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -752,14 +832,11 @@
       "Granite layer"
     ];
     const DEFAULT_SITES = [
-      "Madhuravoyal-Kannan Sir",
-      "Sithalapakam-Nakkiran Sir",
-      "Oragadam-Thygarajan Sir",
-      "Valasaravakkam-Maran Sir",
-      "SVS-Plot30",
-      "SVS-Plot11",
-      "SVS-Plot6A&10",
-       "SVS-Plot23"
+      "Madhuravoyal",
+      "Sithalapakam",
+      "Oragadam",
+      "Sunguvachathiram",
+      "Plot-6A"
     ];
     const REMOVED_UNITS = new Set(["load", "day", "d", "nmr", "w-payment", "w payment"]);
     const DEFAULT_UNITS = [
@@ -769,7 +846,7 @@
     const CONFIGURED_USERS = [
       { user: "Admin", role: "ADMIN", password: "2021" },
       { user: "Senthil", role: "ENGINEER", password: "1981" },
-      { user: "Manigandan", role: "Manigandan", password: "8889" },
+      { user: "Manikandan", role: "Manikandan", password: "8889" },
       { user: "Yogesh", role: "ENGINEER", password: "7699" },
       { user: "Sivashankar", role: "ENGINEER", password: "2962" }
     ];
@@ -778,11 +855,11 @@
       currentUser: null,
       activeTab: "summary",
       engPeriod: "All",
-      adminDetailPanel: null,
       adminFilterOpen: false,
       adminAddFormOpen: false,
       cpSiteFilter: "",
-      seSiteFilter: "",
+      cpFromDate: "",
+      cpToDate: "",
       efEngFilter: "",
       showExpenseForm: false,
       isSavingExpense: false,
@@ -791,6 +868,7 @@
       editingFundId: null,
       editingSelfExpenseId: null,
       editingSiteName: null,
+      editingUserName: null,
       settledUntilByEng: {},
       settlePreview: null,
       pendingOps: [],
@@ -799,7 +877,7 @@
       funds: [],
       clientPayments: [],
       selfExpenses: [],
-      sites: DEFAULT_SITES.map(s => ({ "Site Name": s, Location: "", Status: "Active" })),
+      sites: DEFAULT_SITES.map(s => ({ "Site Name": s, Status: "On Process" })),
       units: [...DEFAULT_UNITS],
       filters: {
         engineer: "",
@@ -811,6 +889,47 @@
         toDate: ""
       }
     };
+
+    function normalizeSiteStatus(val) {
+      const s = String(val || "").trim().toLowerCase();
+      if (s === "completed" || s === "complete" || s === "closed") return "Completed";
+      return "On Process";
+    }
+
+    function isSiteCompleted(siteName) {
+      const target = String(siteName || "").trim().toLowerCase();
+      if (!target) return false;
+      const found = state.sites.find(s => String(s["Site Name"] || "").trim().toLowerCase() === target);
+      if (!found) return false;
+      return normalizeSiteStatus(found.Status) === "Completed";
+    }
+
+    function getEngineerNames() {
+      const names = [];
+      const seen = new Set();
+      const pushEng = (n) => {
+        const val = String(n || "").trim();
+        if (!val) return;
+        const lower = val.toLowerCase();
+        if (lower === "admin") return;
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          names.push(val);
+        }
+      };
+      state.users.forEach(u => pushEng(u.user));
+      DEFAULT_ENGINEERS.forEach(pushEng);
+      return names;
+    }
+
+    function normalizePaymentStatus(val) {
+      const s = String(val || "").trim().toLowerCase();
+      return s === "paid" ? "Paid" : "Unpaid";
+    }
+
+    function isPaidEntry(item) {
+      return normalizePaymentStatus(item.PaymentStatus ?? item.Status ?? item.status) === "Paid";
+    }
 
     function sanitizeUnitsList(rawUnits) {
       const cleaned = [];
@@ -835,6 +954,7 @@
     function persistCache() {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
+          users: state.users,
           expenses: state.expenses,
           funds: state.funds,
           clientPayments: state.clientPayments,
@@ -852,11 +972,17 @@
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return;
         const p = JSON.parse(raw);
+        if (Array.isArray(p.users) && p.users.length) state.users = p.users;
         if (Array.isArray(p.expenses)) state.expenses = normalizeExpenses(p.expenses);
         if (Array.isArray(p.funds)) state.funds = normalizeFunds(p.funds);
         if (Array.isArray(p.clientPayments)) state.clientPayments = normalizeClientPayments(p.clientPayments);
         if (Array.isArray(p.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(p.selfExpenses);
-        if (Array.isArray(p.sites) && p.sites.length) state.sites = p.sites;
+        if (Array.isArray(p.sites) && p.sites.length) {
+          state.sites = p.sites.map(s => ({
+            "Site Name": String(s["Site Name"] || "").trim(),
+            Status: normalizeSiteStatus(s.Status)
+          })).filter(s => s["Site Name"]);
+        }
         state.units = sanitizeUnitsList(p.units);
         if (p.settledUntilByEng && typeof p.settledUntilByEng === "object") {
           state.settledUntilByEng = p.settledUntilByEng;
@@ -940,8 +1066,54 @@
       return state.currentUser && state.currentUser.role === "ADMIN";
     }
 
-    function isManigandan() {
-      return state.currentUser && state.currentUser.user === "Manigandan";
+    function isManikandan() {
+      return state.currentUser && state.currentUser.user === "Manikandan";
+    }
+
+    function openSideDrawer() {
+      if (!isAdmin()) return;
+      document.getElementById("drawerBackdrop")?.classList.add("open");
+      document.getElementById("sideDrawer")?.classList.add("open");
+    }
+
+    function closeSideDrawer() {
+      document.getElementById("drawerBackdrop")?.classList.remove("open");
+      document.getElementById("sideDrawer")?.classList.remove("open");
+    }
+
+    function selectDrawerView(viewName) {
+      closeSideDrawer();
+      state.activeTab = viewName;
+      state.adminAddFormOpen = false;
+      state.settlePreview = null;
+      state.editingExpenseId = null;
+      state.editingClientPaymentId = null;
+      state.editingFundId = null;
+      state.editingSiteName = null;
+      state.editingUserName = null;
+      render();
+    }
+
+    function syncLoginUserSelectOptions() {
+      const sel = document.getElementById("loginUserSelect");
+      if (!sel) return;
+      const prevVal = sel.value || "Admin";
+      const orderedUsers = [];
+      const seen = new Set();
+      CONFIGURED_USERS.forEach(u => {
+        seen.add(u.user.toLowerCase());
+        const live = state.users.find(x => String(x.user).toLowerCase() === u.user.toLowerCase());
+        orderedUsers.push(live || u);
+      });
+      state.users.forEach(u => {
+        if (u.user && !seen.has(String(u.user).toLowerCase())) {
+          seen.add(String(u.user).toLowerCase());
+          orderedUsers.push(u);
+        }
+      });
+      sel.innerHTML = orderedUsers.map(u =>
+        `<option value="${u.user}" ${u.user === prevVal ? "selected" : ""}>${u.user}</option>`
+      ).join("");
     }
 
     function togglePasswordVisibility() {
@@ -976,12 +1148,11 @@
       errEl.style.display = "none";
       state.currentUser = {
         user: matched.user,
-        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manigandan" ? "Manigandan" : (matched.role || "ENGINEER"))
+        role: selectedUser === "Admin" ? "ADMIN" : (selectedUser === "Manikandan" ? "Manikandan" : (matched.role || "ENGINEER"))
       };
       sessionStorage.setItem("NA_SESSION", JSON.stringify(state.currentUser));
       document.getElementById("loginPasswordInput").value = "";
       state.activeTab = "summary";
-      state.adminDetailPanel = null;
       state.showExpenseForm = false;
       state.editingExpenseId = null;
       state.adminAddFormOpen = false;
@@ -992,6 +1163,7 @@
     function handleLogout() {
       sessionStorage.removeItem("NA_SESSION");
       state.currentUser = null;
+      closeSideDrawer();
       document.getElementById("appShell").style.display = "none";
       document.getElementById("loginScreen").style.display = "flex";
     }
@@ -999,6 +1171,10 @@
     function showAppShell() {
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("appShell").style.display = "block";
+      const menuBtn = document.getElementById("menuBtn");
+      if (menuBtn) {
+        menuBtn.style.display = isAdmin() ? "flex" : "none";
+      }
       document.getElementById("loggedInBadge").textContent =
         `${state.currentUser.user} • ${isAdmin() ? "Admin" : "Engineer"}`;
       render();
@@ -1016,15 +1192,13 @@
       el.textContent = msg;
     }
 
-    function getActiveSiteNames() {
+    // Active / On Process sites only (Completed sites hidden from engineers)
+    function getOnProcessSiteNames() {
       const activeSites = state.sites
-        .filter(s => {
-          const st = String(s.Status || "Active").trim().toLowerCase();
-          return st !== "completed" && st !== "closed";
-        })
+        .filter(s => normalizeSiteStatus(s.Status) === "On Process")
         .map(s => String(s["Site Name"] || "").trim())
         .filter(Boolean);
-      return activeSites.length ? activeSites : [...DEFAULT_SITES];
+      return activeSites;
     }
 
     function getAllSiteNames() {
@@ -1049,7 +1223,7 @@
           return {
             RecordId: recId || `EXP_${i + 1}`,
             Date: toLocalDateStr(r.Date || r.date || todayISO()),
-            Engineer: String(r.Engineer || r.engineer || "Manigandan").trim(),
+            Engineer: String(r.Engineer || r.engineer || "Manikandan").trim(),
             Site: String(r.Site || r.site || "").trim(),
             Category: String(r.Category || r.category || "Material").trim(),
             "Vendor/Contractor": String(r["Vendor/Contractor"] || r.vendor || "").trim(),
@@ -1058,6 +1232,7 @@
             Unit: unit,
             Rate: rate,
             Amount: amt,
+            PaymentStatus: normalizePaymentStatus(r.PaymentStatus ?? r.paymentStatus ?? r.Status),
             Settled: isSettledFlag(r.Settled ?? r.settled)
           };
         })
@@ -1083,17 +1258,24 @@
       if (!Array.isArray(list)) return [];
       return list
         .filter(r => r && typeof r === "object")
-        .map((r, i) => ({
-          RecordId: String(r.RecordId || r.id || `CP_${i + 1}`).trim(),
-          Date: toLocalDateStr(r.Date || r.date || todayISO()),
-          Site: String(r.Site || r.site || "").trim(),
-          "Base Amount": Number(r["Base Amount"] ?? r.baseAmount ?? 0) || 0,
-          "Gst%": Number(r["Gst%"] ?? r.gstPct ?? 0) || 0,
-          TotalAmount: Number(r.TotalAmount ?? r["Total Amount"] ?? r.amount ?? 0) || 0,
-          PaymentMode: String(r.PaymentMode || r.paymentMode || "").trim(),
-          ReferenceNo: String(r.ReferenceNo || r.referenceNo || "").trim(),
-          Remarks: String(r.Remarks || r.remarks || "").trim()
-        }))
+        .map((r, i) => {
+          const base = Number(r["Base Amount"] ?? r.baseAmount ?? 0) || 0;
+          const gstPct = Number(r["Gst%"] ?? r.gstPct ?? 0) || 0;
+          const gstAmt = Number(r["GST Amount"] ?? r.gstAmount ?? ((base * gstPct) / 100)) || 0;
+          const total = Number(r.TotalAmount ?? r["Total Amount"] ?? r.amount ?? (base + gstAmt)) || 0;
+          return {
+            RecordId: String(r.RecordId || r.id || `CP_${i + 1}`).trim(),
+            Date: toLocalDateStr(r.Date || r.date || todayISO()),
+            Site: String(r.Site || r.site || "").trim(),
+            "Base Amount": base,
+            "Gst%": gstPct,
+            "GST Amount": gstAmt,
+            TotalAmount: total,
+            PaymentMode: String(r.PaymentMode || r.paymentMode || "").trim(),
+            ReferenceNo: String(r.ReferenceNo || r.referenceNo || "").trim(),
+            Remarks: String(r.Remarks || r.remarks || "").trim()
+          };
+        })
         .filter(x => x.Site.length > 0 && x.TotalAmount > 0);
     }
 
@@ -1195,6 +1377,24 @@
           }
         } else if (op.action === "deleteSelfExpense") {
           state.selfExpenses = state.selfExpenses.filter(x => x.RecordId !== op.RecordId);
+        } else if (op.action === "saveUser") {
+          const u = op.record;
+          if (u && u.user) {
+            const idx = state.users.findIndex(x => String(x.user).toLowerCase() === String(u.user).toLowerCase());
+            if (idx > -1) state.users[idx] = u;
+            else state.users.push(u);
+          }
+        } else if (op.action === "addSite") {
+          const s = op.record;
+          if (s && s["Site Name"]) {
+            const rec = { "Site Name": String(s["Site Name"]).trim(), Status: normalizeSiteStatus(s.Status) };
+            const idx = state.sites.findIndex(x => String(x["Site Name"]).toLowerCase() === rec["Site Name"].toLowerCase());
+            if (idx > -1) state.sites[idx] = rec;
+            else state.sites.push(rec);
+          }
+        } else if (op.action === "deleteSite") {
+          const target = String(op.siteName || "").trim().toLowerCase();
+          state.sites = state.sites.filter(x => String(x["Site Name"]).trim().toLowerCase() !== target);
         }
       }
     }
@@ -1245,8 +1445,19 @@
         if (!res.ok) throw new Error("Network error");
         const data = await res.json();
 
-        // Enforce configured passwords so sheet old PINs don't override new PINs
-        state.users = [...CONFIGURED_USERS];
+        const mapU = new Map();
+        CONFIGURED_USERS.forEach(u => mapU.set(u.user.toLowerCase(), { ...u }));
+        if (Array.isArray(data.users) && data.users.length) {
+          data.users.forEach(u => {
+            if (u.user && u.password) {
+              const key = String(u.user).toLowerCase();
+              const base = mapU.get(key);
+              mapU.set(key, base ? { ...u, password: base.password, role: base.role } : u);
+            }
+          });
+        }
+        state.users = Array.from(mapU.values());
+        syncLoginUserSelectOptions();
 
         if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
         if (Array.isArray(data.funds)) state.funds = normalizeFunds(data.funds);
@@ -1255,14 +1466,16 @@
 
         if (Array.isArray(data.sites) && data.sites.length) {
           const map = new Map();
-          state.sites.forEach(s => map.set(s["Site Name"], s));
+          state.sites.forEach(s => map.set(String(s["Site Name"]).toLowerCase(), {
+            "Site Name": s["Site Name"],
+            Status: normalizeSiteStatus(s.Status)
+          }));
           data.sites.forEach(s => {
             const name = typeof s === "string" ? s.trim() : String(s["Site Name"] || "").trim();
             if (name) {
-              map.set(name, {
+              map.set(name.toLowerCase(), {
                 "Site Name": name,
-                Location: typeof s === "object" ? String(s.Location || "") : "",
-                Status: typeof s === "object" ? String(s.Status || "Active") : "Active"
+                Status: typeof s === "object" ? normalizeSiteStatus(s.Status) : "On Process"
               });
             }
           });
@@ -1347,8 +1560,10 @@
       let list = [...state.expenses];
       if (!isAdmin()) {
         const eng = state.currentUser.user;
+        // Engineers cannot see entries for Completed sites
         list = list.filter(e =>
           e.Engineer === eng &&
+          !isSiteCompleted(e.Site) &&
           !isSettledFlag(e.Settled) &&
           !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
         );
@@ -1422,10 +1637,10 @@
 
       const date = toLocalDateStr(document.getElementById("expDate").value || todayISO());
       const engineer = isAdmin()
-        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manigandan")
+        ? (document.getElementById("expEngineer")?.value || editingObj?.Engineer || "Manikandan")
         : state.currentUser.user;
       const site = document.getElementById("expSite").value;
-      const category = (isAdmin() || isManigandan())
+      const category = (isAdmin() || isManikandan())
         ? (document.getElementById("expCategory")?.value || "Material")
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
@@ -1435,8 +1650,17 @@
       const rate = Number(document.getElementById("expRate").value) || 0;
       const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
 
+      const paymentStatus = isAdmin()
+        ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
+        : (editingObj ? normalizePaymentStatus(editingObj.PaymentStatus) : "Unpaid");
+
       if (!description || amount <= 0) {
         setBanner("Please enter Description and valid Amount.", "warn");
+        return;
+      }
+
+      if (!isAdmin() && (!site || isSiteCompleted(site))) {
+        setBanner("No active site available.", "warn");
         return;
       }
 
@@ -1459,7 +1683,8 @@
           Qty: qty,
           Unit: unit,
           Rate: rate,
-          Amount: amount
+          Amount: amount,
+          PaymentStatus: paymentStatus
         };
         const idx = state.expenses.findIndex(e => e.RecordId === editingObj.RecordId);
         if (idx > -1) state.expenses[idx] = updated;
@@ -1481,6 +1706,7 @@
           Unit: unit,
           Rate: rate,
           Amount: amount,
+          PaymentStatus: paymentStatus,
           Settled: false
         };
         state.expenses.unshift(newRec);
@@ -1492,6 +1718,19 @@
       }
     }
 
+    async function toggleExpensePaymentStatus(recordId, newStatus) {
+      if (!isAdmin()) return;
+      const idx = state.expenses.findIndex(e => e.RecordId === recordId);
+      if (idx === -1) return;
+      const updated = {
+        ...state.expenses[idx],
+        PaymentStatus: normalizePaymentStatus(newStatus)
+      };
+      state.expenses[idx] = updated;
+      render();
+      await postAction({ action: "updateExpense", record: updated });
+    }
+
     async function deleteExpense(recordId) {
       if (!isAdmin()) return;
       state.expenses = state.expenses.filter(e => e.RecordId !== recordId);
@@ -1499,168 +1738,172 @@
       await postAction({ action: "deleteExpense", RecordId: recordId });
     }
 
-    function renderEntryFormCard(editingObj) {
-      const activeSiteNames = getActiveSiteNames();
+    function renderEngineerEntryOnlyForm() {
+      const onProcessSites = getOnProcessSiteNames();
       const unitOptions = sanitizeUnitsList(state.units);
-      const defaultEng = editingObj ? editingObj.Engineer : state.currentUser.user;
-      const defaultSite = editingObj ? editingObj.Site : (activeSiteNames[0] || DEFAULT_SITES[0]);
-      const defaultCat = editingObj ? editingObj.Category : "Material";
-      const defaultDate = editingObj ? toLocalDateStr(editingObj.Date) : todayISO();
-      const defaultVendor = editingObj ? editingObj["Vendor/Contractor"] : "";
-      const defaultDesc = editingObj ? editingObj.Description : "";
-      const defaultQty = editingObj ? editingObj.Qty : 1;
-      const defaultUnit = editingObj && !REMOVED_UNITS.has(String(editingObj.Unit || "").toLowerCase())
-        ? editingObj.Unit
-        : (unitOptions[0] || "Nos");
-      const defaultRate = editingObj ? editingObj.Rate : "";
-      const defaultAmt = editingObj ? editingObj.Amount : "";
-
-      const useCategoryDropdown = isAdmin() || isManigandan();
-      const formSiteOptions = editingObj && !activeSiteNames.includes(editingObj.Site)
-        ? [editingObj.Site, ...activeSiteNames]
-        : activeSiteNames;
-
-      const formUnitOptions = !unitOptions.includes(defaultUnit)
-        ? [defaultUnit, ...unitOptions]
-        : unitOptions;
+      const useCategoryDropdown = isManikandan();
 
       return `
         <div class="card no-print">
-          <div class="card-title">${editingObj ? "Edit Expense Entry" : "New Expense Entry"}</div>
+          <div class="card-title">New Expense Entry</div>
           <form onsubmit="saveExpense(event)">
-            <div class="step-pairs">
-              <div class="pair-row">
-                <div class="field">
-                  <label>Date</label>
-                  <input type="date" id="expDate" value="${defaultDate}" required />
-                </div>
-                <div class="field">
-                  <label>Site</label>
-                  <select id="expSite">
-                    ${formSiteOptions.map(s => `<option value="${s}" ${s === defaultSite ? "selected" : ""}>${s}</option>`).join("")}
+            <div class="vertical-stack">
+              <div class="field">
+                <label>Date</label>
+                <input type="date" id="expDate" value="${todayISO()}" required />
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select id="expSite" ${onProcessSites.length ? "" : "disabled"}>
+                  ${onProcessSites.length
+                    ? onProcessSites.map(s => `<option value="${s}">${s}</option>`).join("")
+                    : `<option value="">No active sites</option>`}
+                </select>
+              </div>
+              <div class="field">
+                <label>Category</label>
+                ${useCategoryDropdown ? `
+                  <select id="expCategory">
+                    ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join("")}
                   </select>
-                </div>
+                ` : `
+                  <input type="text" id="expCategory" value="Material" readonly />
+                `}
               </div>
-
-              <div class="pair-row">
-                <div class="field">
-                  <label>Category</label>
-                  ${useCategoryDropdown ? `
-                    <select id="expCategory">
-                      ${CATEGORIES.map(c => `<option value="${c}" ${c === defaultCat ? "selected" : ""}>${c}</option>`).join("")}
-                    </select>
-                  ` : `
-                    <input type="text" id="expCategory" value="Material" readonly />
-                  `}
-                </div>
-                <div class="field">
-                  <label>Vendor / Contractor</label>
-                  <input type="text" id="expVendor" value="${defaultVendor}" placeholder="Supplier or contractor" />
-                </div>
+              <div class="field">
+                <label>Vendor / Contractor</label>
+                <input type="text" id="expVendor" placeholder="Supplier or contractor" />
               </div>
-
-              ${isAdmin() ? `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Engineer</label>
-                    <select id="expEngineer">
-                      ${ENGINEERS.map(e => `<option value="${e}" ${e === defaultEng ? "selected" : ""}>${e}</option>`).join("")}
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Description</label>
-                    <textarea id="expDesc" class="desc-box" rows="2" placeholder="Material or work details..." required>${defaultDesc}</textarea>
-                  </div>
-                </div>
-              ` : `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Description</label>
-                    <textarea id="expDesc" class="desc-box" rows="2" placeholder="Material or work details..." required>${defaultDesc}</textarea>
-                  </div>
-                  <div class="field">
-                    <label>Qty</label>
-                    <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
-                  </div>
-                </div>
-              `}
-
-              ${isAdmin() ? `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Qty</label>
-                    <input type="number" step="0.01" min="0.01" id="expQty" value="${defaultQty}" oninput="calcExpenseAmount()" required />
-                  </div>
-                  <div class="field">
-                    <label>Unit</label>
-                    <select id="expUnit">
-                      ${formUnitOptions.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
-                    </select>
-                  </div>
-                </div>
-              ` : `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Unit</label>
-                    <select id="expUnit">
-                      ${formUnitOptions.map(u => `<option value="${u}" ${u === defaultUnit ? "selected" : ""}>${u}</option>`).join("")}
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label>Rate (₹)</label>
-                    <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
-                  </div>
-                </div>
-              `}
-
-              ${isAdmin() ? `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Rate (₹)</label>
-                    <input type="number" step="0.01" min="0" id="expRate" value="${defaultRate}" placeholder="0" oninput="calcExpenseAmount()" required />
-                  </div>
-                  <div class="field">
-                    <label>Amount (₹)</label>
-                    <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
-                  </div>
-                </div>
-              ` : `
-                <div class="pair-row">
-                  <div class="field">
-                    <label>Amount (₹)</label>
-                    <input type="number" step="0.01" min="0.01" id="expAmount" value="${defaultAmt}" placeholder="0" required />
-                  </div>
-                  <div class="field" style="display:flex; align-items:flex-end; gap:8px;">
-                    <button type="button" class="btn-secondary" style="flex:1;" onclick="closeExpenseForm()">Close</button>
-                    <button type="submit" id="expSaveBtn" class="btn-primary" style="flex:1;">${editingObj ? "Update" : "Save"}</button>
-                  </div>
-                </div>
-              `}
+              <div class="field">
+                <label>Description</label>
+                <textarea id="expDesc" class="desc-box" rows="2" placeholder="Material or work details..." required></textarea>
+              </div>
+              <div class="field">
+                <label>Qty</label>
+                <input type="number" step="0.01" min="0.01" id="expQty" value="1" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Unit</label>
+                <select id="expUnit">
+                  ${unitOptions.map(u => `<option value="${u}">${u}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Rate (₹)</label>
+                <input type="number" step="0.01" min="0" id="expRate" placeholder="0" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Amount (₹)</label>
+                <input type="number" step="0.01" min="0.01" id="expAmount" placeholder="0" required />
+              </div>
+              <div class="field">
+                <label>Status</label>
+                <input type="text" id="expPayStatus" value="Unpaid" readonly />
+              </div>
             </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
+              <button type="submit" id="expSaveBtn" class="btn-primary">Save</button>
+            </div>
+          </form>
+        </div>
+      `;
+    }
 
-            ${isAdmin() ? `
-              <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
-                <button type="submit" id="expSaveBtn" class="btn-primary">${editingObj ? "Update Entry" : "Save Expense"}</button>
+    function renderAdminEditExpenseForm(editingObj) {
+      const allSiteNames = getAllSiteNames();
+      const unitOptions = sanitizeUnitsList(state.units);
+      const engList = getEngineerNames();
+      const formUnitOptions = !unitOptions.includes(editingObj.Unit)
+        ? [editingObj.Unit, ...unitOptions]
+        : unitOptions;
+      const payStatus = normalizePaymentStatus(editingObj.PaymentStatus);
+
+      return `
+        <div class="card no-print">
+          <div class="card-title">Edit Expense Entry</div>
+          <form onsubmit="saveExpense(event)">
+            <div class="form-grid">
+              <div class="field">
+                <label>Date</label>
+                <input type="date" id="expDate" value="${toLocalDateStr(editingObj.Date)}" required />
               </div>
-            ` : ""}
+              <div class="field">
+                <label>Engineer</label>
+                <select id="expEngineer">
+                  ${engList.map(e => `<option value="${e}" ${e === editingObj.Engineer ? "selected" : ""}>${e}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Site</label>
+                <select id="expSite">
+                  ${allSiteNames.map(s => `<option value="${s}" ${s === editingObj.Site ? "selected" : ""}>${s}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Category</label>
+                <select id="expCategory">
+                  ${CATEGORIES.map(c => `<option value="${c}" ${c === editingObj.Category ? "selected" : ""}>${c}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Vendor / Contractor</label>
+                <input type="text" id="expVendor" value="${editingObj["Vendor/Contractor"] || ""}" placeholder="Supplier or contractor" />
+              </div>
+              <div class="field">
+                <label>Qty</label>
+                <input type="number" step="0.01" min="0.01" id="expQty" value="${editingObj.Qty}" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Unit</label>
+                <select id="expUnit">
+                  ${formUnitOptions.map(u => `<option value="${u}" ${u === editingObj.Unit ? "selected" : ""}>${u}</option>`).join("")}
+                </select>
+              </div>
+              <div class="field">
+                <label>Rate (₹)</label>
+                <input type="number" step="0.01" min="0" id="expRate" value="${editingObj.Rate}" oninput="calcExpenseAmount()" required />
+              </div>
+              <div class="field">
+                <label>Amount (₹)</label>
+                <input type="number" step="0.01" min="0.01" id="expAmount" value="${editingObj.Amount}" required />
+              </div>
+              <div class="field">
+                <label>Payment Status</label>
+                <select id="expPayStatus">
+                  <option value="Unpaid" ${payStatus === "Unpaid" ? "selected" : ""}>Unpaid</option>
+                  <option value="Paid" ${payStatus === "Paid" ? "selected" : ""}>Paid</option>
+                </select>
+              </div>
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>Description</label>
+              <textarea id="expDesc" class="desc-box" rows="2" required>${editingObj.Description}</textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" onclick="closeExpenseForm()">Close</button>
+              <button type="submit" id="expSaveBtn" class="btn-primary">Update Entry</button>
+            </div>
           </form>
         </div>
       `;
     }
 
     function renderExpensesView() {
+      if (!isAdmin() && state.showExpenseForm) {
+        return renderEngineerEntryOnlyForm();
+      }
+
       const allSiteNames = getAllSiteNames();
+      const engList = getEngineerNames();
       const editingObj = isAdmin() && state.editingExpenseId
         ? state.expenses.find(e => e.RecordId === state.editingExpenseId)
         : null;
 
-      const showForm = (!isAdmin() && state.showExpenseForm) || (isAdmin() && Boolean(editingObj));
-
       let html = "";
 
-      if (showForm) {
-        html += renderEntryFormCard(editingObj);
+      if (isAdmin() && editingObj) {
+        html += renderAdminEditExpenseForm(editingObj);
       }
 
       if (!isAdmin()) {
@@ -1691,7 +1934,7 @@
                   <label>Engineer</label>
                   <select onchange="state.filters.engineer = this.value; render();">
                     <option value="">All Engineers</option>
-                    ${ENGINEERS.map(e => `<option value="${e}" ${state.filters.engineer === e ? "selected" : ""}>${e}</option>`).join("")}
+                    ${engList.map(e => `<option value="${e}" ${state.filters.engineer === e ? "selected" : ""}>${e}</option>`).join("")}
                   </select>
                 </div>
                 <div class="field">
@@ -1737,17 +1980,20 @@
         return String(b.RecordId).localeCompare(String(a.RecordId));
       });
 
-      const totalScopedExpense = scoped.reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
-      const listHeading = isAdmin() ? "Expenses" : `Expenses (${state.engPeriod})`;
+      const totalPaidScopedExpense = scoped
+        .filter(item => isPaidEntry(item))
+        .reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
+
+      const listHeading = isAdmin() ? "Expenses (Paid Calculated)" : `Expenses (${state.engPeriod})`;
 
       if (!scoped.length) {
-        html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(0)}</span></div><div class="pb-meta">No entries found.</div></div>`;
+        html += `<div class="card"><div class="card-title"><span>${listHeading}</span><span>Paid Total: ${formatINR(0)}</span></div><div class="pb-meta">No entries found.</div></div>`;
         return html;
       }
 
       html += `
         <div class="card">
-          <div class="card-title"><span>${listHeading}</span><span>Total: ${formatINR(totalScopedExpense)}</span></div>
+          <div class="card-title"><span>${listHeading}</span><span>Paid Total: ${formatINR(totalPaidScopedExpense)}</span></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -1762,32 +2008,46 @@
                   <th>Unit</th>
                   <th>Rate</th>
                   <th>Amount</th>
+                  <th>Status</th>
                   ${isAdmin() ? `<th class="no-print">Action</th>` : ""}
                 </tr>
               </thead>
               <tbody>
-                ${scoped.map(item => `
-                  <tr>
-                    <td>${toLocalDateStr(item.Date)}</td>
-                    <td><strong>${item.Engineer}</strong></td>
-                    <td>${item.Site}</td>
-                    <td>${item.Category}</td>
-                    <td>${item["Vendor/Contractor"] || "-"}</td>
-                    <td class="wrap-cell">${item.Description}</td>
-                    <td>${item.Qty}</td>
-                    <td>${item.Unit}</td>
-                    <td>${formatINR(item.Rate)}</td>
-                    <td class="c-red"><strong>${formatINR(item.Amount)}</strong></td>
-                    ${isAdmin() ? `
-                      <td class="no-print">
-                        <div class="pb-actions">
-                          <button type="button" class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
-                          <button type="button" class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
-                        </div>
+                ${scoped.map(item => {
+                  const paid = isPaidEntry(item);
+                  return `
+                    <tr>
+                      <td>${toLocalDateStr(item.Date)}</td>
+                      <td><strong>${item.Engineer}</strong></td>
+                      <td>${item.Site}</td>
+                      <td>${item.Category}</td>
+                      <td>${item["Vendor/Contractor"] || "-"}</td>
+                      <td class="wrap-cell">${item.Description}</td>
+                      <td>${item.Qty}</td>
+                      <td>${item.Unit}</td>
+                      <td>${formatINR(item.Rate)}</td>
+                      <td class="${paid ? "c-red" : "pb-meta"}"><strong>${formatINR(item.Amount)}</strong></td>
+                      <td>
+                        ${isAdmin() ? `
+                          <select class="no-print" style="width:92px; padding:4px 6px; font-size:12px;" onchange="toggleExpensePaymentStatus('${item.RecordId}', this.value)">
+                            <option value="Unpaid" ${!paid ? "selected" : ""}>Unpaid</option>
+                            <option value="Paid" ${paid ? "selected" : ""}>Paid</option>
+                          </select>
+                        ` : `
+                          <span class="badge-status ${paid ? "badge-paid" : "badge-unpaid"}">${paid ? "Paid" : "Unpaid"}</span>
+                        `}
                       </td>
-                    ` : ""}
-                  </tr>
-                `).join("")}
+                      ${isAdmin() ? `
+                        <td class="no-print">
+                          <div class="pb-actions">
+                            <button type="button" class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
+                            <button type="button" class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
+                          </div>
+                        </td>
+                      ` : ""}
+                    </tr>
+                  `;
+                }).join("")}
               </tbody>
             </table>
           </div>
@@ -1795,376 +2055,6 @@
       `;
 
       return html;
-    }
-
-    function toggleAdminPanel(panelName) {
-      state.adminDetailPanel = state.adminDetailPanel === panelName ? null : panelName;
-      state.adminAddFormOpen = false;
-      state.settlePreview = null;
-      render();
-    }
-
-    function renderAdminDetailSection(activeSiteNames, allSiteNames) {
-      const panel = state.adminDetailPanel;
-      if (!panel) return "";
-
-      if (panel === "client") {
-        const editCp = state.editingClientPaymentId
-          ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editCp);
-        const cpSiteOptions = editCp && !activeSiteNames.includes(editCp.Site)
-          ? [editCp.Site, ...activeSiteNames]
-          : activeSiteNames;
-
-        const filteredCp = state.cpSiteFilter
-          ? state.clientPayments.filter(c => c.Site === state.cpSiteFilter)
-          : state.clientPayments;
-
-        return `
-          <div class="card">
-            <div class="card-title">
-              <span>Client Received Details</span>
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <select style="width:155px;" onchange="state.cpSiteFilter = this.value; render();">
-                  <option value="">All Sites</option>
-                  ${allSiteNames.map(s => `<option value="${s}" ${state.cpSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
-                </select>
-                <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingClientPaymentId = null; render();">
-                  ${showForm ? "Close" : "+ Add Payment"}
-                </button>
-              </div>
-            </div>
-
-            ${showForm ? `
-              <form onsubmit="submitClientPayment(event)" style="margin-bottom:14px;">
-                <div class="form-grid">
-                  <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? toLocalDateStr(editCp.Date) : todayISO()}" required /></div>
-                  <div class="field"><label>Site</label><select id="cpSite">${cpSiteOptions.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
-                  <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
-                  <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
-                  <div class="field"><label>Total Amount (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
-                  <div class="field">
-                    <label>Payment Mode</label>
-                    <select id="cpMode">
-                      ${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}
-                    </select>
-                  </div>
-                  <div class="field"><label>Reference No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" placeholder="UTR / Cheque No" /></div>
-                  <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" placeholder="Client / Stage / notes" /></div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn-primary">${editCp ? "Update Payment" : "Save Payment"}</button>
-                </div>
-              </form>
-            ` : ""}
-
-            ${filteredCp.length ? `
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th><th>Site</th><th>Base</th><th>GST%</th><th>Total</th><th>Mode</th><th>Ref No</th><th>Remarks</th><th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${filteredCp.map(c => `
-                      <tr>
-                        <td>${toLocalDateStr(c.Date)}</td>
-                        <td><strong>${c.Site}</strong></td>
-                        <td>${formatINR(c["Base Amount"])}</td>
-                        <td>${c["Gst%"]}%</td>
-                        <td class="c-green"><strong>${formatINR(c.TotalAmount)}</strong></td>
-                        <td>${c.PaymentMode}</td>
-                        <td>${c.ReferenceNo || "-"}</td>
-                        <td class="wrap-cell">${c.Remarks || "-"}</td>
-                        <td>
-                          <div class="pb-actions">
-                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingClientPaymentId = '${c.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                            <button type="button" class="btn-danger btn-sm" onclick="deleteClientPayment('${c.RecordId}')">Del</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              </div>
-            ` : `<div class="pb-meta">No client payments found.</div>`}
-          </div>
-        `;
-      }
-
-      if (panel === "siteExpense") {
-        let list = [...state.expenses];
-        if (state.seSiteFilter) list = list.filter(e => e.Site === state.seSiteFilter);
-        list = list.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
-
-        return `
-          <div class="card">
-            <div class="card-title">
-              <span>Site Expense Details</span>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <select style="width:155px;" onchange="state.seSiteFilter = this.value; render();">
-                  <option value="">All Sites</option>
-                  ${allSiteNames.map(s => `<option value="${s}" ${state.seSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
-                </select>
-                <button type="button" class="btn-secondary btn-sm" onclick="state.adminDetailPanel = null; render();">Close</button>
-              </div>
-            </div>
-            ${list.length ? `
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th><th>Engineer</th><th>Site</th><th>Category</th><th>Vendor</th><th>Description</th><th>Amount</th><th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${list.map(item => `
-                      <tr>
-                        <td>${toLocalDateStr(item.Date)}</td>
-                        <td><strong>${item.Engineer}</strong></td>
-                        <td>${item.Site}</td>
-                        <td>${item.Category}</td>
-                        <td>${item["Vendor/Contractor"] || "-"}</td>
-                        <td class="wrap-cell">${item.Description}</td>
-                        <td class="c-red"><strong>${formatINR(item.Amount)}</strong></td>
-                        <td>
-                          <div class="pb-actions">
-                            <button type="button" class="btn-secondary btn-sm" onclick="openExpenseForm('${item.RecordId}')">Edit</button>
-                            <button type="button" class="btn-danger btn-sm" onclick="deleteExpense('${item.RecordId}')">Del</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              </div>
-            ` : `<div class="pb-meta">No site expenses found.</div>`}
-          </div>
-        `;
-      }
-
-      if (panel === "selfExpense") {
-        const editSe = state.editingSelfExpenseId
-          ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editSe);
-
-        return `
-          <div class="card">
-            <div class="card-title">
-              <span>Self Expenses</span>
-              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSelfExpenseId = null; render();">
-                ${showForm ? "Close" : "+ Add Self Expense"}
-              </button>
-            </div>
-
-            ${showForm ? `
-              <form onsubmit="submitSelfExpense(event)" style="margin-bottom:14px;">
-                <div class="form-grid">
-                  <div class="field"><label>Date</label><input type="date" id="seDate" value="${editSe ? toLocalDateStr(editSe.Date) : todayISO()}" required /></div>
-                  <div class="field">
-                    <label>For</label>
-                    <select id="seFor">
-                      ${["Senthil", "Manigandan", "Office"].map(f => `<option value="${f}" ${editSe && editSe.For === f ? "selected" : ""}>${f}</option>`).join("")}
-                    </select>
-                  </div>
-                  <div class="field"><label>Description</label><input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Self / office expense" required /></div>
-                  <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="seAmt" value="${editSe ? editSe.Amount : ""}" required /></div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn-primary">${editSe ? "Update" : "Save"}</button>
-                </div>
-              </form>
-            ` : ""}
-
-            ${state.selfExpenses.length ? `
-              <div class="table-wrap">
-                <table>
-                  <thead><tr><th>Date</th><th>For</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
-                  <tbody>
-                    ${state.selfExpenses.map(s => `
-                      <tr>
-                        <td>${toLocalDateStr(s.Date)}</td>
-                        <td><strong>${s.For}</strong></td>
-                        <td class="wrap-cell">${s.Description}</td>
-                        <td class="c-red"><strong>${formatINR(s.Amount)}</strong></td>
-                        <td>
-                          <div class="pb-actions">
-                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingSelfExpenseId = '${s.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                            <button type="button" class="btn-danger btn-sm" onclick="deleteSelfExpense('${s.RecordId}')">Del</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              </div>
-            ` : `<div class="pb-meta">No self expenses yet.</div>`}
-          </div>
-        `;
-      }
-
-      if (panel === "engineerFund") {
-        const editFnd = state.editingFundId
-          ? state.funds.find(f => f.RecordId === state.editingFundId)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editFnd);
-
-        const filteredFunds = state.efEngFilter
-          ? state.funds.filter(f => f.Engineer === state.efEngFilter)
-          : state.funds;
-
-        return `
-          <div class="card">
-            <div class="card-title">
-              <span>Engineer Fund Details</span>
-              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <select style="width:150px;" onchange="state.efEngFilter = this.value; render();">
-                  <option value="">All Engineers</option>
-                  ${ENGINEERS.map(e => `<option value="${e}" ${state.efEngFilter === e ? "selected" : ""}>${e}</option>`).join("")}
-                </select>
-                <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingFundId = null; render();">
-                  ${showForm ? "Close" : "+ Add Fund"}
-                </button>
-              </div>
-            </div>
-
-            ${showForm ? `
-              <form onsubmit="submitEngineerFund(event)" style="margin-bottom:14px;">
-                <div class="form-grid">
-                  <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? toLocalDateStr(editFnd.Date) : todayISO()}" required /></div>
-                  <div class="field"><label>Engineer</label><select id="efEng">${ENGINEERS.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
-                  <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
-                  <div class="field">
-                    <label>Mode</label>
-                    <select id="efMode">
-                      ${["GPay / UPI", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editFnd && editFnd.Mode === m ? "selected" : ""}>${m}</option>`).join("")}
-                    </select>
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn-primary">${editFnd ? "Update Fund" : "Save Fund"}</button>
-                </div>
-              </form>
-            ` : ""}
-
-            ${filteredFunds.length ? `
-              <div class="table-wrap">
-                <table>
-                  <thead><tr><th>Date</th><th>Engineer</th><th>Mode</th><th>Amount</th><th>Settled</th><th>Action</th></tr></thead>
-                  <tbody>
-                    ${filteredFunds.map(f => `
-                      <tr>
-                        <td>${toLocalDateStr(f.Date)}</td>
-                        <td><strong>${f.Engineer}</strong></td>
-                        <td>${f.Mode}</td>
-                        <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
-                        <td>${isSettledFlag(f.Settled) ? "Yes" : "No"}</td>
-                        <td>
-                          <div class="pb-actions">
-                            <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
-                            <button type="button" class="btn-danger btn-sm" onclick="deleteFund('${f.RecordId}')">Del</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `).join("")}
-                  </tbody>
-                </table>
-              </div>
-            ` : `<div class="pb-meta">No fund entries yet.</div>`}
-
-            <div class="confirm-box">
-              <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance)</div>
-              <form onsubmit="previewSettlePeriod(event)">
-                <div class="form-grid">
-                  <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${ENGINEERS.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
-                  <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
-                </div>
-                <div class="form-actions"><button type="submit" class="btn-secondary btn-sm">Check Balance</button></div>
-              </form>
-              ${state.settlePreview ? `
-                <div style="font-size:13px; margin-top:8px; padding-top:8px; border-top:1px solid #e7cf96;">
-                  <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
-                  Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
-                  Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
-                  Carry Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
-                  <div class="form-actions" style="margin-top:8px;">
-                    <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
-                    <button type="button" class="btn-primary btn-sm" onclick="confirmSettlePeriod()">Confirm &amp; Settle</button>
-                  </div>
-                </div>
-              ` : ""}
-            </div>
-          </div>
-        `;
-      }
-
-      if (panel === "sites") {
-        const editSiteObj = state.editingSiteName
-          ? state.sites.find(s => s["Site Name"] === state.editingSiteName)
-          : null;
-        const showForm = state.adminAddFormOpen || Boolean(editSiteObj);
-
-        return `
-          <div class="card">
-            <div class="card-title">
-              <span>Sites</span>
-              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSiteName = null; render();">
-                ${showForm ? "Close" : "+ Add Site"}
-              </button>
-            </div>
-
-            ${showForm ? `
-              <form onsubmit="submitAddSite(event)" style="margin-bottom:14px;">
-                <div class="form-grid">
-                  <div class="field"><label>Site Name</label><input type="text" id="newSiteName" value="${editSiteObj ? editSiteObj["Site Name"] : ""}" placeholder="Enter Site Name" required /></div>
-                  <div class="field"><label>Location</label><input type="text" id="newSiteLoc" value="${editSiteObj ? (editSiteObj.Location || "") : ""}" placeholder="Enter Location" /></div>
-                  <div class="field">
-                    <label>Status</label>
-                    <select id="newSiteStatus">
-                      <option value="Active" ${!editSiteObj || String(editSiteObj.Status).toLowerCase() !== "completed" ? "selected" : ""}>Active</option>
-                      <option value="Completed" ${editSiteObj && String(editSiteObj.Status).toLowerCase() === "completed" ? "selected" : ""}>Completed</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn-primary">${editSiteObj ? "Update Site" : "Save Site"}</button>
-                </div>
-              </form>
-            ` : ""}
-
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Site Name</th><th>Location</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody>
-                  ${state.sites.map(s => {
-                    const name = s["Site Name"];
-                    const status = String(s.Status || "Active").toLowerCase() === "completed" ? "Completed" : "Active";
-                    const isComp = status === "Completed";
-                    return `
-                      <tr>
-                        <td><strong>${name}</strong></td>
-                        <td>${s.Location || "-"}</td>
-                        <td><span class="badge-status ${isComp ? "badge-completed" : "badge-active"}">${status}</span></td>
-                        <td>
-                          <div class="pb-actions">
-                            <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
-                            <button type="button" class="btn-danger btn-sm" onclick="deleteSite('${name.replace(/'/g, "\\'")}')">Del</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-                  }).join("")}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        `;
-      }
-
-      return "";
     }
 
     function renderSummaryView() {
@@ -2178,6 +2068,8 @@
         );
         const myExp = state.expenses.filter(e =>
           e.Engineer === engName &&
+          !isSiteCompleted(e.Site) &&
+          isPaidEntry(e) &&
           !isSettledFlag(e.Settled) &&
           !isRecordBeforeSettlement(engName, e.Date, e.RecordId)
         );
@@ -2188,13 +2080,13 @@
         const balVal = fSum - eSum;
 
         return `
-          <div class="summary-grid-3">
+          <div class="summary-grid-5" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-box highlight-soft">
               <div class="stat-label">${carryItem ? "Carry Balance" : "Fund Received"}</div>
               <div class="stat-val c-green">${formatINR(fSum)}</div>
             </div>
             <div class="stat-box">
-              <div class="stat-label">Expense</div>
+              <div class="stat-label">Expense (Paid)</div>
               <div class="stat-val c-red">${formatINR(eSum)}</div>
             </div>
             <div class="stat-box">
@@ -2225,69 +2117,480 @@
       }
 
       const totalClientReceived = state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
-      const totalSiteExpense = state.expenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-      const siteBalance = totalClientReceived - totalSiteExpense;
-      const totalSelfExpense = state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-      const netBalance = siteBalance - totalSelfExpense;
-
-      const totalEngineerFund = state.funds
-        .filter(f => !isSettledFlag(f.Settled))
+      const totalSiteExpense = state.expenses
+        .filter(e => isPaidEntry(e))
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      const balance = totalClientReceived - totalSiteExpense;
+      const totalSelfExpense = state.selfExpenses.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+      const netBalance = balance - totalSelfExpense;
 
-      const activeSiteNames = getActiveSiteNames();
-      const allSiteNames = getAllSiteNames();
+      const engList = getEngineerNames();
+      const engRows = engList.map(eng => {
+        const engFunds = state.funds.filter(f =>
+          f.Engineer === eng &&
+          !isSettledFlag(f.Settled) &&
+          !isRecordBeforeSettlement(eng, f.Date, f.RecordId)
+        );
+        const engPaidExp = state.expenses.filter(e =>
+          e.Engineer === eng &&
+          isPaidEntry(e) &&
+          !isSettledFlag(e.Settled) &&
+          !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
+        );
+        const fundReceived = engFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const spent = engPaidExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const engBal = fundReceived - spent;
+        return { eng, fundReceived, spent, engBal };
+      });
 
       return `
         <div class="summary-grid-5">
-          <div class="stat-box highlight-soft clickable ${state.adminDetailPanel === "client" ? "selected-box" : ""}" onclick="toggleAdminPanel('client')">
-            <div class="stat-label">Client Received</div>
+          <div class="stat-box highlight-soft">
+            <div class="stat-label">Client Payment</div>
             <div class="stat-val c-green">${formatINR(totalClientReceived)}</div>
-            <div class="stat-hint">Tap for details</div>
           </div>
-          <div class="stat-box clickable ${state.adminDetailPanel === "siteExpense" ? "selected-box" : ""}" onclick="toggleAdminPanel('siteExpense')">
+          <div class="stat-box">
             <div class="stat-label">Site Expense</div>
             <div class="stat-val c-red">${formatINR(totalSiteExpense)}</div>
-            <div class="stat-hint">Tap for details</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Balance</div>
-            <div class="stat-val c-ink">${formatINR(siteBalance)}</div>
-            <div class="stat-hint">Client - Site Exp</div>
+            <div class="stat-val c-ink">${formatINR(balance)}</div>
           </div>
-          <div class="stat-box clickable ${state.adminDetailPanel === "selfExpense" ? "selected-box" : ""}" onclick="toggleAdminPanel('selfExpense')">
+          <div class="stat-box">
             <div class="stat-label">Self Expense</div>
             <div class="stat-val c-red">${formatINR(totalSelfExpense)}</div>
-            <div class="stat-hint">Tap for details</div>
           </div>
           <div class="stat-box highlight-soft">
             <div class="stat-label">Net Balance</div>
             <div class="stat-val c-ink">${formatINR(netBalance)}</div>
-            <div class="stat-hint">Balance - Self Exp</div>
           </div>
         </div>
 
-        <div class="admin-blocks-grid">
-          <div class="stat-box clickable ${state.adminDetailPanel === "engineerFund" ? "selected-box" : ""}" onclick="toggleAdminPanel('engineerFund')">
-            <div class="stat-label">Engineer Fund</div>
-            <div class="stat-val c-green">${formatINR(totalEngineerFund)}</div>
-            <div class="stat-hint">Tap for breakdown &amp; settle</div>
+        <div class="card">
+          <div class="card-title">Engineers Fund &amp; Expense Summary</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Engineer</th>
+                  <th>Fund Received</th>
+                  <th>Expense (Paid)</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${engRows.map(r => `
+                  <tr>
+                    <td><strong>${r.eng}</strong></td>
+                    <td class="c-green"><strong>${formatINR(r.fundReceived)}</strong></td>
+                    <td class="c-red"><strong>${formatINR(r.spent)}</strong></td>
+                    <td class="c-ink"><strong>${formatINR(r.engBal)}</strong></td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
           </div>
-          <div class="stat-box clickable ${state.adminDetailPanel === "sites" ? "selected-box" : ""}" onclick="toggleAdminPanel('sites')">
-            <div class="stat-label">Sites</div>
-            <div class="stat-val c-ink">${activeSiteNames.length} Active / ${allSiteNames.length} Total</div>
-            <div class="stat-hint">Tap to Add / Edit / Delete</div>
+        </div>
+      `;
+    }
+
+    function renderClientPaymentPage() {
+      const allSiteNames = getAllSiteNames();
+      const editCp = state.editingClientPaymentId
+        ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
+        : null;
+      const showForm = state.adminAddFormOpen || Boolean(editCp);
+
+      let filteredCp = [...state.clientPayments];
+      if (state.cpSiteFilter) filteredCp = filteredCp.filter(c => c.Site === state.cpSiteFilter);
+      if (state.cpFromDate) filteredCp = filteredCp.filter(c => toLocalDateStr(c.Date) >= state.cpFromDate);
+      if (state.cpToDate) filteredCp = filteredCp.filter(c => toLocalDateStr(c.Date) <= state.cpToDate);
+      filteredCp.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
+
+      const totalFiltered = filteredCp.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
+
+      return `
+        <div class="card no-print">
+          <div class="card-title">
+            <span>Client Payment Filter</span>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="btn-secondary btn-sm" onclick="window.print()">Print</button>
+              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingClientPaymentId = null; render();">
+                ${showForm ? "Close" : "+"}
+              </button>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Site / Client</label>
+              <select onchange="state.cpSiteFilter = this.value; render();">
+                <option value="">All Sites / Clients</option>
+                ${allSiteNames.map(s => `<option value="${s}" ${state.cpSiteFilter === s ? "selected" : ""}>${s}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label>From Date</label>
+              <input type="date" value="${state.cpFromDate}" onchange="state.cpFromDate = this.value; render();" />
+            </div>
+            <div class="field">
+              <label>To Date</label>
+              <input type="date" value="${state.cpToDate}" onchange="state.cpToDate = this.value; render();" />
+            </div>
           </div>
         </div>
 
-        ${renderAdminDetailSection(activeSiteNames, allSiteNames)}
+        ${showForm ? `
+          <div class="card no-print">
+            <div class="card-title">${editCp ? "Edit Client Payment" : "Add Client Payment"}</div>
+            <form onsubmit="submitClientPayment(event)">
+              <div class="form-grid">
+                <div class="field"><label>Date</label><input type="date" id="cpDate" value="${editCp ? toLocalDateStr(editCp.Date) : todayISO()}" required /></div>
+                <div class="field"><label>Site</label><select id="cpSite">${allSiteNames.map(s => `<option value="${s}" ${editCp && editCp.Site === s ? "selected" : ""}>${s}</option>`).join("")}</select></div>
+                <div class="field"><label>Base Amount (₹)</label><input type="number" step="0.01" id="cpBase" value="${editCp ? editCp["Base Amount"] : ""}" oninput="syncGst()" required /></div>
+                <div class="field"><label>GST %</label><input type="number" step="0.01" id="cpGstPct" value="${editCp ? editCp["Gst%"] : 0}" oninput="syncGst()" /></div>
+                <div class="field"><label>GST Amount (₹)</label><input type="number" step="0.01" id="cpGstAmt" value="${editCp ? editCp["GST Amount"] : 0}" readonly /></div>
+                <div class="field"><label>Total Amount (₹)</label><input type="number" step="0.01" id="cpTotal" value="${editCp ? editCp.TotalAmount : ""}" required /></div>
+                <div class="field">
+                  <label>Payment Mode</label>
+                  <select id="cpMode">
+                    ${["Bank Transfer", "UPI / GPay", "Cheque", "Cash"].map(m => `<option value="${m}" ${editCp && editCp.PaymentMode === m ? "selected" : ""}>${m}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="field"><label>Reference No</label><input type="text" id="cpRef" value="${editCp ? editCp.ReferenceNo : ""}" placeholder="UTR / Cheque No" /></div>
+                <div class="field"><label>Remarks</label><input type="text" id="cpRemarks" value="${editCp ? editCp.Remarks : ""}" placeholder="Client / Stage / notes" /></div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">${editCp ? "Update" : "Save"}</button>
+              </div>
+            </form>
+          </div>
+        ` : ""}
+
+        <div class="card">
+          <div class="card-title"><span>Client Payment List</span><span>Total: ${formatINR(totalFiltered)}</span></div>
+          ${filteredCp.length ? `
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Record ID</th>
+                    <th>Date</th>
+                    <th>Site</th>
+                    <th>Base Amount</th>
+                    <th>GST Amount</th>
+                    <th>Total Amount</th>
+                    <th>Payment Mode</th>
+                    <th>Reference No</th>
+                    <th>Remarks</th>
+                    <th class="no-print">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredCp.map(c => `
+                    <tr>
+                      <td>${c.RecordId}</td>
+                      <td>${toLocalDateStr(c.Date)}</td>
+                      <td><strong>${c.Site}</strong></td>
+                      <td>${formatINR(c["Base Amount"])}</td>
+                      <td>${formatINR(c["GST Amount"])}</td>
+                      <td class="c-green"><strong>${formatINR(c.TotalAmount)}</strong></td>
+                      <td>${c.PaymentMode}</td>
+                      <td>${c.ReferenceNo || "-"}</td>
+                      <td class="wrap-cell">${c.Remarks || "-"}</td>
+                      <td class="no-print">
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingClientPaymentId = '${c.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteClientPayment('${c.RecordId}')">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : `<div class="pb-meta">No client payments found.</div>`}
+        </div>
+      `;
+    }
+
+    function renderEngineerFundPage() {
+      const engList = getEngineerNames();
+      const editFnd = state.editingFundId
+        ? state.funds.find(f => f.RecordId === state.editingFundId)
+        : null;
+      const showForm = state.adminAddFormOpen || Boolean(editFnd);
+
+      let filteredFunds = [...state.funds];
+      if (state.efEngFilter) filteredFunds = filteredFunds.filter(f => f.Engineer === state.efEngFilter);
+      filteredFunds.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
+
+      return `
+        <div class="card">
+          <div class="card-title">
+            <span>Engineer Fund</span>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select style="width:150px;" onchange="state.efEngFilter = this.value; render();">
+                <option value="">All Engineers</option>
+                ${engList.map(e => `<option value="${e}" ${state.efEngFilter === e ? "selected" : ""}>${e}</option>`).join("")}
+              </select>
+              <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingFundId = null; render();">
+                ${showForm ? "Close" : "+"}
+              </button>
+            </div>
+          </div>
+
+          ${showForm ? `
+            <form onsubmit="submitEngineerFund(event)" style="margin-bottom:14px;">
+              <div class="form-grid">
+                <div class="field"><label>Date</label><input type="date" id="efDate" value="${editFnd ? toLocalDateStr(editFnd.Date) : todayISO()}" required /></div>
+                <div class="field"><label>Engineer</label><select id="efEng">${engList.map(e => `<option value="${e}" ${editFnd && editFnd.Engineer === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+                <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="efAmt" value="${editFnd ? editFnd.Amount : ""}" required /></div>
+                <div class="field">
+                  <label>Mode</label>
+                  <select id="efMode">
+                    ${["GPay / UPI", "Bank Transfer", "Cash", "Carry Balance"].map(m => `<option value="${m}" ${editFnd && editFnd.Mode === m ? "selected" : ""}>${m}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">${editFnd ? "Update Fund" : "Save"}</button>
+              </div>
+            </form>
+          ` : ""}
+
+          ${filteredFunds.length ? `
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Date</th><th>Engineer</th><th>Mode</th><th>Amount</th><th>Settled</th><th>Action</th></tr></thead>
+                <tbody>
+                  ${filteredFunds.map(f => `
+                    <tr>
+                      <td>${toLocalDateStr(f.Date)}</td>
+                      <td><strong>${f.Engineer}</strong></td>
+                      <td>${f.Mode}</td>
+                      <td class="c-green"><strong>${formatINR(f.Amount)}</strong></td>
+                      <td>${isSettledFlag(f.Settled) ? "Yes" : "No"}</td>
+                      <td>
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingFundId = '${f.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteFund('${f.RecordId}')">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : `<div class="pb-meta">No fund entries yet.</div>`}
+
+          <div class="confirm-box">
+            <div style="font-size:13px; font-weight:800; margin-bottom:8px;">Settle Period (Carry Balance - Paid Expenses Only)</div>
+            <form onsubmit="previewSettlePeriod(event)">
+              <div class="form-grid">
+                <div class="field"><label>Engineer</label><select id="spEng" onchange="state.settlePreview = null; render();">${engList.map(e => `<option value="${e}" ${state.settlePreview?.eng === e ? "selected" : ""}>${e}</option>`).join("")}</select></div>
+                <div class="field"><label>Settle Up To Date</label><input type="date" id="spDate" value="${state.settlePreview?.upTo || todayISO()}" onchange="state.settlePreview = null; render();" required /></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-secondary btn-sm">Check Balance</button></div>
+            </form>
+            ${state.settlePreview ? `
+              <div style="font-size:13px; margin-top:8px; padding-top:8px; border-top:1px solid #e7cf96;">
+                <strong>${state.settlePreview.eng}</strong> (up to <strong>${state.settlePreview.upTo}</strong>):<br/>
+                Fund: <strong>${formatINR(state.settlePreview.fSum)}</strong> |
+                Paid Spent: <strong>${formatINR(state.settlePreview.eSum)}</strong> |
+                Carry Balance: <strong>${formatINR(state.settlePreview.carry)}</strong>
+                <div class="form-actions" style="margin-top:8px;">
+                  <button type="button" class="btn-secondary btn-sm" onclick="state.settlePreview = null; render();">Cancel</button>
+                  <button type="button" class="btn-primary btn-sm" onclick="confirmSettlePeriod()">Confirm &amp; Settle</button>
+                </div>
+              </div>
+            ` : ""}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAddEngineerPage() {
+      const editUser = state.editingUserName
+        ? state.users.find(u => u.user === state.editingUserName)
+        : null;
+      const showForm = state.adminAddFormOpen || Boolean(editUser);
+
+      return `
+        <div class="card">
+          <div class="card-title">
+            <span>Engineers &amp; Passwords</span>
+            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingUserName = null; render();">
+              ${showForm ? "Close" : "+"}
+            </button>
+          </div>
+
+          ${showForm ? `
+            <form onsubmit="submitEngineerUser(event)" style="margin-bottom:14px;">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Engineer Name</label>
+                  <input type="text" id="engUserName" value="${editUser ? editUser.user : ""}" placeholder="Enter Engineer Name" required />
+                </div>
+                <div class="field">
+                  <label>PIN / Password (4 digits)</label>
+                  <input type="text" id="engUserPin" maxlength="6" value="${editUser ? editUser.password : ""}" placeholder="e.g. 1234" required />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">${editUser ? "Update PIN" : "Save"}</button>
+              </div>
+            </form>
+          ` : ""}
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>PIN</th><th>Action</th></tr></thead>
+              <tbody>
+                ${state.users.map(u => `
+                  <tr>
+                    <td><strong>${u.user}</strong></td>
+                    <td>${u.password}</td>
+                    <td>
+                      <button type="button" class="btn-secondary btn-sm" onclick="state.editingUserName = '${u.user}'; state.adminAddFormOpen = true; render();">Edit PIN</button>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAddSitePage() {
+      const editSiteObj = state.editingSiteName
+        ? state.sites.find(s => s["Site Name"] === state.editingSiteName)
+        : null;
+      const showForm = state.adminAddFormOpen || Boolean(editSiteObj);
+      const editStatus = editSiteObj ? normalizeSiteStatus(editSiteObj.Status) : "On Process";
+
+      return `
+        <div class="card">
+          <div class="card-title">
+            <span>Sites</span>
+            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; state.editingSiteName = null; render();">
+              ${showForm ? "Close" : "+"}
+            </button>
+          </div>
+
+          ${showForm ? `
+            <form onsubmit="submitAddSite(event)" style="margin-bottom:14px;">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Site Name</label>
+                  <input type="text" id="newSiteName" value="${editSiteObj ? editSiteObj["Site Name"] : ""}" placeholder="Enter Site Name" required />
+                </div>
+                <div class="field">
+                  <label>Status</label>
+                  <select id="newSiteStatus">
+                    <option value="On Process" ${editStatus === "On Process" ? "selected" : ""}>On Process</option>
+                    <option value="Completed" ${editStatus === "Completed" ? "selected" : ""}>Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">${editSiteObj ? "Update Site" : "Save"}</button>
+              </div>
+            </form>
+          ` : ""}
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Site Name</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${state.sites.map(s => {
+                  const name = s["Site Name"];
+                  const status = normalizeSiteStatus(s.Status);
+                  const isComp = status === "Completed";
+                  return `
+                    <tr>
+                      <td><strong>${name}</strong></td>
+                      <td>
+                        <select style="width:125px; padding:4px 7px; font-size:12px;" onchange="changeSiteStatusInline('${name.replace(/'/g, "\\'")}', this.value)">
+                          <option value="On Process" ${!isComp ? "selected" : ""}>On Process</option>
+                          <option value="Completed" ${isComp ? "selected" : ""}>Completed</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteSite('${name.replace(/'/g, "\\'")}')">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAddUnitsPage() {
+      const unitList = sanitizeUnitsList(state.units);
+      return `
+        <div class="card">
+          <div class="card-title">
+            <span>Units</span>
+            <button type="button" class="btn-primary btn-sm" onclick="state.adminAddFormOpen = !state.adminAddFormOpen; render();">
+              ${state.adminAddFormOpen ? "Close" : "+"}
+            </button>
+          </div>
+
+          ${state.adminAddFormOpen ? `
+            <form onsubmit="submitAddUnit(event)" style="margin-bottom:14px;">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Unit Name</label>
+                  <input type="text" id="newUnitName" placeholder="Enter Unit (e.g. Sqft, Box)" required />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Save</button>
+              </div>
+            </form>
+          ` : ""}
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Unit</th><th>Action</th></tr></thead>
+              <tbody>
+                ${unitList.map(u => `
+                  <tr>
+                    <td><strong>${u}</strong></td>
+                    <td>
+                      <button type="button" class="btn-danger btn-sm" onclick="deleteUnit('${u.replace(/'/g, "\\'")}')">Del</button>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
       `;
     }
 
     function syncGst() {
       const base = Number(document.getElementById("cpBase")?.value) || 0;
       const pct = Number(document.getElementById("cpGstPct")?.value) || 0;
+      const gstAmt = (base * pct) / 100;
+      const gstEl = document.getElementById("cpGstAmt");
       const totalEl = document.getElementById("cpTotal");
-      if (totalEl) totalEl.value = (base + (base * pct) / 100).toFixed(2);
+      if (gstEl) gstEl.value = gstAmt.toFixed(2);
+      if (totalEl) totalEl.value = (base + gstAmt).toFixed(2);
     }
 
     async function submitClientPayment(ev) {
@@ -2296,13 +2599,19 @@
         ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
         : null;
 
+      const base = Number(document.getElementById("cpBase").value) || 0;
+      const gstPct = Number(document.getElementById("cpGstPct").value) || 0;
+      const gstAmt = Number(document.getElementById("cpGstAmt")?.value) || ((base * gstPct) / 100);
+      const totalAmt = Number(document.getElementById("cpTotal").value) || (base + gstAmt);
+
       const rec = {
         RecordId: existing ? existing.RecordId : ("CP_" + Date.now()),
         Date: toLocalDateStr(document.getElementById("cpDate").value),
         Site: document.getElementById("cpSite").value,
-        "Base Amount": Number(document.getElementById("cpBase").value) || 0,
-        "Gst%": Number(document.getElementById("cpGstPct").value) || 0,
-        TotalAmount: Number(document.getElementById("cpTotal").value) || 0,
+        "Base Amount": base,
+        "Gst%": gstPct,
+        "GST Amount": gstAmt,
+        TotalAmount: totalAmt,
         PaymentMode: document.getElementById("cpMode").value,
         ReferenceNo: document.getElementById("cpRef").value.trim(),
         Remarks: document.getElementById("cpRemarks").value.trim()
@@ -2336,6 +2645,17 @@
       render();
     }
 
+    async function changeSiteStatusInline(siteName, newStatus) {
+      if (!isAdmin()) return;
+      const normalized = normalizeSiteStatus(newStatus);
+      const idx = state.sites.findIndex(s => s["Site Name"] === siteName);
+      if (idx === -1) return;
+      const updated = { "Site Name": siteName, Status: normalized };
+      state.sites[idx] = updated;
+      render();
+      await postAction({ action: "addSite", record: updated });
+    }
+
     async function deleteSite(siteName) {
       if (!isAdmin()) return;
       state.sites = state.sites.filter(s => s["Site Name"] !== siteName);
@@ -2347,11 +2667,10 @@
     async function submitAddSite(ev) {
       ev.preventDefault();
       const name = document.getElementById("newSiteName").value.trim();
-      const loc = document.getElementById("newSiteLoc").value.trim();
-      const status = document.getElementById("newSiteStatus").value;
+      const status = normalizeSiteStatus(document.getElementById("newSiteStatus").value);
       if (!name) return;
 
-      const rec = { "Site Name": name, Location: loc, Status: status };
+      const rec = { "Site Name": name, Status: status };
       if (state.editingSiteName) {
         const prevIdx = state.sites.findIndex(s => s["Site Name"] === state.editingSiteName);
         if (prevIdx > -1) state.sites[prevIdx] = rec;
@@ -2367,40 +2686,49 @@
       await postAction({ action: "addSite", record: rec });
     }
 
-    async function submitSelfExpense(ev) {
+    async function submitAddUnit(ev) {
       ev.preventDefault();
-      const existing = state.editingSelfExpenseId
-        ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
-        : null;
-
-      const rec = {
-        RecordId: existing ? existing.RecordId : ("SE_" + Date.now()),
-        Date: toLocalDateStr(document.getElementById("seDate").value),
-        For: document.getElementById("seFor").value,
-        Description: document.getElementById("seDesc").value.trim(),
-        Amount: Number(document.getElementById("seAmt").value) || 0
-      };
-
-      if (existing) {
-        const idx = state.selfExpenses.findIndex(s => s.RecordId === existing.RecordId);
-        if (idx > -1) state.selfExpenses[idx] = rec;
-        state.editingSelfExpenseId = null;
-        state.adminAddFormOpen = false;
-        render();
-        await postAction({ action: "updateSelfExpense", record: rec });
-      } else {
-        state.selfExpenses.unshift(rec);
-        state.adminAddFormOpen = false;
-        render();
-        await postAction({ action: "addSelfExpense", record: rec });
+      const unitVal = document.getElementById("newUnitName").value.trim();
+      if (!unitVal) return;
+      if (REMOVED_UNITS.has(unitVal.toLowerCase())) {
+        setBanner("This unit is not allowed.", "warn");
+        return;
       }
+      if (!state.units.some(u => u.toLowerCase() === unitVal.toLowerCase())) {
+        state.units.push(unitVal);
+      }
+      state.adminAddFormOpen = false;
+      render();
+      await postAction({ action: "addUnit", unit: unitVal });
     }
 
-    async function deleteSelfExpense(recordId) {
+    async function deleteUnit(unitVal) {
       if (!isAdmin()) return;
-      state.selfExpenses = state.selfExpenses.filter(s => s.RecordId !== recordId);
+      state.units = state.units.filter(u => u.toLowerCase() !== String(unitVal).toLowerCase());
       render();
-      await postAction({ action: "deleteSelfExpense", RecordId: recordId });
+      await postAction({ action: "deleteUnit", unit: unitVal });
+    }
+
+    async function submitEngineerUser(ev) {
+      ev.preventDefault();
+      const name = document.getElementById("engUserName").value.trim();
+      const pin = document.getElementById("engUserPin").value.trim();
+      if (!name || !pin) return;
+
+      const role = name.toLowerCase() === "admin"
+        ? "ADMIN"
+        : (name.toLowerCase() === "manikandan" ? "Manikandan" : "ENGINEER");
+
+      const rec = { user: name, role, password: pin };
+      const idx = state.users.findIndex(u => String(u.user).toLowerCase() === name.toLowerCase());
+      if (idx > -1) state.users[idx] = rec;
+      else state.users.push(rec);
+
+      syncLoginUserSelectOptions();
+      state.editingUserName = null;
+      state.adminAddFormOpen = false;
+      render();
+      await postAction({ action: "saveUser", record: rec });
     }
 
     async function submitEngineerFund(ev) {
@@ -2448,7 +2776,7 @@
         .filter(f => f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       const eSum = state.expenses
-        .filter(e => e.Engineer === eng && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
+        .filter(e => e.Engineer === eng && isPaidEntry(e) && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
@@ -2462,7 +2790,7 @@
         if (f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo) f.Settled = true;
       });
       state.expenses.forEach(e => {
-        if (e.Engineer === eng && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
+        if (e.Engineer === eng && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
       });
 
       const prevSettledDate = state.settledUntilByEng[eng];
@@ -2490,12 +2818,25 @@
       const container = document.getElementById("viewContainer");
       if (state.activeTab === "summary") {
         container.innerHTML = renderSummaryView();
-      } else {
+      } else if (state.activeTab === "expenses") {
         container.innerHTML = renderExpensesView();
+      } else if (isAdmin() && state.activeTab === "clientPayment") {
+        container.innerHTML = renderClientPaymentPage();
+      } else if (isAdmin() && state.activeTab === "engineerFund") {
+        container.innerHTML = renderEngineerFundPage();
+      } else if (isAdmin() && state.activeTab === "addEngineer") {
+        container.innerHTML = renderAddEngineerPage();
+      } else if (isAdmin() && state.activeTab === "addSite") {
+        container.innerHTML = renderAddSitePage();
+      } else if (isAdmin() && state.activeTab === "addUnits") {
+        container.innerHTML = renderAddUnitsPage();
+      } else {
+        container.innerHTML = renderSummaryView();
       }
     }
 
     restoreCache();
+    syncLoginUserSelectOptions();
 
     setInterval(() => {
       if (state.currentUser && document.visibilityState === "visible" && !isUserInteractingWithFormOrDropdown()) {
