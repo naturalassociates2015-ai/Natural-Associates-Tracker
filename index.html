@@ -283,7 +283,7 @@
 
     function userKey(name) {
       const k = String(name || "").trim().toLowerCase();
-      if (k === "manikandan" || k === "மணிகண்டன்") return "manigandan";
+      if (k === "manikandan" || k === "மணிகண்டன்" || k === "மணிஜண்டன்") return "manigandan";
       if (k === "செந்தில்") return "senthil";
       if (k === "யோகேஷ்") return "yogesh";
       if (k === "சிவசங்கர்") return "sivashankar";
@@ -1124,6 +1124,32 @@
       const selfSum = state.selfExpenses.reduce((s, r) => s + numVal(r.Amount), 0);
       const net = bal - selfSum;
 
+      const siteNames = [];
+      const seenSites = new Set();
+      getAllSites().forEach(sn => {
+        const k = sn.toLowerCase();
+        if (!seenSites.has(k)) { seenSites.add(k); siteNames.push(sn); }
+      });
+      state.clientPayments.forEach(c => {
+        const k = String(c.Site || "").trim().toLowerCase();
+        if (k && !seenSites.has(k)) { seenSites.add(k); siteNames.push(String(c.Site).trim()); }
+      });
+      state.expenses.forEach(e => {
+        const k = String(e.Site || "").trim().toLowerCase();
+        if (k && !seenSites.has(k)) { seenSites.add(k); siteNames.push(String(e.Site).trim()); }
+      });
+
+      const siteRows = siteNames.map(site => {
+        const sk = site.toLowerCase();
+        const cpSite = state.clientPayments.filter(c => String(c.Site || "").trim().toLowerCase() === sk);
+        const baseAmt = cpSite.reduce((s, r) => s + numVal(r["Base Amount"]), 0);
+        const gstAmt = cpSite.reduce((s, r) => s + numVal(r["GST Amount"]), 0);
+        const totalAmt = cpSite.reduce((s, r) => s + numVal(r.TotalAmount), 0);
+        const expSite = state.expenses.filter(e => String(e.Site || "").trim().toLowerCase() === sk && isPaid(e));
+        const expAmt = expSite.reduce((s, r) => s + numVal(r.Amount), 0);
+        return { site, baseAmt, gstAmt, totalAmt, expAmt, balAmt: totalAmt - expAmt };
+      });
+
       const rows = getEngineerList().map(eng => {
         const ek = userKey(eng);
         const fGiven = state.funds.filter(f => userKey(f.Engineer) === ek && !isSettled(f.Settled)).reduce((s, r) => s + numVal(r.Amount), 0);
@@ -1138,6 +1164,23 @@
           <div class="stat-box highlight-soft"><div class="stat-label">Balance</div><div class="stat-val c-ink">${formatINR(bal)}</div></div>
           <div class="stat-box"><div class="stat-label">Self Expense</div><div class="stat-val c-red">${formatINR(selfSum)}</div></div>
           <div class="stat-box highlight-soft"><div class="stat-label">Net Balance</div><div class="stat-val c-green">${formatINR(net)}</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Site-wise Summary</div>
+          ${siteRows.length ? `
+            <div class="table-wrap"><table><thead><tr><th>Site</th><th>Base Amount</th><th>GST Amount</th><th>Total Amount</th><th>Expense</th><th>Balance</th></tr></thead><tbody>
+              ${siteRows.map(s => `
+                <tr>
+                  <td><strong>${s.site}</strong></td>
+                  <td>${formatINR(s.baseAmt)}</td>
+                  <td>${formatINR(s.gstAmt)}</td>
+                  <td class="c-green"><strong>${formatINR(s.totalAmt)}</strong></td>
+                  <td class="c-red"><strong>${formatINR(s.expAmt)}</strong></td>
+                  <td class="c-ink"><strong>${formatINR(s.balAmt)}</strong></td>
+                </tr>
+              `).join("")}
+            </tbody></table></div>
+          ` : `<div class="pb-meta">No site data found.</div>`}
         </div>
         <div class="card">
           <div class="card-title">Engineers Fund &amp; Expense Summary</div>
