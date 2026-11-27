@@ -551,16 +551,6 @@
       font-weight: 700;
     }
 
-    .badge-active {
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-
-    .badge-completed {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
     .badge-paid {
       background: #dcfce7;
       color: #166534;
@@ -815,7 +805,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V10";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V11";
 
     const DEFAULT_ENGINEERS = ["Senthil", "Manikandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
@@ -869,6 +859,7 @@
       editingSelfExpenseId: null,
       editingSiteName: null,
       editingUserName: null,
+      deletedUsers: [],
       settledUntilByEng: {},
       settlePreview: null,
       pendingOps: [],
@@ -889,6 +880,12 @@
         toDate: ""
       }
     };
+
+    function isUserDeleted(username) {
+      const target = String(username || "").trim().toLowerCase();
+      if (!target || target === "admin") return false;
+      return state.deletedUsers.some(u => String(u).toLowerCase() === target);
+    }
 
     function normalizeSiteStatus(val) {
       const s = String(val || "").trim().toLowerCase();
@@ -912,6 +909,7 @@
         if (!val) return;
         const lower = val.toLowerCase();
         if (lower === "admin") return;
+        if (isUserDeleted(val)) return;
         if (!seen.has(lower)) {
           seen.add(lower);
           names.push(val);
@@ -955,6 +953,7 @@
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           users: state.users,
+          deletedUsers: state.deletedUsers,
           expenses: state.expenses,
           funds: state.funds,
           clientPayments: state.clientPayments,
@@ -972,7 +971,10 @@
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return;
         const p = JSON.parse(raw);
-        if (Array.isArray(p.users) && p.users.length) state.users = p.users;
+        if (Array.isArray(p.deletedUsers)) state.deletedUsers = p.deletedUsers;
+        if (Array.isArray(p.users) && p.users.length) {
+          state.users = p.users.filter(u => !isUserDeleted(u.user));
+        }
         if (Array.isArray(p.expenses)) state.expenses = normalizeExpenses(p.expenses);
         if (Array.isArray(p.funds)) state.funds = normalizeFunds(p.funds);
         if (Array.isArray(p.clientPayments)) state.clientPayments = normalizeClientPayments(p.clientPayments);
@@ -1100,19 +1102,24 @@
       const prevVal = sel.value || "Admin";
       const orderedUsers = [];
       const seen = new Set();
+
       CONFIGURED_USERS.forEach(u => {
+        if (isUserDeleted(u.user)) return;
         seen.add(u.user.toLowerCase());
         const live = state.users.find(x => String(x.user).toLowerCase() === u.user.toLowerCase());
         orderedUsers.push(live || u);
       });
       state.users.forEach(u => {
-        if (u.user && !seen.has(String(u.user).toLowerCase())) {
+        if (!u.user || isUserDeleted(u.user)) return;
+        if (!seen.has(String(u.user).toLowerCase())) {
           seen.add(String(u.user).toLowerCase());
           orderedUsers.push(u);
         }
       });
+
+      const nextSelected = orderedUsers.some(u => u.user === prevVal) ? prevVal : "Admin";
       sel.innerHTML = orderedUsers.map(u =>
-        `<option value="${u.user}" ${u.user === prevVal ? "selected" : ""}>${u.user}</option>`
+        `<option value="${u.user}" ${u.user === nextSelected ? "selected" : ""}>${u.user}</option>`
       ).join("");
     }
 
@@ -1134,6 +1141,12 @@
       const selectedUser = document.getElementById("loginUserSelect").value;
       const enteredPw = document.getElementById("loginPasswordInput").value.trim();
       const errEl = document.getElementById("loginError");
+
+      if (isUserDeleted(selectedUser)) {
+        errEl.textContent = "User is disabled/removed.";
+        errEl.style.display = "block";
+        return;
+      }
 
       const matched = state.users.find(
         u => String(u.user).toLowerCase() === String(selectedUser).toLowerCase()
@@ -1192,13 +1205,11 @@
       el.textContent = msg;
     }
 
-    // Active / On Process sites only (Completed sites hidden from engineers)
     function getOnProcessSiteNames() {
-      const activeSites = state.sites
+      return state.sites
         .filter(s => normalizeSiteStatus(s.Status) === "On Process")
         .map(s => String(s["Site Name"] || "").trim())
         .filter(Boolean);
-      return activeSites;
     }
 
     function getAllSiteNames() {
@@ -1380,9 +1391,18 @@
         } else if (op.action === "saveUser") {
           const u = op.record;
           if (u && u.user) {
+            state.deletedUsers = state.deletedUsers.filter(x => String(x).toLowerCase() !== String(u.user).toLowerCase());
             const idx = state.users.findIndex(x => String(x.user).toLowerCase() === String(u.user).toLowerCase());
             if (idx > -1) state.users[idx] = u;
             else state.users.push(u);
+          }
+        } else if (op.action === "deleteUser") {
+          const target = String(op.user || "").trim().toLowerCase();
+          if (target && target !== "admin") {
+            if (!state.deletedUsers.some(x => String(x).toLowerCase() === target)) {
+              state.deletedUsers.push(op.user);
+            }
+            state.users = state.users.filter(x => String(x.user).trim().toLowerCase() !== target);
           }
         } else if (op.action === "addSite") {
           const s = op.record;
@@ -1446,13 +1466,20 @@
         const data = await res.json();
 
         const mapU = new Map();
-        CONFIGURED_USERS.forEach(u => mapU.set(u.user.toLowerCase(), { ...u }));
+        CONFIGURED_USERS.forEach(u => {
+          if (!isUserDeleted(u.user)) {
+            mapU.set(u.user.toLowerCase(), { ...u });
+          }
+        });
         if (Array.isArray(data.users) && data.users.length) {
           data.users.forEach(u => {
-            if (u.user && u.password) {
+            if (u.user && u.password && !isUserDeleted(u.user)) {
               const key = String(u.user).toLowerCase();
-              const base = mapU.get(key);
-              mapU.set(key, base ? { ...u, password: base.password, role: base.role } : u);
+              mapU.set(key, {
+                user: u.user,
+                role: key === "admin" ? "ADMIN" : (key === "manikandan" ? "Manikandan" : (u.role || "ENGINEER")),
+                password: String(u.password)
+              });
             }
           });
         }
@@ -1560,7 +1587,6 @@
       let list = [...state.expenses];
       if (!isAdmin()) {
         const eng = state.currentUser.user;
-        // Engineers cannot see entries for Completed sites
         list = list.filter(e =>
           e.Engineer === eng &&
           !isSiteCompleted(e.Site) &&
@@ -2411,8 +2437,9 @@
     }
 
     function renderAddEngineerPage() {
+      const visibleUsers = state.users.filter(u => u.user && !isUserDeleted(u.user));
       const editUser = state.editingUserName
-        ? state.users.find(u => u.user === state.editingUserName)
+        ? visibleUsers.find(u => u.user === state.editingUserName)
         : null;
       const showForm = state.adminAddFormOpen || Boolean(editUser);
 
@@ -2430,7 +2457,7 @@
               <div class="form-grid">
                 <div class="field">
                   <label>Engineer Name</label>
-                  <input type="text" id="engUserName" value="${editUser ? editUser.user : ""}" placeholder="Enter Engineer Name" required />
+                  <input type="text" id="engUserName" value="${editUser ? editUser.user : ""}" ${editUser ? "readonly" : ""} placeholder="Enter Engineer Name" required />
                 </div>
                 <div class="field">
                   <label>PIN / Password (4 digits)</label>
@@ -2447,15 +2474,22 @@
             <table>
               <thead><tr><th>User</th><th>PIN</th><th>Action</th></tr></thead>
               <tbody>
-                ${state.users.map(u => `
-                  <tr>
-                    <td><strong>${u.user}</strong></td>
-                    <td>${u.password}</td>
-                    <td>
-                      <button type="button" class="btn-secondary btn-sm" onclick="state.editingUserName = '${u.user}'; state.adminAddFormOpen = true; render();">Edit PIN</button>
-                    </td>
-                  </tr>
-                `).join("")}
+                ${visibleUsers.map(u => {
+                  const isAdm = String(u.user).toLowerCase() === "admin";
+                  const escapedName = String(u.user).replace(/'/g, "\\'");
+                  return `
+                    <tr>
+                      <td><strong>${u.user}</strong></td>
+                      <td>${u.password}</td>
+                      <td>
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingUserName = '${escapedName}'; state.adminAddFormOpen = true; render();">Edit PIN</button>
+                          ${!isAdm ? `<button type="button" class="btn-danger btn-sm" onclick="deleteEngineerUser('${escapedName}')">Delete</button>` : ""}
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join("")}
               </tbody>
             </table>
           </div>
@@ -2514,19 +2548,20 @@
                   const name = s["Site Name"];
                   const status = normalizeSiteStatus(s.Status);
                   const isComp = status === "Completed";
+                  const escaped = name.replace(/'/g, "\\'");
                   return `
                     <tr>
                       <td><strong>${name}</strong></td>
                       <td>
-                        <select style="width:125px; padding:4px 7px; font-size:12px;" onchange="changeSiteStatusInline('${name.replace(/'/g, "\\'")}', this.value)">
+                        <select style="width:125px; padding:4px 7px; font-size:12px;" onchange="changeSiteStatusInline('${escaped}', this.value)">
                           <option value="On Process" ${!isComp ? "selected" : ""}>On Process</option>
                           <option value="Completed" ${isComp ? "selected" : ""}>Completed</option>
                         </select>
                       </td>
                       <td>
                         <div class="pb-actions">
-                          <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${name.replace(/'/g, "\\'")}')">Edit</button>
-                          <button type="button" class="btn-danger btn-sm" onclick="deleteSite('${name.replace(/'/g, "\\'")}')">Del</button>
+                          <button type="button" class="btn-secondary btn-sm" onclick="startEditSite('${escaped}')">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteSite('${escaped}')">Del</button>
                         </div>
                       </td>
                     </tr>
@@ -2715,12 +2750,15 @@
       const pin = document.getElementById("engUserPin").value.trim();
       if (!name || !pin) return;
 
-      const role = name.toLowerCase() === "admin"
+      const lower = name.toLowerCase();
+      state.deletedUsers = state.deletedUsers.filter(u => String(u).toLowerCase() !== lower);
+
+      const role = lower === "admin"
         ? "ADMIN"
-        : (name.toLowerCase() === "manikandan" ? "Manikandan" : "ENGINEER");
+        : (lower === "manikandan" ? "Manikandan" : "ENGINEER");
 
       const rec = { user: name, role, password: pin };
-      const idx = state.users.findIndex(u => String(u.user).toLowerCase() === name.toLowerCase());
+      const idx = state.users.findIndex(u => String(u.user).toLowerCase() === lower);
       if (idx > -1) state.users[idx] = rec;
       else state.users.push(rec);
 
@@ -2729,6 +2767,30 @@
       state.adminAddFormOpen = false;
       render();
       await postAction({ action: "saveUser", record: rec });
+    }
+
+    async function deleteEngineerUser(username) {
+      if (!isAdmin()) return;
+      const lower = String(username || "").trim().toLowerCase();
+      if (!lower || lower === "admin") return;
+
+      if (!state.deletedUsers.some(u => String(u).toLowerCase() === lower)) {
+        state.deletedUsers.push(username);
+      }
+      state.users = state.users.filter(u => String(u.user).trim().toLowerCase() !== lower);
+      if (state.editingUserName && String(state.editingUserName).toLowerCase() === lower) {
+        state.editingUserName = null;
+      }
+      if (state.filters.engineer && String(state.filters.engineer).toLowerCase() === lower) {
+        state.filters.engineer = "";
+      }
+      if (state.efEngFilter && String(state.efEngFilter).toLowerCase() === lower) {
+        state.efEngFilter = "";
+      }
+
+      syncLoginUserSelectOptions();
+      render();
+      await postAction({ action: "deleteUser", user: username });
     }
 
     async function submitEngineerFund(ev) {
@@ -2850,6 +2912,11 @@
         try {
           const parsed = JSON.parse(saved);
           if (parsed && parsed.user && parsed.role) {
+            if (isUserDeleted(parsed.user)) {
+              sessionStorage.removeItem("NA_SESSION");
+              loadAllData(false);
+              return;
+            }
             state.currentUser = parsed;
             showAppShell();
             loadAllData(false);
