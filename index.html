@@ -510,9 +510,15 @@
 
     .summary-grid-5 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 9px;
       margin-bottom: 13px;
+    }
+
+    @media (max-width: 540px) {
+      .summary-grid-5 {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     .stat-box {
@@ -752,6 +758,7 @@
         <button type="button" class="drawer-item" data-view="expenses" onclick="selectDrawerView('expenses')">Expenses</button>
         <button type="button" class="drawer-item" data-view="clientPayment" onclick="selectDrawerView('clientPayment')">Client Payment</button>
         <button type="button" class="drawer-item" data-view="engineerFund" onclick="selectDrawerView('engineerFund')">Engineer Fund</button>
+        <button type="button" class="drawer-item" data-view="selfExpense" onclick="selectDrawerView('selfExpense')">Self Expense</button>
         <button type="button" class="drawer-item" data-view="addEngineer" onclick="selectDrawerView('addEngineer')">Add Engineer</button>
         <button type="button" class="drawer-item" data-view="addSite" onclick="selectDrawerView('addSite')">Add Site</button>
         <button type="button" class="drawer-item" data-view="addUnits" onclick="selectDrawerView('addUnits')">Add Units</button>
@@ -799,9 +806,10 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBTKwNtMbEta5sp8qiUi2_Q30B6lMjz-_A5y4NJesqLxTYCC3TO7MdLv_T4o3ChG0h8A/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V16";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V18";
 
     const DEFAULT_ENGINEERS = ["Senthil", "Manigandan", "Yogesh", "Sivashankar"];
+    const SELF_EXPENSE_PERSONS = ["Senthil", "Manigandan"];
     const CATEGORIES = [
       "Material",
       "Masonry",
@@ -836,11 +844,13 @@
       cpFromDate: "",
       cpToDate: "",
       efEngFilter: "",
+      seWhoFilter: "",
       showExpenseForm: false,
       isSavingExpense: false,
       editingExpenseId: null,
       editingClientPaymentId: null,
       editingFundId: null,
+      editingSelfExpenseId: null,
       editingSiteName: null,
       editingUserName: null,
       settledUntilByEng: {},
@@ -848,6 +858,7 @@
       users: [...CONFIGURED_USERS],
       expenses: [],
       funds: [],
+      selfExpenses: [],
       clientPayments: [],
       sites: [],
       units: [...DEFAULT_UNITS],
@@ -868,6 +879,7 @@
       if (t === "summary") return "summary";
       if (t === "clientpayment" || t === "client payment") return "clientPayment";
       if (t === "engineerfund" || t === "engineer fund") return "engineerFund";
+      if (t === "selfexpense" || t === "self expense") return "selfExpense";
       if (t === "addengineer" || t === "add engineer") return "addEngineer";
       if (t === "addsite" || t === "add site") return "addSite";
       if (t === "addunits" || t === "add units") return "addUnits";
@@ -979,6 +991,7 @@
           users: dedupeUsersList(state.users),
           expenses: state.expenses,
           funds: state.funds,
+          selfExpenses: state.selfExpenses,
           clientPayments: state.clientPayments,
           sites: state.sites,
           units: sanitizeUnitsList(state.units),
@@ -1000,6 +1013,7 @@
         state.users = Array.isArray(p.users) && p.users.length ? dedupeUsersList(p.users) : dedupeUsersList(CONFIGURED_USERS);
         state.expenses = Array.isArray(p.expenses) ? normalizeExpenses(p.expenses) : [];
         state.funds = Array.isArray(p.funds) ? normalizeFunds(p.funds) : [];
+        state.selfExpenses = Array.isArray(p.selfExpenses) ? normalizeSelfExpenses(p.selfExpenses) : [];
         state.clientPayments = Array.isArray(p.clientPayments) ? normalizeClientPayments(p.clientPayments) : [];
         state.sites = Array.isArray(p.sites)
           ? p.sites
@@ -1126,6 +1140,7 @@
       state.editingExpenseId = null;
       state.editingClientPaymentId = null;
       state.editingFundId = null;
+      state.editingSelfExpenseId = null;
       state.editingSiteName = null;
       state.editingUserName = null;
       render();
@@ -1232,14 +1247,21 @@
         .filter(Boolean);
     }
 
+    function parseMoneyValue(val) {
+      if (typeof val === "number") return isNaN(val) ? 0 : val;
+      const cleaned = String(val ?? "").replace(/[^\d.-]/g, "");
+      const num = Number(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
     function normalizeExpenses(list) {
       if (!Array.isArray(list)) return [];
       return list
         .filter(r => r && typeof r === "object")
         .map((r, i) => {
-          const qty = Number(r.Qty ?? r.qty ?? 1) || 1;
-          const rate = Number(r.Rate ?? r.rate ?? 0) || 0;
-          const amt = Number(r.Amount ?? r.amount ?? (qty * rate)) || 0;
+          const qty = parseMoneyValue(r.Qty ?? r.qty ?? 1) || 1;
+          const rate = parseMoneyValue(r.Rate ?? r.rate ?? 0);
+          const amt = parseMoneyValue(r.Amount ?? r.amount ?? (qty * rate));
           const desc = String(r.Description || r.description || "").trim();
           const recId = String(r.RecordId || r.id || "").trim();
           const unit = String(r.Unit || r.unit || "Nos").trim();
@@ -1270,11 +1292,25 @@
           RecordId: String(r.RecordId || r.id || `FND_${i + 1}`).trim(),
           Date: toLocalDateStr(r.Date || r.date || todayISO()),
           Engineer: getCanonicalDisplayName(String(r.Engineer || r.engineer || "").trim()),
-          Amount: Number(r.Amount ?? r.amount ?? 0) || 0,
+          Amount: parseMoneyValue(r.Amount ?? r.amount ?? 0),
           Mode: String(r.Mode || r.mode || "Online").trim(),
           Settled: isSettledFlag(r.Settled ?? r.settled)
         }))
         .filter(x => x.Engineer.length > 0 && x.Amount !== 0);
+    }
+
+    function normalizeSelfExpenses(list) {
+      if (!Array.isArray(list)) return [];
+      return list
+        .filter(r => r && typeof r === "object")
+        .map((r, i) => ({
+          RecordId: String(r.RecordId || r.id || `SE_${i + 1}`).trim(),
+          Date: toLocalDateStr(r.Date || r.date || todayISO()),
+          Description: String(r.Description || r.description || "").trim(),
+          Amount: parseMoneyValue(r.Amount ?? r.amount ?? 0),
+          Who: getCanonicalDisplayName(String(r.Who || r.who || "Manigandan").trim())
+        }))
+        .filter(x => x.Amount > 0 && x.Description.length > 0);
     }
 
     function normalizeClientPayments(list) {
@@ -1282,10 +1318,10 @@
       return list
         .filter(r => r && typeof r === "object")
         .map((r, i) => {
-          const base = Number(r["Base Amount"] ?? r.baseAmount ?? 0) || 0;
-          const gstPct = Number(r["Gst%"] ?? r.gstPct ?? 0) || 0;
-          const gstAmt = Number(r["GST Amount"] ?? r.gstAmount ?? ((base * gstPct) / 100)) || 0;
-          const total = Number(r.TotalAmount ?? r["Total Amount"] ?? r.amount ?? (base + gstAmt)) || 0;
+          const base = parseMoneyValue(r["Base Amount"] ?? r.baseAmount ?? 0);
+          const gstPct = parseMoneyValue(r["Gst%"] ?? r.gstPct ?? 0);
+          const gstAmt = parseMoneyValue(r["GST Amount"] ?? r.gstAmount ?? ((base * gstPct) / 100));
+          const total = parseMoneyValue(r.TotalAmount ?? r["Total Amount"] ?? r.amount ?? (base + gstAmt));
           return {
             RecordId: String(r.RecordId || r.id || `CP_${i + 1}`).trim(),
             Date: toLocalDateStr(r.Date || r.date || todayISO()),
@@ -1364,6 +1400,7 @@
 
         if (Array.isArray(data.expenses)) state.expenses = normalizeExpenses(data.expenses);
         if (Array.isArray(data.funds)) state.funds = normalizeFunds(data.funds);
+        if (Array.isArray(data.selfExpenses)) state.selfExpenses = normalizeSelfExpenses(data.selfExpenses);
         if (Array.isArray(data.clientPayments)) state.clientPayments = normalizeClientPayments(data.clientPayments);
 
         if (Array.isArray(data.sites)) {
@@ -1522,8 +1559,8 @@
     }
 
     function calcExpenseAmount() {
-      const qty = Number(document.getElementById("expQty")?.value) || 0;
-      const rate = Number(document.getElementById("expRate")?.value) || 0;
+      const qty = parseMoneyValue(document.getElementById("expQty")?.value);
+      const rate = parseMoneyValue(document.getElementById("expRate")?.value);
       const amtEl = document.getElementById("expAmount");
       if (amtEl && qty > 0 && rate > 0) {
         amtEl.value = (qty * rate).toFixed(2);
@@ -1550,10 +1587,10 @@
         : "Material";
       const vendor = document.getElementById("expVendor").value.trim();
       const description = document.getElementById("expDesc").value.trim();
-      const qty = Number(document.getElementById("expQty").value) || 1;
+      const qty = parseMoneyValue(document.getElementById("expQty").value) || 1;
       const unit = document.getElementById("expUnit").value || "Nos";
-      const rate = Number(document.getElementById("expRate").value) || 0;
-      const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
+      const rate = parseMoneyValue(document.getElementById("expRate").value);
+      const amount = parseMoneyValue(document.getElementById("expAmount").value) || (qty * rate);
       const paymentStatus = isAdmin()
         ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
         : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Paid");
@@ -1814,7 +1851,7 @@
 
       const totalPaidScopedExpense = scoped
         .filter(item => isPaidEntry(item))
-        .reduce((sum, item) => sum + (Number(item.Amount) || 0), 0);
+        .reduce((sum, item) => sum + (parseMoneyValue(item.Amount)), 0);
 
       const listHeading = isAdmin() ? "Expenses (Paid Calculated)" : `Expenses (${state.engPeriod})`;
 
@@ -1908,8 +1945,8 @@
         );
 
         const carryItem = myFunds.find(f => f.Mode === "Carry Balance");
-        const fSum = myFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const eSum = myPaidExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const fSum = myFunds.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
+        const eSum = myPaidExp.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
         const balVal = fSum - eSum;
 
         return `
@@ -1949,11 +1986,13 @@
         `;
       }
 
-      const totalClientReceived = state.clientPayments.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
+      const totalClientReceived = state.clientPayments.reduce((s, r) => s + parseMoneyValue(r.TotalAmount), 0);
       const totalSiteExpense = state.expenses
         .filter(e => isPaidEntry(e))
-        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
       const balance = totalClientReceived - totalSiteExpense;
+      const totalSelfExpense = state.selfExpenses.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
+      const netBalance = balance - totalSelfExpense;
 
       const engList = getEngineerNames();
       const engRows = engList.map(eng => {
@@ -1969,14 +2008,14 @@
           !isSettledFlag(e.Settled) &&
           !isRecordBeforeSettlement(eng, e.Date, e.RecordId)
         );
-        const fundReceived = engFunds.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
-        const spent = engPaidExp.reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        const fundReceived = engFunds.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
+        const spent = engPaidExp.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
         const engBal = fundReceived - spent;
         return { eng, fundReceived, spent, engBal };
       });
 
       return `
-        <div class="summary-grid-5" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="summary-grid-5">
           <div class="stat-box highlight-soft">
             <div class="stat-label">Client Payment</div>
             <div class="stat-val c-green">${formatINR(totalClientReceived)}</div>
@@ -1988,6 +2027,14 @@
           <div class="stat-box highlight-soft">
             <div class="stat-label">Balance</div>
             <div class="stat-val c-ink">${formatINR(balance)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Self Expense</div>
+            <div class="stat-val c-red">${formatINR(totalSelfExpense)}</div>
+          </div>
+          <div class="stat-box highlight-soft">
+            <div class="stat-label">Net Balance</div>
+            <div class="stat-val c-green">${formatINR(netBalance)}</div>
           </div>
         </div>
 
@@ -2019,6 +2066,154 @@
       `;
     }
 
+    function renderSelfExpensePage() {
+      const editSe = state.editingSelfExpenseId
+        ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
+        : null;
+      const showForm = state.adminAddFormOpen || Boolean(editSe);
+
+      let list = [...state.selfExpenses];
+      if (state.seWhoFilter) {
+        list = list.filter(s => getCanonicalUserKey(s.Who) === getCanonicalUserKey(state.seWhoFilter));
+      }
+      list.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)) || String(b.RecordId).localeCompare(String(a.RecordId)));
+
+      const totalSe = list.reduce((sum, item) => sum + parseMoneyValue(item.Amount), 0);
+      const currentWho = editSe ? getCanonicalDisplayName(editSe.Who) : "Senthil";
+
+      return `
+        <div class="card no-print">
+          <div class="card-title">
+            <span>Self Expense</span>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <select style="width:145px;" onchange="state.seWhoFilter = this.value; render();">
+                <option value="">All (Senthil &amp; Manigandan)</option>
+                ${SELF_EXPENSE_PERSONS.map(p => `<option value="${p}" ${state.seWhoFilter === p ? "selected" : ""}>${p}</option>`).join("")}
+              </select>
+              <button type="button" class="btn-primary btn-sm" onclick="if (${showForm}) { state.adminAddFormOpen = false; state.editingSelfExpenseId = null; } else { state.editingSelfExpenseId = null; state.adminAddFormOpen = true; } render();">
+                ${showForm ? "Close" : "+"}
+              </button>
+            </div>
+          </div>
+
+          ${showForm ? `
+            <form onsubmit="submitSelfExpense(event)">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Date</label>
+                  <input type="date" id="seDate" value="${editSe ? toLocalDateStr(editSe.Date) : todayISO()}" required />
+                </div>
+                <div class="field">
+                  <label>Description</label>
+                  <input type="text" id="seDesc" value="${editSe ? editSe.Description : ""}" placeholder="Enter description" required />
+                </div>
+                <div class="field">
+                  <label>Amount (₹)</label>
+                  <input type="number" step="0.01" min="0.01" id="seAmount" value="${editSe ? editSe.Amount : ""}" placeholder="0" required />
+                </div>
+                <div class="field">
+                  <label>Who</label>
+                  <select id="seWho">
+                    ${SELF_EXPENSE_PERSONS.map(p => `<option value="${p}" ${getCanonicalUserKey(currentWho) === getCanonicalUserKey(p) ? "selected" : ""}>${p}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">${editSe ? "Update" : "Save"}</button>
+              </div>
+            </form>
+          ` : ""}
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>Self Expense List</span>
+            <span>Total: ${formatINR(totalSe)}</span>
+          </div>
+          ${list.length ? `
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Who</th>
+                    <th class="no-print">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${list.map(item => `
+                    <tr>
+                      <td>${toLocalDateStr(item.Date)}</td>
+                      <td class="wrap-cell">${item.Description}</td>
+                      <td class="c-red"><strong>${formatINR(item.Amount)}</strong></td>
+                      <td><strong>${getCanonicalDisplayName(item.Who)}</strong></td>
+                      <td class="no-print">
+                        <div class="pb-actions">
+                          <button type="button" class="btn-secondary btn-sm" onclick="state.editingSelfExpenseId = '${item.RecordId}'; state.adminAddFormOpen = true; render();">Edit</button>
+                          <button type="button" class="btn-danger btn-sm" onclick="deleteSelfExpense('${item.RecordId}')">Del</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : `<div class="pb-meta">No self expense entries yet. Click + to add.</div>`}
+        </div>
+      `;
+    }
+
+    async function submitSelfExpense(ev) {
+      ev.preventDefault();
+      if (!isAdmin()) return;
+
+      const existing = state.editingSelfExpenseId
+        ? state.selfExpenses.find(s => s.RecordId === state.editingSelfExpenseId)
+        : null;
+
+      const dateVal = toLocalDateStr(document.getElementById("seDate").value || todayISO());
+      const descVal = document.getElementById("seDesc").value.trim();
+      const amtVal = parseMoneyValue(document.getElementById("seAmount").value);
+      const whoVal = getCanonicalDisplayName(document.getElementById("seWho").value || "Senthil");
+
+      if (!descVal || amtVal <= 0) {
+        setBanner("Please enter Description and valid Amount.", "warn");
+        return;
+      }
+
+      const rec = {
+        RecordId: existing ? existing.RecordId : ("SE_" + Date.now()),
+        Date: dateVal,
+        Description: descVal,
+        Amount: amtVal,
+        Who: whoVal
+      };
+
+      if (existing) {
+        const idx = state.selfExpenses.findIndex(s => s.RecordId === existing.RecordId);
+        if (idx > -1) state.selfExpenses[idx] = rec;
+        state.editingSelfExpenseId = null;
+        state.adminAddFormOpen = false;
+        render();
+        await postAction({ action: "updateSelfExpense", record: rec });
+      } else {
+        state.selfExpenses.unshift(rec);
+        state.adminAddFormOpen = false;
+        render();
+        await postAction({ action: "addSelfExpense", record: rec });
+      }
+    }
+
+    async function deleteSelfExpense(recordId) {
+      if (!isAdmin()) return;
+      state.selfExpenses = state.selfExpenses.filter(s => s.RecordId !== recordId);
+      if (state.editingSelfExpenseId === recordId) state.editingSelfExpenseId = null;
+      render();
+      await postAction({ action: "deleteSelfExpense", RecordId: recordId });
+    }
+
     function renderClientPaymentPage() {
       const allSiteNames = getAllSiteNames();
       const editCp = state.editingClientPaymentId
@@ -2032,7 +2227,7 @@
       if (state.cpToDate) filteredCp = filteredCp.filter(c => toLocalDateStr(c.Date) <= state.cpToDate);
       filteredCp.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
 
-      const totalFiltered = filteredCp.reduce((s, r) => s + (Number(r.TotalAmount) || 0), 0);
+      const totalFiltered = filteredCp.reduce((s, r) => s + parseMoneyValue(r.TotalAmount), 0);
 
       return `
         <div class="card no-print">
@@ -2145,7 +2340,40 @@
       }
       filteredFunds.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
 
+      const activeFunds = state.funds.filter(f =>
+        !isSettledFlag(f.Settled) &&
+        !isRecordBeforeSettlement(f.Engineer, f.Date, f.RecordId) &&
+        (!state.efEngFilter || getCanonicalUserKey(f.Engineer) === getCanonicalUserKey(state.efEngFilter))
+      );
+
+      const activePaidExpenses = state.expenses.filter(e =>
+        isPaidEntry(e) &&
+        !isSettledFlag(e.Settled) &&
+        !isRecordBeforeSettlement(e.Engineer, e.Date, e.RecordId) &&
+        (!state.efEngFilter || getCanonicalUserKey(e.Engineer) === getCanonicalUserKey(state.efEngFilter))
+      );
+
+      const totalFundGiven = activeFunds.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
+      const totalPaidSpent = activePaidExpenses.reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
+      const remainingBalance = totalFundGiven - totalPaidSpent;
+      const scopeLabel = state.efEngFilter ? ` (${state.efEngFilter})` : " (All Engineers)";
+
       return `
+        <div class="summary-grid-5" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-box highlight-soft">
+            <div class="stat-label">Fund Given${scopeLabel}</div>
+            <div class="stat-val c-green">${formatINR(totalFundGiven)}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Expense (Paid)${scopeLabel}</div>
+            <div class="stat-val c-red">${formatINR(totalPaidSpent)}</div>
+          </div>
+          <div class="stat-box highlight-soft">
+            <div class="stat-label">Balance${scopeLabel}</div>
+            <div class="stat-val c-ink">${formatINR(remainingBalance)}</div>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-title">
             <span>Engineer Fund</span>
@@ -2158,7 +2386,6 @@
                 ${showForm ? "Close" : "+"}
               </button>
             </div>
-            
           </div>
 
           ${showForm ? `
@@ -2424,8 +2651,8 @@
     }
 
     function syncGst() {
-      const base = Number(document.getElementById("cpBase")?.value) || 0;
-      const pct = Number(document.getElementById("cpGstPct")?.value) || 0;
+      const base = parseMoneyValue(document.getElementById("cpBase")?.value);
+      const pct = parseMoneyValue(document.getElementById("cpGstPct")?.value);
       const gstAmt = (base * pct) / 100;
       const gstEl = document.getElementById("cpGstAmt");
       const totalEl = document.getElementById("cpTotal");
@@ -2439,10 +2666,10 @@
         ? state.clientPayments.find(c => c.RecordId === state.editingClientPaymentId)
         : null;
 
-      const base = Number(document.getElementById("cpBase").value) || 0;
-      const gstPct = Number(document.getElementById("cpGstPct").value) || 0;
-      const gstAmt = Number(document.getElementById("cpGstAmt")?.value) || ((base * gstPct) / 100);
-      const totalAmt = Number(document.getElementById("cpTotal").value) || (base + gstAmt);
+      const base = parseMoneyValue(document.getElementById("cpBase").value);
+      const gstPct = parseMoneyValue(document.getElementById("cpGstPct").value);
+      const gstAmt = parseMoneyValue(document.getElementById("cpGstAmt")?.value) || ((base * gstPct) / 100);
+      const totalAmt = parseMoneyValue(document.getElementById("cpTotal").value) || (base + gstAmt);
 
       const rec = {
         RecordId: existing ? existing.RecordId : ("CP_" + Date.now()),
@@ -2632,7 +2859,7 @@
         RecordId: existing ? existing.RecordId : ("FND_" + Date.now()),
         Date: toLocalDateStr(document.getElementById("efDate").value),
         Engineer: getCanonicalDisplayName(document.getElementById("efEng").value),
-        Amount: Number(document.getElementById("efAmt").value) || 0,
+        Amount: parseMoneyValue(document.getElementById("efAmt").value),
         Mode: document.getElementById("efMode").value,
         Settled: existing ? isSettledFlag(existing.Settled) : false
       };
@@ -2666,10 +2893,10 @@
       const upTo = toLocalDateStr(document.getElementById("spDate").value);
       const fSum = state.funds
         .filter(f => getCanonicalUserKey(f.Engineer) === engKey && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
-        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
       const eSum = state.expenses
         .filter(e => getCanonicalUserKey(e.Engineer) === engKey && isPaidEntry(e) && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
-        .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
+        .reduce((s, r) => s + parseMoneyValue(r.Amount), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
     }
@@ -2719,6 +2946,8 @@
         container.innerHTML = renderClientPaymentPage();
       } else if (isAdmin() && state.activeTab === "engineerFund") {
         container.innerHTML = renderEngineerFundPage();
+      } else if (isAdmin() && state.activeTab === "selfExpense") {
+        container.innerHTML = renderSelfExpensePage();
       } else if (isAdmin() && state.activeTab === "addEngineer") {
         container.innerHTML = renderAddEngineerPage();
       } else if (isAdmin() && state.activeTab === "addSite") {
