@@ -805,7 +805,7 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOGACtm9gwgTJHl1W00t43O3m-1OQcr2DSF3oJKVCBfKxvZOeupyWuSOxkEqrDsj8GaQ/exec";
-    const CACHE_KEY = "NA_TRACKER_CACHE_V12";
+    const CACHE_KEY = "NA_TRACKER_CACHE_V13";
 
     const DEFAULT_ENGINEERS = ["Senthil", "Manikandan", "Yogesh", "Sivashankar"];
     const CATEGORIES = [
@@ -881,6 +881,12 @@
       }
     };
 
+    function isUserDeleted(username) {
+      const target = String(username || "").trim().toLowerCase();
+      if (!target || target === "admin") return false;
+      return state.deletedUsers.some(u => String(u).trim().toLowerCase() === target);
+    }
+
     function dedupeUsersList(rawList) {
       const map = new Map();
       const addUser = (u) => {
@@ -910,12 +916,6 @@
         }
       });
       return Array.from(map.values());
-    }
-
-    function isUserDeleted(username) {
-      const target = String(username || "").trim().toLowerCase();
-      if (!target || target === "admin") return false;
-      return state.deletedUsers.some(u => String(u).toLowerCase() === target);
     }
 
     function normalizeSiteStatus(val) {
@@ -1323,7 +1323,7 @@
 
     function getLatestCarryRecForEng(eng) {
       const carries = state.funds
-        .filter(f => f.Engineer === eng && f.Mode === "Carry Balance")
+        .filter(f => String(f.Engineer).toLowerCase() === String(eng).toLowerCase() && f.Mode === "Carry Balance")
         .sort((a, b) => String(b.RecordId).localeCompare(String(a.RecordId)) || toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
       return carries[0] || null;
     }
@@ -1371,12 +1371,12 @@
           if (eng && upTo) {
             state.settledUntilByEng[eng] = upTo;
             state.funds.forEach(f => {
-              if (f.Engineer === eng && f.Mode !== "Carry Balance" && toLocalDateStr(f.Date) <= upTo) {
+              if (String(f.Engineer).toLowerCase() === String(eng).toLowerCase() && f.Mode !== "Carry Balance" && toLocalDateStr(f.Date) <= upTo) {
                 f.Settled = true;
               }
             });
             state.expenses.forEach(e => {
-              if (e.Engineer === eng && toLocalDateStr(e.Date) <= upTo) {
+              if (String(e.Engineer).toLowerCase() === String(eng).toLowerCase() && toLocalDateStr(e.Date) <= upTo) {
                 e.Settled = true;
               }
             });
@@ -1491,6 +1491,11 @@
             }
           });
         }
+        state.users.forEach(u => {
+          if (u && u.user && u.password && !isUserDeleted(u.user)) {
+            rawUsers.push(u);
+          }
+        });
         CONFIGURED_USERS.forEach(u => {
           if (!isUserDeleted(u.user)) {
             rawUsers.push(u);
@@ -1696,7 +1701,6 @@
       const rate = Number(document.getElementById("expRate").value) || 0;
       const amount = Number(document.getElementById("expAmount").value) || (qty * rate);
 
-      // Engineer chooses Paid or Unpaid at entry time; Admin controls Paid/Unpaid updates & edits
       const paymentStatus = isAdmin()
         ? normalizePaymentStatus(document.getElementById("expPayStatus")?.value)
         : normalizePaymentStatus(document.getElementById("expPayStatus")?.value || "Unpaid");
@@ -2116,7 +2120,6 @@
           !isSettledFlag(f.Settled) &&
           !isRecordBeforeSettlement(engName, f.Date, f.RecordId)
         );
-        // Paid expenses by engineer deduct from their balance; Unpaid do not deduct
         const myPaidExp = state.expenses.filter(e =>
           String(e.Engineer).toLowerCase() === String(engName).toLowerCase() &&
           !isSiteCompleted(e.Site) &&
@@ -2373,7 +2376,9 @@
       const showForm = state.adminAddFormOpen || Boolean(editFnd);
 
       let filteredFunds = [...state.funds];
-      if (state.efEngFilter) filteredFunds = filteredFunds.filter(f => f.Engineer === state.efEngFilter);
+      if (state.efEngFilter) {
+        filteredFunds = filteredFunds.filter(f => String(f.Engineer).toLowerCase() === String(state.efEngFilter).toLowerCase());
+      }
       filteredFunds.sort((a, b) => toLocalDateStr(b.Date).localeCompare(toLocalDateStr(a.Date)));
 
       return `
@@ -2788,6 +2793,7 @@
       state.users = dedupeUsersList([...state.users.filter(u => u.user.toLowerCase() !== canonicalKey), rec]);
 
       syncLoginUserSelectOptions();
+      persistCache();
       state.editingUserName = null;
       state.adminAddFormOpen = false;
       render();
@@ -2814,6 +2820,7 @@
       }
 
       syncLoginUserSelectOptions();
+      persistCache();
       render();
       await postAction({ action: "deleteUser", user: username });
     }
@@ -2860,10 +2867,10 @@
       const eng = document.getElementById("spEng").value;
       const upTo = toLocalDateStr(document.getElementById("spDate").value);
       const fSum = state.funds
-        .filter(f => f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
+        .filter(f => String(f.Engineer).toLowerCase() === String(eng).toLowerCase() && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       const eSum = state.expenses
-        .filter(e => e.Engineer === eng && isPaidEntry(e) && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
+        .filter(e => String(e.Engineer).toLowerCase() === String(eng).toLowerCase() && isPaidEntry(e) && !isSettledFlag(e.Settled) && toLocalDateStr(e.Date) <= upTo)
         .reduce((s, r) => s + (Number(r.Amount) || 0), 0);
       state.settlePreview = { eng, upTo, fSum, eSum, carry: fSum - eSum };
       render();
@@ -2874,10 +2881,10 @@
       const { eng, upTo, carry } = state.settlePreview;
 
       state.funds.forEach(f => {
-        if (f.Engineer === eng && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo) f.Settled = true;
+        if (String(f.Engineer).toLowerCase() === String(eng).toLowerCase() && !isSettledFlag(f.Settled) && toLocalDateStr(f.Date) <= upTo) f.Settled = true;
       });
       state.expenses.forEach(e => {
-        if (e.Engineer === eng && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
+        if (String(e.Engineer).toLowerCase() === String(eng).toLowerCase() && toLocalDateStr(e.Date) <= upTo) e.Settled = true;
       });
 
       const prevSettledDate = state.settledUntilByEng[eng];
